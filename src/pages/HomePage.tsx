@@ -1,10 +1,13 @@
 import { useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchTrendingVideos } from '../store/slices/videosSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
+import ContinueWatching from '../components/ContinueWatching'
 
 const HomePage = () => {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const {
     trendingVideos,
@@ -51,6 +54,14 @@ const HomePage = () => {
 
   return (
     <div className="p-6">
+      {/* Continue Watching Section */}
+      <ContinueWatching 
+        limit={4} 
+        showMoreButton={true} 
+        onMoreClick={() => navigate('/continue-watching')} 
+      />
+
+      {/* Trending Section */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Trending

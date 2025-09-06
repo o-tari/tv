@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppDispatch } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
+import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { useVideo } from '../hooks/useVideo'
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
@@ -24,10 +25,11 @@ const WatchPage = () => {
     loadMoreComments,
   } = useVideo(videoId || '')
 
-  // Add to history when video loads
+  // Add to history and continue watching when video loads
   useEffect(() => {
     if (video) {
       dispatch(addToHistory(video))
+      dispatch(addToContinueWatching(video))
     }
   }, [dispatch, video])
 

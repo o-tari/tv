@@ -15,6 +15,7 @@ const Sidebar = () => {
     { label: 'Home', href: '/', icon: '🏠' },
     { label: 'Explore', href: '/explore', icon: '🔍' },
     { label: 'Subscriptions', href: '/subscriptions', icon: '📺' },
+    { label: 'Continue Watching', href: '/continue-watching', icon: '▶️' },
     { label: 'History', href: '/history', icon: '🕒' },
     { label: 'Watch later', href: '/watch-later', icon: '⏰' },
   ]

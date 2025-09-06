@@ -15,6 +15,7 @@ const ExplorePage = lazy(() => import('../pages/ExplorePage'))
 const SubscriptionsPage = lazy(() => import('../pages/SubscriptionsPage'))
 const HistoryPage = lazy(() => import('../pages/HistoryPage'))
 const WatchLaterPage = lazy(() => import('../pages/WatchLaterPage'))
+const ContinueWatchingPage = lazy(() => import('../pages/ContinueWatchingPage'))
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/watch-later" element={<WatchLaterPage />} />
+                <Route path="/continue-watching" element={<ContinueWatchingPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
