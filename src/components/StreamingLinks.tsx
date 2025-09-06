@@ -33,8 +33,10 @@ const StreamingLinks = ({ episodes, onEpisodeSelect }: StreamingLinksProps) => {
 
   // Auto-select first episode if available
   useEffect(() => {
+    console.log('Episodes received:', episodes)
     if (episodes.length > 0 && !selectedEpisode) {
       const firstEpisode = episodes[0]
+      console.log('First episode:', firstEpisode)
       setSelectedEpisode(firstEpisode.id)
       dispatch(setCurrentEpisode(firstEpisode.id))
     }
@@ -61,6 +63,7 @@ const StreamingLinks = ({ episodes, onEpisodeSelect }: StreamingLinksProps) => {
   }, [streamingLinks, selectedQuality])
 
   const handleEpisodeChange = (episodeId: string) => {
+    console.log('Episode selected:', episodeId)
     setSelectedEpisode(episodeId)
     setSelectedQuality('')
     setShowPlayer(false)
@@ -112,7 +115,12 @@ const StreamingLinks = ({ episodes, onEpisodeSelect }: StreamingLinksProps) => {
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              Ep {episode.episodeNumber}
+              <div className="text-center">
+                <div className="font-semibold">Ep {episode.episodeNumber}</div>
+                <div className="text-xs opacity-75 truncate max-w-20" title={episode.title}>
+                  {episode.title}
+                </div>
+              </div>
             </button>
           ))}
         </div>
