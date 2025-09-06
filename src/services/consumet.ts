@@ -90,14 +90,11 @@ export const getAnimeInfo = async (animeId: string): Promise<AnimeInfo> => {
 
 // Get anime episode streaming links
 export const getAnimeEpisodeStreamingLinks = async (
-  episodeId: string,
-  server: string = 'animepahe'
-): Promise<StreamingLink[]> => {
-  return requestCache.get('/streaming-links', { episodeId, server }, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${episodeId}`, {
-      params: { server }
-    })
-    return response.data.sources || []
+  episodeId: string
+): Promise<{ headers: any; sources: StreamingLink[] }> => {
+  return requestCache.get('/streaming-links', { episodeId }, async () => {
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${episodeId}`)
+    return response.data
   })
 }
 

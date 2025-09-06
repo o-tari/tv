@@ -9,6 +9,7 @@ import { fetchAnimeInfo } from '../store/slices/animeSlice'
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import VideoGrid from '../components/VideoGrid'
+import StreamingLinks from '../components/StreamingLinks'
 import { type AnimeMedia } from '../types/anime'
 
 const WatchPage = () => {
@@ -130,20 +131,35 @@ const WatchPage = () => {
           <div className="lg:col-span-2 space-y-6">
             {isAnime ? (
               <>
-                {/* Anime player placeholder */}
-                <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">🎌</span>
+                {/* Anime Streaming Links */}
+                {currentAnime?.episodes && currentAnime.episodes.length > 0 ? (
+                  <StreamingLinks
+                    animeId={currentAnime.id}
+                    episodes={currentAnime.episodes.map(ep => ({
+                      id: ep.episodeId,
+                      episodeNumber: ep.episodeNumber,
+                      title: ep.title
+                    }))}
+                    onEpisodeSelect={(episodeId) => {
+                      // Handle episode selection if needed
+                      console.log('Selected episode:', episodeId)
+                    }}
+                  />
+                ) : (
+                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">🎌</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        {currentAnime?.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        No episodes available
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      {currentAnime?.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Anime player coming soon
-                    </p>
                   </div>
-                </div>
+                )}
 
                 {/* Anime info */}
                 {currentAnime && (
