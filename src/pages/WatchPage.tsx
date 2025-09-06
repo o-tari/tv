@@ -135,11 +135,16 @@ const WatchPage = () => {
                 {currentAnime?.episodes && currentAnime.episodes.length > 0 ? (
                   <StreamingLinks
                     animeId={currentAnime.id}
-                    episodes={currentAnime.episodes.map((ep, index) => ({
-                      id: ep.episodeId || ep.id || `episode-${index}`,
-                      episodeNumber: ep.episodeNumber || index + 1,
-                      title: ep.title || `Episode ${ep.episodeNumber || index + 1}`
-                    }))}
+                    episodes={currentAnime.episodes.map((ep, index) => {
+                      // Clean the episode ID to avoid slashes and special characters
+                      const rawId = ep.episodeId || ep.id || `episode-${index}`
+                      const cleanId = rawId.replace(/[\/\\]/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '-')
+                      return {
+                        id: cleanId,
+                        episodeNumber: ep.episodeNumber || index + 1,
+                        title: ep.title || `Episode ${ep.episodeNumber || index + 1}`
+                      }
+                    })}
                     onEpisodeSelect={(episodeId) => {
                       // Handle episode selection if needed
                       console.log('Selected episode:', episodeId)

@@ -93,7 +93,9 @@ export const getAnimeEpisodeStreamingLinks = async (
   episodeId: string
 ): Promise<{ headers: any; sources: StreamingLink[] }> => {
   return requestCache.get('/streaming-links', { episodeId }, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${episodeId}`)
+    // URL encode the episode ID to handle special characters and slashes
+    const encodedEpisodeId = encodeURIComponent(episodeId)
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${encodedEpisodeId}`)
     return response.data
   })
 }

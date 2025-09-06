@@ -45,6 +45,7 @@ const StreamingLinks = ({ episodes, onEpisodeSelect }: StreamingLinksProps) => {
   // Fetch streaming links when episode changes
   useEffect(() => {
     if (selectedEpisode) {
+      console.log('Fetching streaming links for episode ID:', selectedEpisode)
       dispatch(fetchStreamingLinks(selectedEpisode))
     }
   }, [selectedEpisode, dispatch])
