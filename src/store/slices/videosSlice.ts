@@ -157,6 +157,42 @@ const videosSlice = createSlice({
       state.channelError = null
       state.channelVideosError = null
     },
+    clearAllData: (state) => {
+      // Clear all video data when settings change
+      state.trendingVideos = []
+      state.trendingLoading = false
+      state.trendingError = null
+      state.trendingNextPageToken = null
+      
+      state.searchResults = []
+      state.searchLoading = false
+      state.searchError = null
+      state.searchNextPageToken = null
+      state.searchTotalResults = 0
+      
+      state.currentVideo = null
+      state.currentVideoLoading = false
+      state.currentVideoError = null
+      
+      state.relatedVideos = []
+      state.relatedLoading = false
+      state.relatedError = null
+      state.relatedNextPageToken = null
+      
+      state.comments = []
+      state.commentsLoading = false
+      state.commentsError = null
+      state.commentsNextPageToken = null
+      
+      state.currentChannel = null
+      state.channelLoading = false
+      state.channelError = null
+      
+      state.channelVideos = []
+      state.channelVideosLoading = false
+      state.channelVideosError = null
+      state.channelVideosNextPageToken = null
+    },
   },
   extraReducers: (builder) => {
     // Trending videos
@@ -302,5 +338,5 @@ const videosSlice = createSlice({
   },
 })
 
-export const { clearSearchResults, clearCurrentVideo, clearChannel } = videosSlice.actions
+export const { clearSearchResults, clearCurrentVideo, clearChannel, clearAllData } = videosSlice.actions
 export default videosSlice.reducer

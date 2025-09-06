@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAppSelector } from '../store'
-import { selectUseMockData } from '../store/slices/settingsSlice'
+import { useAppSelector, store } from '../store'
+import { selectUseMockData, selectYoutubeApiKey } from '../store/slices/settingsSlice'
 
 interface MockDataNotificationProps {
   onOpenSettings?: () => void
@@ -11,12 +11,16 @@ const MockDataNotification = ({ onOpenSettings }: MockDataNotificationProps) => 
   const useMockData = useAppSelector(selectUseMockData)
 
   useEffect(() => {
-    const USE_MOCK_DATA = !import.meta.env.VITE_YT_API_KEY || 
-      import.meta.env.VITE_YT_API_KEY === 'your_youtube_api_key_here'
+    // Check if we should show the notification based on current settings
+    const state = store.getState()
+    const uiApiKey = selectYoutubeApiKey(state)
+    const envApiKey = import.meta.env.VITE_YT_API_KEY
     
-    if (USE_MOCK_DATA || useMockData) {
-      setShow(true)
-    }
+    // Show notification if using mock data (either from settings or no API key available)
+    const hasApiKey = uiApiKey || (envApiKey && envApiKey !== 'your_youtube_api_key_here')
+    const shouldShowNotification = useMockData || !hasApiKey
+    
+    setShow(shouldShowNotification)
   }, [useMockData])
 
   if (!show) return null

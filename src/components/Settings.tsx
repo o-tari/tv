@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectYoutubeApiKey, selectUseMockData, setYoutubeApiKey, setUseMockData, resetSettings } from '../store/slices/settingsSlice'
+import { clearAllData } from '../store/slices/videosSlice'
 
 interface SettingsProps {
   isOpen: boolean
@@ -17,8 +18,12 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
   const [showApiKey, setShowApiKey] = useState(false)
 
   const handleSave = () => {
+    console.log('Saving settings:', { localApiKey, localUseMockData })
     dispatch(setYoutubeApiKey(localApiKey))
     dispatch(setUseMockData(localUseMockData))
+    // Clear all cached data so it will be refetched with new settings
+    dispatch(clearAllData())
+    console.log('Settings saved successfully, data cleared')
     onClose()
   }
 

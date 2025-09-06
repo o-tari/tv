@@ -10,6 +10,15 @@ export const getApiConfig = () => {
   const apiKey = uiApiKey || import.meta.env.VITE_YT_API_KEY
   const shouldUseMockData = useMockData || !apiKey || apiKey === 'your_youtube_api_key_here'
   
+  // Debug logging
+  console.log('API Config Debug:', {
+    uiApiKey,
+    envApiKey: import.meta.env.VITE_YT_API_KEY,
+    finalApiKey: apiKey,
+    useMockData,
+    shouldUseMockData
+  })
+  
   return {
     apiKey,
     useMockData: shouldUseMockData,
