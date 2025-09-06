@@ -72,18 +72,21 @@ const AnimePage = () => {
   }
 
   // Convert anime to media format for MediaGrid
-  const convertAnimeToMedia = (anime: Anime): AnimeMedia => ({
-    id: anime.id,
-    title: anime.title,
-    image: anime.image,
-    url: anime.url,
-    type: 'anime',
-    genres: anime.genres,
-    description: anime.description,
-    status: anime.status,
-    totalEpisodes: anime.totalEpisodes,
-    subOrDub: anime.subOrDub,
-  })
+  const convertAnimeToMedia = (anime: Anime): AnimeMedia => {
+    console.log('Converting anime:', anime) // Debug log
+    return {
+      id: anime.id,
+      title: anime.title,
+      image: anime.image,
+      url: anime.url,
+      type: 'anime',
+      genres: anime.genres,
+      description: anime.description,
+      status: anime.status,
+      totalEpisodes: anime.totalEpisodes,
+      subOrDub: anime.subOrDub,
+    }
+  }
 
   // Convert episodes to media format for MediaGrid
   const convertEpisodeToMedia = (episode: AnimeEpisode): AnimeMedia => ({

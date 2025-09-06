@@ -74,16 +74,22 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
     </Link>
   )
 
-  const renderAnimeCard = (anime: AnimeMedia) => (
-    <Link to={getMediaUrl()} className="block group max-w-sm">
-      <div className="space-y-3">
-        <div className="relative">
-          <LazyImage
-            src={anime.image}
-            alt={anime.title}
-            className="w-full aspect-[3/4] object-cover rounded-lg"
-            placeholder="🎌"
-          />
+  const renderAnimeCard = (anime: AnimeMedia) => {
+    // Fallback image if the API image is not available
+    const imageSrc = anime.image && anime.image.trim() !== '' 
+      ? anime.image 
+      : `https://via.placeholder.com/300x400/6366f1/ffffff?text=${encodeURIComponent(anime.title)}`
+    
+    return (
+      <Link to={getMediaUrl()} className="block group max-w-sm">
+        <div className="space-y-3">
+          <div className="relative">
+            <LazyImage
+              src={imageSrc}
+              alt={anime.title}
+              className="w-full aspect-[3/4] object-cover rounded-lg"
+              placeholder="🎌"
+            />
           {anime.totalEpisodes && (
             <span className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
               {anime.totalEpisodes} eps
@@ -116,15 +122,22 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
         </div>
       </div>
     </Link>
-  )
+    )
+  }
 
   if (variant === 'compact') {
+    const imageSrc = media.image && media.image.trim() !== '' 
+      ? media.image 
+      : media.type === 'anime'
+        ? `https://via.placeholder.com/300x400/6366f1/ffffff?text=${encodeURIComponent(media.title)}`
+        : `https://via.placeholder.com/300x200/ef4444/ffffff?text=${encodeURIComponent(media.title)}`
+    
     return (
       <Link to={getMediaUrl()} className="block group max-w-md">
         <div className="flex space-x-3">
           <div className="relative flex-shrink-0">
             <LazyImage
-              src={media.image}
+              src={imageSrc}
               alt={media.title}
               className="w-40 aspect-video object-cover rounded-lg"
               placeholder={media.type === 'video' ? '📹' : '🎌'}
@@ -163,12 +176,18 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
   }
 
   if (variant === 'large') {
+    const imageSrc = media.image && media.image.trim() !== '' 
+      ? media.image 
+      : media.type === 'anime'
+        ? `https://via.placeholder.com/500x700/6366f1/ffffff?text=${encodeURIComponent(media.title)}`
+        : `https://via.placeholder.com/500x300/ef4444/ffffff?text=${encodeURIComponent(media.title)}`
+    
     return (
       <Link to={getMediaUrl()} className="block group max-w-lg">
         <div className="space-y-4">
           <div className="relative">
             <LazyImage
-              src={media.image}
+              src={imageSrc}
               alt={media.title}
               className="w-full aspect-video object-cover rounded-lg"
               placeholder={media.type === 'video' ? '📹' : '🎌'}
