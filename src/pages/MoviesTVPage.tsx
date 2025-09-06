@@ -15,6 +15,12 @@ const MoviesTVPage = () => {
   const [searchResults, setSearchResults] = useState<TMDBContent[]>([])
   const [trendingMovies, setTrendingMovies] = useState<TMDBMovie[]>([])
   const [trendingTV, setTrendingTV] = useState<TMDBTVShow[]>([])
+  const [tvRecommendations, setTvRecommendations] = useState<TMDBTVShow[]>([])
+  const [discoverMovies, setDiscoverMovies] = useState<TMDBMovie[]>([])
+  const [discoverTV, setDiscoverTV] = useState<TMDBTVShow[]>([])
+  const [nowPlayingMovies, setNowPlayingMovies] = useState<TMDBMovie[]>([])
+  const [popularMovies, setPopularMovies] = useState<TMDBMovie[]>([])
+  const [topRatedMovies, setTopRatedMovies] = useState<TMDBMovie[]>([])
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'trending' | 'search'>('trending')
@@ -32,16 +38,50 @@ const MoviesTVPage = () => {
     try {
       const tmdbService = getTMDBService(tmdbApiKey)
       
-      const [moviesResponse, tvResponse] = await Promise.all([
+      const [
+        moviesResponse, 
+        tvResponse, 
+        discoverMoviesResponse, 
+        discoverTVResponse, 
+        nowPlayingResponse, 
+        popularMoviesResponse, 
+        topRatedMoviesResponse
+      ] = await Promise.all([
         tmdbService.getTrendingMovies('week'),
-        tmdbService.getTrendingTV('week')
+        tmdbService.getTrendingTV('week'),
+        tmdbService.discoverMovies(),
+        tmdbService.discoverTV(),
+        tmdbService.getNowPlayingMovies(),
+        tmdbService.getPopularMovies(),
+        tmdbService.getTopRatedMovies()
       ])
 
       const filteredMovies = tmdbService.filterByReleaseDate(moviesResponse.results, showUpcomingReleases)
       const filteredTV = tmdbService.filterByReleaseDate(tvResponse.results, showUpcomingReleases)
+      const filteredDiscoverMovies = tmdbService.filterByReleaseDate(discoverMoviesResponse.results, showUpcomingReleases)
+      const filteredDiscoverTV = tmdbService.filterByReleaseDate(discoverTVResponse.results, showUpcomingReleases)
+      const filteredNowPlaying = tmdbService.filterByReleaseDate(nowPlayingResponse.results, showUpcomingReleases)
+      const filteredPopularMovies = tmdbService.filterByReleaseDate(popularMoviesResponse.results, showUpcomingReleases)
+      const filteredTopRatedMovies = tmdbService.filterByReleaseDate(topRatedMoviesResponse.results, showUpcomingReleases)
 
       setTrendingMovies(filteredMovies)
       setTrendingTV(filteredTV)
+      setDiscoverMovies(filteredDiscoverMovies)
+      setDiscoverTV(filteredDiscoverTV)
+      setNowPlayingMovies(filteredNowPlaying)
+      setPopularMovies(filteredPopularMovies)
+      setTopRatedMovies(filteredTopRatedMovies)
+
+      // Load TV recommendations (using a popular TV show as reference)
+      if (filteredTV.length > 0) {
+        try {
+          const recommendationsResponse = await tmdbService.getTVRecommendations(filteredTV[0].id)
+          const filteredRecommendations = tmdbService.filterByReleaseDate(recommendationsResponse.results, showUpcomingReleases)
+          setTvRecommendations(filteredRecommendations)
+        } catch (error) {
+          console.error('Error loading TV recommendations:', error)
+        }
+      }
     } catch (error) {
       console.error('Error loading trending content:', error)
     } finally {
@@ -131,6 +171,32 @@ const MoviesTVPage = () => {
 
     return (
       <div className="space-y-12">
+        {/* TV Recommendations - First section after search */}
+        {tvRecommendations.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              Recommended TV Shows
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {tvRecommendations.map((tv) => (
+                <TMDBMediaCard
+                  key={`tv-rec-${tv.id}`}
+                  id={tv.id}
+                  title={tv.name}
+                  thumbnail={tv.poster_path}
+                  duration={null}
+                  viewCount={tv.vote_count}
+                  publishedAt={tv.first_air_date}
+                  channelTitle={null}
+                  type="tv"
+                  rating={tv.vote_average}
+                  overview={tv.overview}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Trending Movies */}
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
@@ -185,6 +251,156 @@ const MoviesTVPage = () => {
                   type="tv"
                   rating={tv.vote_average}
                   overview={tv.overview}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Discover Movies */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Discover Movies
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {discoverMovies.map((movie) => (
+                <TMDBMediaCard
+                  key={`discover-movie-${movie.id}`}
+                  id={movie.id}
+                  title={movie.title}
+                  thumbnail={movie.poster_path}
+                  duration={null}
+                  viewCount={movie.vote_count}
+                  publishedAt={movie.release_date}
+                  channelTitle={null}
+                  type="movie"
+                  rating={movie.vote_average}
+                  overview={movie.overview}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Discover TV Shows */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Discover TV Shows
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {discoverTV.map((tv) => (
+                <TMDBMediaCard
+                  key={`discover-tv-${tv.id}`}
+                  id={tv.id}
+                  title={tv.name}
+                  thumbnail={tv.poster_path}
+                  duration={null}
+                  viewCount={tv.vote_count}
+                  publishedAt={tv.first_air_date}
+                  channelTitle={null}
+                  type="tv"
+                  rating={tv.vote_average}
+                  overview={tv.overview}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Now Playing Movies */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Now Playing Movies
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {nowPlayingMovies.map((movie) => (
+                <TMDBMediaCard
+                  key={`now-playing-${movie.id}`}
+                  id={movie.id}
+                  title={movie.title}
+                  thumbnail={movie.poster_path}
+                  duration={null}
+                  viewCount={movie.vote_count}
+                  publishedAt={movie.release_date}
+                  channelTitle={null}
+                  type="movie"
+                  rating={movie.vote_average}
+                  overview={movie.overview}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Popular Movies */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Popular Movies
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {popularMovies.map((movie) => (
+                <TMDBMediaCard
+                  key={`popular-movie-${movie.id}`}
+                  id={movie.id}
+                  title={movie.title}
+                  thumbnail={movie.poster_path}
+                  duration={null}
+                  viewCount={movie.vote_count}
+                  publishedAt={movie.release_date}
+                  channelTitle={null}
+                  type="movie"
+                  rating={movie.vote_average}
+                  overview={movie.overview}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Top Rated Movies */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Top Rated Movies
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {topRatedMovies.map((movie) => (
+                <TMDBMediaCard
+                  key={`top-rated-${movie.id}`}
+                  id={movie.id}
+                  title={movie.title}
+                  thumbnail={movie.poster_path}
+                  duration={null}
+                  viewCount={movie.vote_count}
+                  publishedAt={movie.release_date}
+                  channelTitle={null}
+                  type="movie"
+                  rating={movie.vote_average}
+                  overview={movie.overview}
                 />
               ))}
             </div>

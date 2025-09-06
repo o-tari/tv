@@ -205,3 +205,4 @@ const TorrentProviderManager = ({ onProviderChange }: TorrentProviderManagerProp
 }
 
 export default TorrentProviderManager
+

@@ -142,6 +142,106 @@ export class TMDBService {
     })
   }
 
+  // Discover movies with filters
+  async discoverMovies(params: {
+    page?: number
+    sort_by?: string
+    include_adult?: boolean
+    include_video?: boolean
+    language?: string
+    with_genres?: string
+    with_original_language?: string
+    with_cast?: string
+    with_crew?: string
+    with_companies?: string
+    with_keywords?: string
+    with_people?: string
+    with_runtime_gte?: number
+    with_runtime_lte?: number
+    with_release_type?: string
+    with_origin_country?: string
+    with_original_language?: string
+    without_genres?: string
+    without_keywords?: string
+    without_companies?: string
+    without_cast?: string
+    without_crew?: string
+    without_people?: string
+    year?: number
+    primary_release_year?: number
+    first_air_date_year?: number
+    release_date_gte?: string
+    release_date_lte?: string
+    vote_average_gte?: number
+    vote_average_lte?: number
+    vote_count_gte?: number
+    vote_count_lte?: number
+    with_watch_providers?: string
+    watch_region?: string
+    with_watch_monetization_types?: string
+  } = {}): Promise<TMDBResponse<TMDBMovie>> {
+    return this.makeRequest<TMDBResponse<TMDBMovie>>('/discover/movie', {
+      page: 1,
+      sort_by: 'popularity.desc',
+      include_adult: false,
+      include_video: false,
+      language: 'en-US',
+      ...params
+    })
+  }
+
+  // Discover TV shows with filters
+  async discoverTV(params: {
+    page?: number
+    sort_by?: string
+    include_adult?: boolean
+    include_video?: boolean
+    language?: string
+    with_genres?: string
+    with_original_language?: string
+    with_cast?: string
+    with_crew?: string
+    with_companies?: string
+    with_keywords?: string
+    with_people?: string
+    with_runtime_gte?: number
+    with_runtime_lte?: number
+    with_origin_country?: string
+    without_genres?: string
+    without_keywords?: string
+    without_companies?: string
+    without_cast?: string
+    without_crew?: string
+    without_people?: string
+    year?: number
+    first_air_date_year?: number
+    first_air_date_gte?: string
+    first_air_date_lte?: string
+    vote_average_gte?: number
+    vote_average_lte?: number
+    vote_count_gte?: number
+    vote_count_lte?: number
+    with_watch_providers?: string
+    watch_region?: string
+    with_watch_monetization_types?: string
+  } = {}): Promise<TMDBResponse<TMDBTVShow>> {
+    return this.makeRequest<TMDBResponse<TMDBTVShow>>('/discover/tv', {
+      page: 1,
+      sort_by: 'popularity.desc',
+      include_adult: false,
+      include_video: false,
+      language: 'en-US',
+      ...params
+    })
+  }
+
+  // Get TV show recommendations
+  async getTVRecommendations(tvId: number, page: number = 1): Promise<TMDBResponse<TMDBTVShow>> {
+    return this.makeRequest<TMDBResponse<TMDBTVShow>>(`/tv/${tvId}/recommendations`, {
+      page
+    })
+  }
+
   // Filter content by release date
   filterByReleaseDate<T extends { release_date?: string; first_air_date?: string }>(
     content: T[],
