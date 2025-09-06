@@ -7,51 +7,35 @@ import {
   mockCommentsResponse 
 } from './mockData'
 import { type Video, type Channel, type Comment, type SearchFilters, type SearchResponse } from '../types/youtube'
+import { createApiInstance } from '../utils/apiConfig'
 
-const API_BASE_URL = 'https://www.googleapis.com/youtube/v3'
-const API_KEY = import.meta.env.VITE_YT_API_KEY
-const REGION = import.meta.env.VITE_REGION || 'US'
-const LANG = import.meta.env.VITE_LANG || 'en'
 
-const USE_MOCK_DATA = !API_KEY || API_KEY === 'your_youtube_api_key_here'
-
-if (USE_MOCK_DATA) {
-  // Using mock data - set VITE_YT_API_KEY in your .env file for real YouTube data
+// Create API instance with current configuration
+const getApiInstance = () => {
+  const config = createApiInstance()
+  
+  return axios.create({
+    baseURL: config.baseURL,
+    params: config.params,
+  })
 }
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  params: {
-    key: API_KEY,
-    regionCode: REGION,
-    hl: LANG,
-  },
-})
+// Check if we should use mock data
+const shouldUseMockData = () => {
+  const config = createApiInstance()
+  return config.useMockData
+}
 
-// Request interceptor for logging
-api.interceptors.request.use(
-  (config) => {
-    // API request interceptor
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
+// Error handling helper
+const handleApiError = (error: any) => {
+  if (error.response?.status === 403) {
+    throw new Error('API quota exceeded. Please try again later.')
   }
-)
-
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 403) {
-      throw new Error('API quota exceeded. Please try again later.')
-    }
-    if (error.response?.status === 400) {
-      throw new Error('Invalid request. Please check your search parameters.')
-    }
-    throw error
+  if (error.response?.status === 400) {
+    throw new Error('Invalid request. Please check your search parameters.')
   }
-)
+  throw error
+}
 
 
 // Search videos
@@ -60,7 +44,7 @@ export const searchVideos = async (
   filters: SearchFilters = {},
   pageToken?: string
 ): Promise<SearchResponse> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 600))
     // Filter mock videos based on query
     const filteredVideos = mockVideos.filter(video => 
@@ -133,6 +117,7 @@ export const searchVideos = async (
       params.publishedAfter = publishedAfter
     }
 
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
     return {
@@ -151,19 +136,21 @@ export const searchVideos = async (
       totalResults: response.data.pageInfo.totalResults,
     }
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
 // Get video details
 export const getVideoDetails = async (videoId: string): Promise<Video> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 300))
     const video = mockVideos.find(v => v.id === videoId) || mockVideos[0]
     return video
   }
 
   try {
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/videos', {
       params: {
         id: videoId,
@@ -190,13 +177,14 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
       commentCount: video.statistics.commentCount,
     }
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
 // Get trending videos
 export const getTrendingVideos = async (pageToken?: string): Promise<SearchResponse> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500))
     
@@ -229,6 +217,7 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
       params.pageToken = pageToken
     }
 
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/videos', { params })
     
     return {
@@ -249,18 +238,20 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
       totalResults: response.data.pageInfo.totalResults,
     }
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
 // Get channel details
 export const getChannelDetails = async (channelId: string): Promise<Channel> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 300))
     return mockChannel
   }
 
   try {
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/channels', {
       params: {
         id: channelId,
@@ -285,7 +276,8 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
       country: channel.snippet.country,
     }
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
@@ -294,7 +286,7 @@ export const getChannelVideos = async (
   channelId: string,
   pageToken?: string
 ): Promise<SearchResponse> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 400))
     return {
       items: mockVideos.slice(0, 3), // Show first 3 videos for channel
@@ -316,6 +308,7 @@ export const getChannelVideos = async (
       params.pageToken = pageToken
     }
 
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
     return {
@@ -335,7 +328,7 @@ export const getChannelVideos = async (
     }
   } catch (error) {
     // If API key is set but API fails, throw the error instead of falling back to mock data
-    if (!USE_MOCK_DATA) {
+    if (!shouldUseMockData()) {
       throw new Error(`YouTube API error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
     
@@ -355,7 +348,7 @@ export const getVideoComments = async (
   videoId: string,
   pageToken?: string
 ): Promise<{ items: Comment[]; nextPageToken?: string }> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 300))
     return mockCommentsResponse
   }
@@ -371,6 +364,7 @@ export const getVideoComments = async (
       params.pageToken = pageToken
     }
 
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/commentThreads', { params })
     
     return {
@@ -395,7 +389,8 @@ export const getVideoComments = async (
       nextPageToken: response.data.nextPageToken,
     }
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
@@ -404,7 +399,7 @@ export const getRelatedVideos = async (
   videoId: string,
   pageToken?: string
 ): Promise<SearchResponse> => {
-  if (USE_MOCK_DATA) {
+  if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 400))
     return mockRelatedVideos
   }
@@ -421,6 +416,7 @@ export const getRelatedVideos = async (
       params.pageToken = pageToken
     }
 
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
     return {
@@ -439,13 +435,15 @@ export const getRelatedVideos = async (
       totalResults: response.data.pageInfo.totalResults,
     }
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
 // Get video categories
 export const getVideoCategories = async () => {
   try {
+    const api = getApiInstance()
     const response: AxiosResponse = await api.get('/videoCategories', {
       params: {
         part: 'snippet',
@@ -457,8 +455,8 @@ export const getVideoCategories = async () => {
       title: item.snippet.title,
     }))
   } catch (error) {
-    throw error
+    handleApiError(error)
+    throw error // This will never be reached, but satisfies TypeScript
   }
 }
 
-export default api

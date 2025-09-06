@@ -1,8 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 import SearchBar from './SearchBar'
+import Settings from './Settings'
 
 const Sidebar = () => {
   const location = useLocation()
@@ -10,6 +12,7 @@ const Sidebar = () => {
   const dispatch = useAppDispatch()
   const { sidebarOpen } = useAppSelector((state) => state.ui)
   const { theme, toggleTheme } = useTheme()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navigationItems = [
     { label: 'Home', href: '/', icon: '🏠' },
@@ -134,10 +137,23 @@ const Sidebar = () => {
                 </span>
                 {theme === 'light' ? 'Dark mode' : 'Light mode'}
               </button>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="flex items-center w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              >
+                <span className="mr-3">⚙️</span>
+                Configuration
+              </button>
             </div>
           </div>
         )}
       </nav>
+
+      {/* Settings Modal */}
+      <Settings 
+        isOpen={settingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+      />
     </aside>
   )
 }
