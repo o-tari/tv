@@ -4,6 +4,7 @@ import authSlice from './slices/authSlice'
 import uiSlice from './slices/uiSlice'
 import historySlice from './slices/historySlice'
 import videosSlice from './slices/videosSlice'
+import subscriptionsSlice from './slices/subscriptionsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     ui: uiSlice,
     history: historySlice,
     videos: videosSlice,
+    subscriptions: subscriptionsSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

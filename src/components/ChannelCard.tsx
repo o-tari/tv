@@ -1,17 +1,45 @@
-import { Link } from 'react-router-dom'
+// import { Link } from 'react-router-dom' // Removed unused import
 import { type Channel } from '../types/youtube'
 import { formatSubscriberCount } from '../utils/formatNumber'
+import { useAppSelector, useAppDispatch } from '../store'
+import { selectIsSubscribed, toggleSubscription } from '../store/slices/subscriptionsSlice'
 
 interface ChannelCardProps {
   channel: Channel
   variant?: 'default' | 'compact'
+  showSubscribeButton?: boolean
+  onClick?: () => void
+  isSelected?: boolean
 }
 
-const ChannelCard = ({ channel, variant = 'default' }: ChannelCardProps) => {
+const ChannelCard = ({ 
+  channel, 
+  variant = 'default', 
+  showSubscribeButton = true, 
+  onClick,
+  isSelected = false 
+}: ChannelCardProps) => {
+  const dispatch = useAppDispatch()
+  const isSubscribed = useAppSelector(selectIsSubscribed(channel.id))
+
+  const handleSubscribe = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dispatch(toggleSubscription(channel))
+  }
+
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick()
+    }
+  }
   if (variant === 'compact') {
     return (
-      <Link to={`/channel/${channel.id}`} className="block group">
-        <div className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+      <div className="block group">
+        <div 
+          className={`flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer ${isSelected ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+          onClick={handleCardClick}
+        >
           <img
             src={channel.thumbnail}
             alt={channel.title}
@@ -25,14 +53,29 @@ const ChannelCard = ({ channel, variant = 'default' }: ChannelCardProps) => {
               {formatSubscriberCount(channel.subscriberCount)}
             </p>
           </div>
+          {showSubscribeButton && (
+            <button
+              onClick={handleSubscribe}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                isSubscribed
+                  ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+            >
+              {isSubscribed ? 'Subscribed' : 'Subscribe'}
+            </button>
+          )}
         </div>
-      </Link>
+      </div>
     )
   }
 
   return (
-    <Link to={`/channel/${channel.id}`} className="block group">
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="block group">
+      <div 
+        className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-red-500' : ''}`}
+        onClick={handleCardClick}
+      >
         <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500"></div>
         <div className="p-4">
           <div className="flex items-start space-x-3">
@@ -58,9 +101,23 @@ const ChannelCard = ({ channel, variant = 'default' }: ChannelCardProps) => {
               {channel.description}
             </p>
           )}
+          {showSubscribeButton && (
+            <div className="mt-4">
+              <button
+                onClick={handleSubscribe}
+                className={`w-full px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                  isSubscribed
+                    ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                    : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
+              >
+                {isSubscribed ? 'Subscribed' : 'Subscribe'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 

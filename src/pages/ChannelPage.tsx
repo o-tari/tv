@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useAppDispatch } from '../store'
-import { subscribeToChannel, unsubscribeFromChannel } from '../store/slices/historySlice'
+import { useAppDispatch, useAppSelector } from '../store'
+import { selectIsSubscribed, toggleSubscription } from '../store/slices/subscriptionsSlice'
 import { useChannel } from '../hooks/useChannel'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
@@ -16,19 +16,15 @@ const ChannelPage = () => {
     videos,
     videosLoading,
     videosError,
-    isSubscribed,
     loadMoreVideos,
   } = useChannel(channelId || '')
 
+  const isSubscribed = useAppSelector(selectIsSubscribed(channelId || ''))
   const [activeTab, setActiveTab] = useState<'videos' | 'playlists' | 'about'>('videos')
 
   const handleSubscribe = () => {
     if (channel) {
-      if (isSubscribed) {
-        dispatch(unsubscribeFromChannel(channel.id))
-      } else {
-        dispatch(subscribeToChannel(channel.id))
-      }
+      dispatch(toggleSubscription(channel))
     }
   }
 

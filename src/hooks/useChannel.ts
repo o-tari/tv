@@ -13,8 +13,6 @@ export const useChannel = (channelId: string) => {
     channelVideosError,
   } = useAppSelector((state) => state.videos)
 
-  const { subscriptions } = useAppSelector((state) => state.history)
-
   useEffect(() => {
     if (channelId) {
       dispatch(fetchChannelDetails(channelId))
@@ -28,8 +26,6 @@ export const useChannel = (channelId: string) => {
     }
   }
 
-  const isSubscribed = subscriptions.includes(channelId)
-
   return {
     channel: currentChannel,
     loading: channelLoading,
@@ -37,7 +33,6 @@ export const useChannel = (channelId: string) => {
     videos: channelVideos,
     videosLoading: channelVideosLoading,
     videosError: channelVideosError,
-    isSubscribed,
     loadMoreVideos,
   }
 }
