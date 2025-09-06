@@ -7,7 +7,7 @@ import Layout from './Layout'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 // Lazy load pages for code splitting
-const HomePage = lazy(() => import('../pages/HomePage'))
+const YouTubePage = lazy(() => import('../pages/YouTubePage'))
 const SearchPage = lazy(() => import('../pages/SearchPage'))
 const WatchPage = lazy(() => import('../pages/WatchPage'))
 const ChannelPage = lazy(() => import('../pages/ChannelPage'))
@@ -27,7 +27,8 @@ function App() {
           <Layout>
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<YouTubePage />} />
+                <Route path="/youtube" element={<YouTubePage />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/watch/:videoId" element={<WatchPage />} />
                 <Route path="/channel/:channelId" element={<ChannelPage />} />

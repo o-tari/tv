@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { fetchTopAiringAnime, fetchRecentEpisodes } from '../store/slices/animeSlice'
+import { fetchTopAiringAnime, fetchRecentEpisodes, searchAnime } from '../store/slices/animeSlice'
+import { selectAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import MediaGrid from '../components/MediaGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
+import SearchBar from '../components/SearchBar'
 import { type Anime, type AnimeEpisode, type AnimeMedia } from '../types/anime'
 
 const AnimePage = () => {
@@ -18,9 +20,17 @@ const AnimePage = () => {
     recentEpisodesError,
     recentEpisodesNextPage,
     recentEpisodesHasNextPage,
+    searchResults,
+    searchLoading,
+    searchError,
+    searchNextPage,
+    searchHasNextPage,
   } = useAppSelector((state) => state.anime)
+  
+  const animeContinueWatching = useAppSelector(selectAnimeContinueWatching)
 
-  const [activeTab, setActiveTab] = useState<'trending' | 'recent'>('trending')
+  const [activeTab, setActiveTab] = useState<'trending' | 'recent' | 'search'>('trending')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (topAiring.length === 0) {
@@ -40,10 +50,24 @@ const AnimePage = () => {
     }
   }
 
-  const handleTabChange = (tab: 'trending' | 'recent') => {
+  const loadMoreSearch = () => {
+    if (searchNextPage && !searchLoading && searchQuery) {
+      dispatch(searchAnime({ query: searchQuery, page: searchNextPage }))
+    }
+  }
+
+  const handleTabChange = (tab: 'trending' | 'recent' | 'search') => {
     setActiveTab(tab)
     if (tab === 'recent' && recentEpisodes.length === 0) {
       dispatch(fetchRecentEpisodes({ page: 1 }))
+    }
+  }
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setActiveTab('search')
+    if (query.trim()) {
+      dispatch(searchAnime({ query: query.trim(), page: 1 }))
     }
   }
 
@@ -104,6 +128,29 @@ const AnimePage = () => {
           Anime
         </h1>
 
+        {/* Search Section */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Search Anime
+          </h2>
+          <div className="max-w-2xl">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+        </div>
+
+        {/* Continue Watching Section */}
+        {animeContinueWatching.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              ▶️ Continue Watching Anime
+            </h2>
+            <MediaGrid
+              media={animeContinueWatching.slice(0, 8)}
+              loading={false}
+            />
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex space-x-1 mb-8">
           <button
@@ -126,6 +173,18 @@ const AnimePage = () => {
           >
             🆕 Recent Episodes
           </button>
+          {searchQuery && (
+            <button
+              onClick={() => handleTabChange('search')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'search'
+                  ? 'bg-red-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              🔍 Search Results
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -145,7 +204,7 @@ const AnimePage = () => {
               />
             </InfiniteScroll>
           </div>
-        ) : (
+        ) : activeTab === 'recent' ? (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Recent Episodes
@@ -171,6 +230,36 @@ const AnimePage = () => {
                 <MediaGrid
                   media={recentEpisodesMedia}
                   loading={recentEpisodesLoading && recentEpisodesMedia.length === 0}
+                />
+              </InfiniteScroll>
+            )}
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Search Results for "{searchQuery}"
+            </h2>
+            {searchError ? (
+              <div className="text-center py-8">
+                <p className="text-red-600 dark:text-red-400">
+                  Failed to search anime: {searchError}
+                </p>
+                <button
+                  onClick={() => dispatch(searchAnime({ query: searchQuery, page: 1 }))}
+                  className="mt-4 btn-primary"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <InfiniteScroll
+                onLoadMore={loadMoreSearch}
+                hasMore={searchHasNextPage}
+                loading={searchLoading}
+              >
+                <MediaGrid
+                  media={searchResults.map(convertAnimeToMedia)}
+                  loading={searchLoading && searchResults.length === 0}
                 />
               </InfiniteScroll>
             )}

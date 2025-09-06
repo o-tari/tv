@@ -13,7 +13,7 @@ import { selectConsumetApiUrl } from '../store/slices/settingsSlice'
 const getApiBaseUrl = () => {
   const state = store.getState()
   const baseUrl = selectConsumetApiUrl(state)
-  return `${baseUrl}/anime/gogoanime`
+  return `${baseUrl}/anime/animepahe`
 }
 
 // Search anime
@@ -21,35 +21,40 @@ export const searchAnime = async (
   query: string,
   page: number = 1
 ): Promise<AnimeSearchResponse> => {
-  const params = { q: query, page }
-  
-  return requestCache.get('/search', params, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/search`, { params })
-    return response.data
-  })
-}
-
-// Get top airing anime
-export const getTopAiringAnime = async (page: number = 1): Promise<AnimeSearchResponse> => {
   const params = { page }
   
-  return requestCache.get('/top-airing', params, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/top-airing`, { params })
+  return requestCache.get('/search', params, async () => {
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/${encodeURIComponent(query)}`, { params })
     return response.data
   })
 }
 
-// Get recent episodes
+// Get top airing anime (using search with popular terms)
+export const getTopAiringAnime = async (page: number = 1): Promise<AnimeSearchResponse> => {
+  // Animepahe doesn't have a dedicated top airing endpoint, so we'll use a popular search term
+  return searchAnime('anime', page)
+}
+
+// Get recent episodes (using search with recent terms)
 export const getRecentEpisodes = async (
   page: number = 1,
-  type: number = 1
+  _type: number = 1
 ): Promise<AnimeEpisodesResponse> => {
-  const params = { page, type }
-  
-  return requestCache.get('/recent-episodes', params, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/recent-episodes`, { params })
-    return response.data
-  })
+  // Animepahe doesn't have a dedicated recent episodes endpoint, so we'll use search
+  const searchResult = await searchAnime('new', page)
+  // Convert search results to episodes format
+  return {
+    currentPage: searchResult.currentPage,
+    hasNextPage: searchResult.hasNextPage,
+    results: searchResult.results.map(anime => ({
+      id: anime.id,
+      episodeId: anime.id,
+      episodeNumber: 1, // Default episode number
+      title: anime.title,
+      image: anime.image,
+      url: anime.url,
+    }))
+  }
 }
 
 // Get anime info
@@ -63,7 +68,7 @@ export const getAnimeInfo = async (animeId: string): Promise<AnimeInfo> => {
 // Get anime episode streaming links
 export const getAnimeEpisodeStreamingLinks = async (
   episodeId: string,
-  server: string = 'gogocdn'
+  server: string = 'animepahe'
 ): Promise<StreamingLink[]> => {
   return requestCache.get('/streaming-links', { episodeId, server }, async () => {
     const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${episodeId}`, {

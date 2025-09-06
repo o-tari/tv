@@ -15,18 +15,13 @@ const Sidebar = () => {
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navigationItems = [
-    { label: 'Home', href: '/', icon: '🏠' },
-    { label: 'Explore', href: '/explore', icon: '🔍' },
+    { label: 'YouTube', href: '/youtube', icon: '📺' },
     { label: 'Anime', href: '/anime', icon: '🎌' },
-    { label: 'Subscriptions', href: '/subscriptions', icon: '📺' },
-    { label: 'Continue Watching', href: '/continue-watching', icon: '▶️' },
-    { label: 'History', href: '/history', icon: '🕒' },
-    { label: 'Watch later', href: '/watch-later', icon: '⏰' },
   ]
 
   const isActive = (href: string) => {
-    if (href === '/') {
-      return location.pathname === '/'
+    if (href === '/youtube') {
+      return location.pathname === '/youtube' || location.pathname === '/'
     }
     return location.pathname.startsWith(href)
   }
