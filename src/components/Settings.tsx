@@ -105,7 +105,8 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
               </span>
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              When enabled, the app will use mock data instead of the YouTube API
+              When enabled, the app will use mock data instead of the YouTube API. 
+              {!localApiKey && !import.meta.env.VITE_YT_API_KEY && ' Enabled by default when no API key is configured.'}
             </p>
           </div>
 

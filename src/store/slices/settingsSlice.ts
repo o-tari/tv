@@ -23,9 +23,13 @@ const saveToStorage = (key: string, value: any) => {
   }
 }
 
+// Check if environment API key is set
+const hasEnvApiKey = import.meta.env.VITE_YT_API_KEY && 
+  import.meta.env.VITE_YT_API_KEY !== 'your_youtube_api_key_here'
+
 const initialState: SettingsState = {
   youtubeApiKey: loadFromStorage('youtubeApiKey', ''),
-  useMockData: loadFromStorage('useMockData', false),
+  useMockData: loadFromStorage('useMockData', !hasEnvApiKey), // Default to true if no env API key
 }
 
 const settingsSlice = createSlice({
