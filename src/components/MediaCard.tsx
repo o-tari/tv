@@ -89,11 +89,18 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
               className="w-full aspect-[3/4] object-cover rounded-lg"
               placeholder="🎌"
             />
-          {anime.totalEpisodes && (
-            <span className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
-              {anime.totalEpisodes} eps
-            </span>
-          )}
+          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+            {anime.totalEpisodes && (
+              <span className="bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
+                {anime.totalEpisodes} eps
+              </span>
+            )}
+            {anime.score && (
+              <span className="bg-yellow-600 bg-opacity-90 text-white text-xs px-1.5 py-0.5 rounded">
+                ⭐ {anime.score}
+              </span>
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -112,11 +119,23 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
                 ))}
               </div>
             )}
-            {anime.status && (
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                {anime.status}
-              </p>
-            )}
+            <div className="flex flex-col space-y-1">
+              {anime.status && (
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  {anime.status}
+                </p>
+              )}
+              {anime.year && (
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  {anime.year}
+                </p>
+              )}
+              {anime.rank && (
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  Rank #{anime.rank}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

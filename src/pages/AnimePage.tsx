@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { fetchTopAiringAnime, fetchRecentEpisodes, searchAnime, clearSearchResults } from '../store/slices/animeSlice'
+import { 
+  fetchTopAiringAnime, 
+  fetchRecentEpisodes, 
+  searchAnime, 
+  clearSearchResults,
+  fetchTopAnime
+} from '../store/slices/animeSlice'
 import { selectAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import MediaGrid from '../components/MediaGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
@@ -25,6 +31,15 @@ const AnimePage = () => {
     searchError,
     searchNextPage,
     searchHasNextPage,
+    // Jikan API data
+    topAnime,
+    topAnimeLoading,
+    topAnimeError,
+    topAnimeNextPage,
+    topAnimeHasNextPage,
+    recommendations,
+    recommendationsLoading,
+    recommendationsError,
   } = useAppSelector((state) => state.anime)
   
   const animeContinueWatching = useAppSelector(selectAnimeContinueWatching)
@@ -36,7 +51,10 @@ const AnimePage = () => {
     if (topAiring.length === 0) {
       dispatch(fetchTopAiringAnime(1))
     }
-  }, [dispatch, topAiring.length])
+    if (topAnime.length === 0) {
+      dispatch(fetchTopAnime({ page: 1, filter: 'bypopularity' }))
+    }
+  }, [dispatch, topAiring.length, topAnime.length])
 
   const loadMoreTopAiring = () => {
     if (topAiringNextPage && !topAiringLoading) {
@@ -55,6 +73,13 @@ const AnimePage = () => {
       dispatch(searchAnime({ query: searchQuery, page: searchNextPage }))
     }
   }
+
+  const loadMoreTopAnime = () => {
+    if (topAnimeNextPage && !topAnimeLoading) {
+      dispatch(fetchTopAnime({ page: topAnimeNextPage, filter: 'bypopularity' }))
+    }
+  }
+
 
   const handleTabChange = (tab: 'trending' | 'recent' | 'search') => {
     setActiveTab(tab)
@@ -101,6 +126,8 @@ const AnimePage = () => {
 
   const topAiringMedia = topAiring.map(convertAnimeToMedia)
   const recentEpisodesMedia = recentEpisodes.map(convertEpisodeToMedia)
+  const topAnimeMedia = topAnime.map(convertAnimeToMedia)
+  const recommendationsMedia = recommendations.map(convertAnimeToMedia)
 
   if (topAiringError) {
     return (
@@ -153,6 +180,58 @@ const AnimePage = () => {
               media={animeContinueWatching.slice(0, 8)}
               loading={false}
             />
+          </div>
+        )}
+
+        {/* Top Anime Section (Jikan API) */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            🏆 Top Anime
+          </h2>
+          {topAnimeError ? (
+            <div className="text-center py-8">
+              <p className="text-red-600 dark:text-red-400">
+                Failed to load top anime: {topAnimeError}
+              </p>
+              <button
+                onClick={() => dispatch(fetchTopAnime({ page: 1, filter: 'bypopularity' }))}
+                className="mt-4 btn-primary"
+              >
+                Try again
+              </button>
+            </div>
+          ) : (
+            <InfiniteScroll
+              onLoadMore={loadMoreTopAnime}
+              hasMore={topAnimeHasNextPage}
+              loading={topAnimeLoading}
+            >
+              <MediaGrid
+                media={topAnimeMedia}
+                loading={topAnimeLoading && topAnimeMedia.length === 0}
+              />
+            </InfiniteScroll>
+          )}
+        </div>
+
+        {/* Recommendations Section (Jikan API) */}
+        {recommendations.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              💡 Recommendations
+            </h2>
+            {recommendationsError ? (
+              <div className="text-center py-8">
+                <p className="text-red-600 dark:text-red-400">
+                  Failed to load recommendations: {recommendationsError}
+                </p>
+              </div>
+            ) : (
+              <MediaGrid
+                media={recommendationsMedia.slice(0, 12)}
+                loading={recommendationsLoading}
+              />
+            )}
           </div>
         )}
 

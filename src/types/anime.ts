@@ -1,4 +1,4 @@
-// Anime types based on Consumet API
+// Anime types based on Consumet API and Jikan API
 export interface Anime {
   id: string
   title: string
@@ -12,6 +12,19 @@ export interface Anime {
   subOrDub?: string
   type?: string
   releaseDate?: string
+  // Jikan-specific fields
+  score?: number | null
+  scoredBy?: number | null
+  rank?: number | null
+  popularity?: number | null
+  members?: number | null
+  favorites?: number | null
+  year?: number | null
+  season?: string | null
+  duration?: string
+  rating?: string
+  studios?: string[]
+  producers?: string[]
 }
 
 export interface AnimeEpisode {

@@ -20,7 +20,7 @@ const getApiBaseUrl = () => {
   if (!baseUrl || baseUrl.trim() === '') {
     return null
   }
-  return `${baseUrl}/anime/animepahe`
+  return `${baseUrl}/anime/zoro`
 }
 
 // Check if we should use mock data for anime services
@@ -74,7 +74,7 @@ export const searchAnime = async (
     
     const url = `${baseUrl}/${encodeURIComponent(query)}`
     console.log('Making API request to:', url, 'with params:', params)
-    const response: AxiosResponse<{currentPage: number, hasNextPage: boolean, results: AnimeApiResponse[]}> = await axios.get(url, { params })
+    const response: AxiosResponse<{totalPages: number, currentPage: number, hasNextPage: boolean, results: AnimeApiResponse[]}> = await axios.get(url, { params })
     console.log('API response received:', response.data)
     // Map API response to internal format
     const mappedResults = response.data.results.map(mapApiResponseToAnime)
@@ -102,7 +102,7 @@ export const getTopAiringAnime = async (page: number = 1): Promise<AnimeSearchRe
     throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
   }
   
-  // Animepahe doesn't have a dedicated top airing endpoint, so we'll use a popular search term
+  // Zoro doesn't have a dedicated top airing endpoint, so we'll use a popular search term
   return await searchAnime('anime', page)
 }
 
@@ -124,7 +124,7 @@ export const getRecentEpisodes = async (
     throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
   }
   
-  // Animepahe doesn't have a dedicated recent episodes endpoint, so we'll use search
+  // Zoro doesn't have a dedicated recent episodes endpoint, so we'll use search
   const searchResult = await searchAnime('new', page)
   // Convert search results to episodes format
   return {
@@ -151,7 +151,7 @@ export const getAnimeInfo = async (animeId: string): Promise<AnimeInfo> => {
       throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
     }
     
-    const response: AxiosResponse = await axios.get(`${baseUrl}/info/${animeId}`)
+    const response: AxiosResponse = await axios.get(`${baseUrl}/info`, { params: { id: animeId } })
     return response.data
   })
 }
@@ -169,23 +169,23 @@ export const getAnimeEpisodeStreamingLinks = async (
     }
     
     // URL encode the episode ID to handle special characters and slashes
-    const encodedEpisodeId = encodeURIComponent(episodeId)
-    const response: AxiosResponse = await axios.get(`${baseUrl}/watch/${encodedEpisodeId}`)
+    const response: AxiosResponse = await axios.get(`${baseUrl}/watch`, { 
+      params: { 
+        episodeId: episodeId,
+        server: 'vidcloud'
+      } 
+    })
     return response.data
   })
 }
 
-// Get available servers for anime episode
+// Get available servers for anime episode (Zoro supports multiple servers)
 export const getAnimeEpisodeServers = async (episodeId: string): Promise<AnimeServer[]> => {
-  return requestCache.get('/servers', { episodeId }, async () => {
-    const baseUrl = getApiBaseUrl()
-    
-    // If no API URL is configured, throw error
-    if (!baseUrl) {
-      throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
-    }
-    
-    const response: AxiosResponse = await axios.get(`${baseUrl}/servers/${episodeId}`)
-    return response.data || []
-  })
+  // Zoro supports multiple servers, return the available options
+  return [
+    { name: 'vidcloud', url: 'vidcloud' },
+    { name: 'streamsb', url: 'streamsb' },
+    { name: 'vidstreaming', url: 'vidstreaming' },
+    { name: 'streamtape', url: 'streamtape' }
+  ]
 }

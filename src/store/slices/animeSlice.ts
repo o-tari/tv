@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { type Anime, type AnimeInfo, type AnimeEpisode } from '../../types/anime'
 import * as consumetService from '../../services/consumet'
+import * as jikanService from '../../services/jikan'
 import { requestCache } from '../../utils/requestCache'
 
 interface AnimeState {
@@ -34,6 +35,23 @@ interface AnimeState {
   currentEpisode: AnimeEpisode | null
   currentEpisodeLoading: boolean
   currentEpisodeError: string | null
+
+  // Jikan API data
+  topAnime: Anime[]
+  topAnimeLoading: boolean
+  topAnimeError: string | null
+  topAnimeNextPage: number | null
+  topAnimeHasNextPage: boolean
+
+  recommendations: Anime[]
+  recommendationsLoading: boolean
+  recommendationsError: string | null
+
+  videoEpisodes: AnimeEpisode[]
+  videoEpisodesLoading: boolean
+  videoEpisodesError: string | null
+  videoEpisodesNextPage: number | null
+  videoEpisodesHasNextPage: boolean
 }
 
 const initialState: AnimeState = {
@@ -62,14 +80,35 @@ const initialState: AnimeState = {
   currentEpisode: null,
   currentEpisodeLoading: false,
   currentEpisodeError: null,
+
+  // Jikan API data
+  topAnime: [],
+  topAnimeLoading: false,
+  topAnimeError: null,
+  topAnimeNextPage: null,
+  topAnimeHasNextPage: false,
+
+  recommendations: [],
+  recommendationsLoading: false,
+  recommendationsError: null,
+
+  videoEpisodes: [],
+  videoEpisodesLoading: false,
+  videoEpisodesError: null,
+  videoEpisodesNextPage: null,
+  videoEpisodesHasNextPage: false,
 }
 
 // Async thunks
 export const fetchTopAiringAnime = createAsyncThunk(
   'anime/fetchTopAiringAnime',
   async (page: number = 1) => {
-    const response = await consumetService.getTopAiringAnime(page)
-    return response
+    const response = await jikanService.getTopAnime(page, 25, 'tv', 'airing')
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map(jikanService.convertJikanAnimeToAnime)
+    }
   }
 )
 
@@ -94,6 +133,58 @@ export const fetchAnimeInfo = createAsyncThunk(
   async (animeId: string) => {
     const response = await consumetService.getAnimeInfo(animeId)
     return response
+  }
+)
+
+// Jikan API thunks
+export const fetchTopAnime = createAsyncThunk(
+  'anime/fetchTopAnime',
+  async ({ page = 1, filter = 'bypopularity' }: { page?: number; filter?: string } = {}) => {
+    const response = await jikanService.getTopAnime(page, 25, 'tv', filter)
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map(jikanService.convertJikanAnimeToAnime)
+    }
+  }
+)
+
+export const searchAnimeJikan = createAsyncThunk(
+  'anime/searchAnimeJikan',
+  async ({ query, page = 1 }: { query: string; page?: number }) => {
+    const response = await jikanService.searchAnime(query, page, 25)
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map(jikanService.convertJikanAnimeToAnime)
+    }
+  }
+)
+
+export const fetchAnimeRecommendations = createAsyncThunk(
+  'anime/fetchAnimeRecommendations',
+  async (animeId: number) => {
+    const response = await jikanService.getAnimeRecommendations(animeId)
+    return response.map(rec => jikanService.convertJikanAnimeToAnime(rec.entry))
+  }
+)
+
+export const fetchAnimeVideoEpisodes = createAsyncThunk(
+  'anime/fetchAnimeVideoEpisodes',
+  async ({ animeId, page = 1 }: { animeId: number; page?: number }) => {
+    const response = await jikanService.getAnimeVideoEpisodes(animeId, page)
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map(episode => ({
+        id: episode.mal_id.toString(),
+        episodeId: episode.mal_id.toString(),
+        episodeNumber: parseInt(episode.episode) || 0,
+        title: episode.title,
+        image: episode.images.jpg.image_url,
+        url: episode.url
+      }))
+    }
   }
 )
 
@@ -145,6 +236,23 @@ const animeSlice = createSlice({
       state.currentEpisode = null
       state.currentEpisodeLoading = false
       state.currentEpisodeError = null
+
+      // Clear Jikan data
+      state.topAnime = []
+      state.topAnimeLoading = false
+      state.topAnimeError = null
+      state.topAnimeNextPage = null
+      state.topAnimeHasNextPage = false
+
+      state.recommendations = []
+      state.recommendationsLoading = false
+      state.recommendationsError = null
+
+      state.videoEpisodes = []
+      state.videoEpisodesLoading = false
+      state.videoEpisodesError = null
+      state.videoEpisodesNextPage = null
+      state.videoEpisodesHasNextPage = false
 
       // Clear request cache to prevent using cached API responses
       requestCache.clear()
@@ -233,6 +341,90 @@ const animeSlice = createSlice({
       .addCase(fetchAnimeInfo.rejected, (state, action) => {
         state.currentAnimeLoading = false
         state.currentAnimeError = action.error.message || 'Failed to fetch anime info'
+      })
+
+    // Top anime (Jikan)
+    builder
+      .addCase(fetchTopAnime.pending, (state) => {
+        state.topAnimeLoading = true
+        state.topAnimeError = null
+      })
+      .addCase(fetchTopAnime.fulfilled, (state, action) => {
+        state.topAnimeLoading = false
+        if (action.meta.arg?.page && action.meta.arg.page > 1) {
+          // Load more
+          state.topAnime = [...state.topAnime, ...action.payload.results]
+        } else {
+          // Initial load
+          state.topAnime = action.payload.results
+        }
+        state.topAnimeNextPage = action.payload.currentPage + 1
+        state.topAnimeHasNextPage = action.payload.hasNextPage
+      })
+      .addCase(fetchTopAnime.rejected, (state, action) => {
+        state.topAnimeLoading = false
+        state.topAnimeError = action.error.message || 'Failed to fetch top anime'
+      })
+
+    // Search anime (Jikan)
+    builder
+      .addCase(searchAnimeJikan.pending, (state) => {
+        state.searchLoading = true
+        state.searchError = null
+      })
+      .addCase(searchAnimeJikan.fulfilled, (state, action) => {
+        state.searchLoading = false
+        if (action.meta.arg?.page && action.meta.arg.page > 1) {
+          // Load more
+          state.searchResults = [...state.searchResults, ...action.payload.results]
+        } else {
+          // Initial load
+          state.searchResults = action.payload.results
+        }
+        state.searchNextPage = action.payload.currentPage + 1
+        state.searchHasNextPage = action.payload.hasNextPage
+      })
+      .addCase(searchAnimeJikan.rejected, (state, action) => {
+        state.searchLoading = false
+        state.searchError = action.error.message || 'Failed to search anime'
+      })
+
+    // Anime recommendations (Jikan)
+    builder
+      .addCase(fetchAnimeRecommendations.pending, (state) => {
+        state.recommendationsLoading = true
+        state.recommendationsError = null
+      })
+      .addCase(fetchAnimeRecommendations.fulfilled, (state, action) => {
+        state.recommendationsLoading = false
+        state.recommendations = action.payload
+      })
+      .addCase(fetchAnimeRecommendations.rejected, (state, action) => {
+        state.recommendationsLoading = false
+        state.recommendationsError = action.error.message || 'Failed to fetch recommendations'
+      })
+
+    // Video episodes (Jikan)
+    builder
+      .addCase(fetchAnimeVideoEpisodes.pending, (state) => {
+        state.videoEpisodesLoading = true
+        state.videoEpisodesError = null
+      })
+      .addCase(fetchAnimeVideoEpisodes.fulfilled, (state, action) => {
+        state.videoEpisodesLoading = false
+        if (action.meta.arg?.page && action.meta.arg.page > 1) {
+          // Load more
+          state.videoEpisodes = [...state.videoEpisodes, ...action.payload.results]
+        } else {
+          // Initial load
+          state.videoEpisodes = action.payload.results
+        }
+        state.videoEpisodesNextPage = action.payload.currentPage + 1
+        state.videoEpisodesHasNextPage = action.payload.hasNextPage
+      })
+      .addCase(fetchAnimeVideoEpisodes.rejected, (state, action) => {
+        state.videoEpisodesLoading = false
+        state.videoEpisodesError = action.error.message || 'Failed to fetch video episodes'
       })
   },
 })

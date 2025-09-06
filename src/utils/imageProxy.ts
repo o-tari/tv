@@ -4,8 +4,8 @@ export const getImageUrl = (originalUrl: string, title: string, type: 'anime' | 
     return getFallbackImage(title, type, size)
   }
 
-  // Check if the URL is from animepahe.ru (has CORS issues)
-  if (originalUrl.includes('animepahe.ru')) {
+  // Check if the URL needs CORS proxy (for external anime images)
+  if (originalUrl.includes('zoro.to') || originalUrl.includes('hianime.to')) {
     // Use images.weserv.nl as a proxy (supports CORS and image resizing)
     const dimensions = getDimensions(size, type)
     return `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}&w=${dimensions.width}&h=${dimensions.height}&fit=cover&output=webp`
