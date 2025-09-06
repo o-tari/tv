@@ -178,7 +178,7 @@ const AnimePage = () => {
           >
             🆕 Recent Episodes
           </button>
-          {(searchQuery || searchResults.length > 0) && (
+          {searchQuery && (
             <button
               onClick={() => handleTabChange('search')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectYoutubeApiKey, selectUseMockData, selectConsumetApiUrl, setYoutubeApiKey, setUseMockData, setConsumetApiUrl, resetSettings } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectConsumetApiUrl, selectRegionCode, selectLanguage, setYoutubeApiKey, setUseMockData, setConsumetApiUrl, setRegionCode, setLanguage, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
+import { useTheme } from '../app/providers/ThemeProvider'
 
 interface SettingsProps {
   isOpen: boolean
@@ -10,19 +11,26 @@ interface SettingsProps {
 
 const Settings = ({ isOpen, onClose }: SettingsProps) => {
   const dispatch = useAppDispatch()
+  const { theme, toggleTheme } = useTheme()
   const youtubeApiKey = useAppSelector(selectYoutubeApiKey)
   const useMockData = useAppSelector(selectUseMockData)
   const consumetApiUrl = useAppSelector(selectConsumetApiUrl)
+  const regionCode = useAppSelector(selectRegionCode)
+  const language = useAppSelector(selectLanguage)
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
   const [localConsumetApiUrl, setLocalConsumetApiUrl] = useState(consumetApiUrl)
+  const [localRegionCode, setLocalRegionCode] = useState(regionCode)
+  const [localLanguage, setLocalLanguage] = useState(language)
   const [showApiKey, setShowApiKey] = useState(false)
 
   const handleSave = () => {
     dispatch(setYoutubeApiKey(localApiKey))
     dispatch(setUseMockData(localUseMockData))
     dispatch(setConsumetApiUrl(localConsumetApiUrl))
+    dispatch(setRegionCode(localRegionCode))
+    dispatch(setLanguage(localLanguage))
     // Clear all cached data so it will be refetched with new settings
     dispatch(clearAllData())
     onClose()
@@ -32,8 +40,10 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
     if (window.confirm('Are you sure you want to reset all settings?')) {
       dispatch(resetSettings())
       setLocalApiKey('')
-      setLocalUseMockData(false)
-      setLocalConsumetApiUrl(import.meta.env.VITE_CONSUMET_API_URL || 'https://api.consumet.org')
+      setLocalUseMockData(true)
+      setLocalConsumetApiUrl('')
+      setLocalRegionCode('US')
+      setLocalLanguage('en')
     }
   }
 
@@ -41,6 +51,8 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
     setLocalApiKey(youtubeApiKey)
     setLocalUseMockData(useMockData)
     setLocalConsumetApiUrl(consumetApiUrl)
+    setLocalRegionCode(regionCode)
+    setLocalLanguage(language)
     onClose()
   }
 
@@ -64,6 +76,37 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
         </div>
 
         <div className="space-y-6">
+          {/* Theme Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Theme
+            </label>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => theme !== 'light' && toggleTheme()}
+                className={`flex items-center px-4 py-2 rounded-md border transition-colors ${
+                  theme === 'light'
+                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <span className="mr-2">☀️</span>
+                Light mode
+              </button>
+              <button
+                onClick={() => theme !== 'dark' && toggleTheme()}
+                className={`flex items-center px-4 py-2 rounded-md border transition-colors ${
+                  theme === 'dark'
+                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <span className="mr-2">🌙</span>
+                Dark mode
+              </button>
+            </div>
+          </div>
+
           {/* YouTube API Key */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -99,8 +142,61 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
             </p>
           </div>
 
-          {/* Use Mock Data */}
+          {/* Consumet API URL */}
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Consumet API URL
+            </label>
+            <input
+              type="url"
+              value={localConsumetApiUrl}
+              onChange={(e) => setLocalConsumetApiUrl(e.target.value)}
+              placeholder="https://api.consumet.org (optional)"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Base URL for the Consumet API (used for anime data). Leave empty to use default.
+            </p>
+          </div>
+
+          {/* Region Code */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Region Code
+            </label>
+            <input
+              type="text"
+              value={localRegionCode}
+              onChange={(e) => setLocalRegionCode(e.target.value.toUpperCase())}
+              placeholder="US"
+              maxLength={2}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Two-letter country code for YouTube API region (e.g., US, GB, JP)
+            </p>
+          </div>
+
+          {/* Language */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Language
+            </label>
+            <input
+              type="text"
+              value={localLanguage}
+              onChange={(e) => setLocalLanguage(e.target.value.toLowerCase())}
+              placeholder="en"
+              maxLength={2}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Two-letter language code for YouTube API language (e.g., en, es, fr)
+            </p>
+          </div>
+
+          {/* Use Mock Data */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -113,25 +209,8 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
               </span>
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              When enabled, the app will use mock data instead of the YouTube API. 
-              {!localApiKey && !import.meta.env.VITE_YT_API_KEY && ' Enabled by default when no API key is configured.'}
-            </p>
-          </div>
-
-          {/* Consumet API URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Consumet API URL
-            </label>
-            <input
-              type="url"
-              value={localConsumetApiUrl}
-              onChange={(e) => setLocalConsumetApiUrl(e.target.value)}
-              placeholder="https://api.consumet.org"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Base URL for the Consumet API (used for anime data)
+              When enabled, the app will always use mock data instead of making real API requests. 
+              When disabled, the app will make real API requests like in production.
             </p>
           </div>
 

@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
-import { useTheme } from '../app/providers/ThemeProvider'
 import SearchBar from './SearchBar'
 import Settings from './Settings'
 
@@ -11,12 +10,12 @@ const Sidebar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { sidebarOpen } = useAppSelector((state) => state.ui)
-  const { theme, toggleTheme } = useTheme()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navigationItems = [
     { label: 'YouTube', href: '/youtube', icon: '📺' },
     { label: 'Anime', href: '/anime', icon: '🎌' },
+    { label: 'Torrent Search', href: '/torrents', icon: '🔍' },
   ]
 
   const isActive = (href: string) => {
@@ -37,7 +36,7 @@ const Sidebar = () => {
         sidebarOpen ? 'w-64' : 'w-16'
       }`}
     >
-      <nav className="h-full overflow-y-auto scrollbar-hide">
+      <nav className="h-full flex flex-col">
         {/* Logo Section */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -65,85 +64,73 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        {sidebarOpen && (
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <SearchBar onSearch={handleSearch} />
-          </div>
-        )}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          {/* Search Bar */}
+          {sidebarOpen && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <SearchBar onSearch={handleSearch} />
+            </div>
+          )}
 
-        <div className="py-4">
-          {navigationItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.href}
-              className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
-                isActive(item.href)
-                  ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              <span className={`${sidebarOpen ? 'mr-4' : 'mx-auto'} text-lg`}>
-                {item.icon}
-              </span>
-              {sidebarOpen && (
-                <span className="truncate">{item.label}</span>
-              )}
-            </Link>
-          ))}
+          <div className="py-4">
+            {navigationItems.map((item, index) => (
+              <Link
+                key={index}
+                to={item.href}
+                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                  isActive(item.href)
+                    ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <span className={`${sidebarOpen ? 'mr-4' : 'mx-auto'} text-lg`}>
+                  {item.icon}
+                </span>
+                {sidebarOpen && (
+                  <span className="truncate">{item.label}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {sidebarOpen && (
+            <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                Library
+              </h3>
+              <div className="space-y-1">
+                <Link
+                  to="/library/liked"
+                  className="flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                >
+                  <span className="mr-3">👍</span>
+                  Liked videos
+                </Link>
+                <Link
+                  to="/library/playlists"
+                  className="flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                >
+                  <span className="mr-3">📋</span>
+                  Playlists
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
-        {sidebarOpen && (
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Library
-            </h3>
-            <div className="space-y-1">
-              <Link
-                to="/library/liked"
-                className="flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              >
-                <span className="mr-3">👍</span>
-                Liked videos
-              </Link>
-              <Link
-                to="/library/playlists"
-                className="flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              >
-                <span className="mr-3">📋</span>
-                Playlists
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Settings Section */}
-        {sidebarOpen && (
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Settings
-            </h3>
-            <div className="space-y-1">
-              <button
-                onClick={toggleTheme}
-                className="flex items-center w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              >
-                <span className="mr-3">
-                  {theme === 'light' ? '🌙' : '☀️'}
-                </span>
-                {theme === 'light' ? 'Dark mode' : 'Light mode'}
-              </button>
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="flex items-center w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              >
-                <span className="mr-3">⚙️</span>
-                Configuration
-              </button>
-            </div>
-          </div>
-        )}
       </nav>
+
+      {/* Settings Button - Bottom of Sidebar */}
+      <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+        >
+          <span className="mr-3">⚙️</span>
+          Settings
+        </button>
+      </div>
 
       {/* Settings Modal */}
       <Settings 

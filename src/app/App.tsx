@@ -17,6 +17,7 @@ const HistoryPage = lazy(() => import('../pages/HistoryPage'))
 const WatchLaterPage = lazy(() => import('../pages/WatchLaterPage'))
 const ContinueWatchingPage = lazy(() => import('../pages/ContinueWatchingPage'))
 const AnimePage = lazy(() => import('../pages/AnimePage'))
+const TorrentSearchPage = lazy(() => import('../pages/TorrentSearchPage'))
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/anime" element={<AnimePage />} />
                 <Route path="/anime/:animeId" element={<WatchPage />} />
+                <Route path="/torrents" element={<TorrentSearchPage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/watch-later" element={<WatchLaterPage />} />

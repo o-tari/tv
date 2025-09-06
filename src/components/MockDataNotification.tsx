@@ -11,16 +11,8 @@ const MockDataNotification = ({ onOpenSettings }: MockDataNotificationProps) => 
   const useMockData = useAppSelector(selectUseMockData)
 
   useEffect(() => {
-    // Check if we should show the notification based on current settings
-    const state = store.getState()
-    const uiApiKey = selectYoutubeApiKey(state)
-    const envApiKey = import.meta.env.VITE_YT_API_KEY
-    
-    // Show notification if using mock data (either from settings or no API key available)
-    const hasApiKey = uiApiKey || (envApiKey && envApiKey !== 'your_youtube_api_key_here')
-    const shouldShowNotification = useMockData || !hasApiKey
-    
-    setShow(shouldShowNotification)
+    // Show notification only when mock data is explicitly enabled
+    setShow(useMockData)
   }, [useMockData])
 
   if (!show) return null
@@ -35,8 +27,7 @@ const MockDataNotification = ({ onOpenSettings }: MockDataNotificationProps) => 
         </div>
         <div className="ml-3 flex-1">
           <p className="text-sm text-yellow-700 dark:text-yellow-300">
-            <strong>Demo Mode:</strong> This app is using mock data. To use real TV data, 
-            add your YouTube API key to the <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">.env</code> file.
+            <strong>Demo Mode:</strong> This is a demonstration using mock data. In a production app, you would integrate with actual torrent search APIs or implement web scraping for real torrent sites.
           </p>
           {onOpenSettings && (
             <div className="mt-2">

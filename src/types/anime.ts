@@ -45,6 +45,15 @@ export interface AnimeServer {
   url: string
 }
 
+// API response interface that matches Consumet API schema
+export interface AnimeApiResponse {
+  id: string
+  title: string
+  image: string
+  releaseDate: string | null
+  subOrDub: 'sub' | 'dub'
+}
+
 export interface AnimeSearchResponse {
   currentPage: number
   hasNextPage: boolean

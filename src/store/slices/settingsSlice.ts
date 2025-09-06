@@ -5,6 +5,8 @@ interface SettingsState {
   youtubeApiKey: string
   useMockData: boolean
   consumetApiUrl: string
+  regionCode: string
+  language: string
 }
 
 const loadFromStorage = (key: string, defaultValue: any) => {
@@ -24,14 +26,12 @@ const saveToStorage = (key: string, value: any) => {
   }
 }
 
-// Check if environment API key is set
-const hasEnvApiKey = import.meta.env.VITE_YT_API_KEY && 
-  import.meta.env.VITE_YT_API_KEY !== 'your_youtube_api_key_here'
-
 const initialState: SettingsState = {
   youtubeApiKey: loadFromStorage('youtubeApiKey', ''),
-  useMockData: loadFromStorage('useMockData', !hasEnvApiKey), // Default to true if no env API key
-  consumetApiUrl: loadFromStorage('consumetApiUrl', import.meta.env.VITE_CONSUMET_API_URL || 'https://api.consumet.org'),
+  useMockData: loadFromStorage('useMockData', false), // Default to false - user must explicitly enable mock data
+  consumetApiUrl: loadFromStorage('consumetApiUrl', ''),
+  regionCode: loadFromStorage('regionCode', 'US'),
+  language: loadFromStorage('language', 'en'),
 }
 
 const settingsSlice = createSlice({
@@ -50,13 +50,25 @@ const settingsSlice = createSlice({
       state.consumetApiUrl = action.payload
       saveToStorage('consumetApiUrl', action.payload)
     },
+    setRegionCode: (state, action: PayloadAction<string>) => {
+      state.regionCode = action.payload
+      saveToStorage('regionCode', action.payload)
+    },
+    setLanguage: (state, action: PayloadAction<string>) => {
+      state.language = action.payload
+      saveToStorage('language', action.payload)
+    },
     resetSettings: (state) => {
       state.youtubeApiKey = ''
       state.useMockData = false
-      state.consumetApiUrl = import.meta.env.VITE_CONSUMET_API_URL || 'https://api.consumet.org'
+      state.consumetApiUrl = ''
+      state.regionCode = 'US'
+      state.language = 'en'
       saveToStorage('youtubeApiKey', '')
       saveToStorage('useMockData', false)
-      saveToStorage('consumetApiUrl', state.consumetApiUrl)
+      saveToStorage('consumetApiUrl', '')
+      saveToStorage('regionCode', 'US')
+      saveToStorage('language', 'en')
     },
   },
 })
@@ -65,6 +77,8 @@ export const {
   setYoutubeApiKey,
   setUseMockData,
   setConsumetApiUrl,
+  setRegionCode,
+  setLanguage,
   resetSettings,
 } = settingsSlice.actions
 
@@ -72,5 +86,7 @@ export const {
 export const selectYoutubeApiKey = (state: { settings: SettingsState }) => state.settings.youtubeApiKey
 export const selectUseMockData = (state: { settings: SettingsState }) => state.settings.useMockData
 export const selectConsumetApiUrl = (state: { settings: SettingsState }) => state.settings.consumetApiUrl
+export const selectRegionCode = (state: { settings: SettingsState }) => state.settings.regionCode
+export const selectLanguage = (state: { settings: SettingsState }) => state.settings.language
 
 export default settingsSlice.reducer

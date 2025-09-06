@@ -4,18 +4,46 @@ import {
   type AnimeSearchResponse, 
   type AnimeEpisodesResponse,
   type StreamingLink,
-  type AnimeServer
+  type AnimeServer,
+  type AnimeApiResponse,
+  type Anime
 } from '../types/anime'
 import { requestCache } from '../utils/requestCache'
 import { store } from '../store'
-import { selectConsumetApiUrl } from '../store/slices/settingsSlice'
+import { selectConsumetApiUrl, selectUseMockData } from '../store/slices/settingsSlice'
 import { mockAnimeSearchResponse, mockAnimeEpisodesResponse } from './animeMockData'
 
 const getApiBaseUrl = () => {
   const state = store.getState()
   const baseUrl = selectConsumetApiUrl(state)
+  // Only return URL if one is configured
+  if (!baseUrl || baseUrl.trim() === '') {
+    return null
+  }
   return `${baseUrl}/anime/animepahe`
 }
+
+// Check if we should use mock data for anime services
+const shouldUseMockData = () => {
+  const state = store.getState()
+  return selectUseMockData(state)
+}
+
+// Map API response to internal Anime format
+const mapApiResponseToAnime = (apiResponse: AnimeApiResponse): Anime => ({
+  id: apiResponse.id,
+  title: apiResponse.title,
+  image: apiResponse.image,
+  url: `/anime/${apiResponse.id}`, // Generate URL based on ID
+  releaseDate: apiResponse.releaseDate || undefined,
+  subOrDub: apiResponse.subOrDub,
+  // Set default values for fields not provided by API
+  genres: [],
+  description: '',
+  status: 'Unknown',
+  totalEpisodes: 0,
+  type: 'TV'
+})
 
 // Search anime
 export const searchAnime = async (
@@ -25,15 +53,45 @@ export const searchAnime = async (
   const params = { page }
   
   return requestCache.get('/search', params, async () => {
+    // If mock data is enabled, always use mock data
+    if (shouldUseMockData()) {
+      console.log('Mock data enabled, using mock data for anime search')
+      const filteredResults = mockAnimeSearchResponse.results.filter(anime => 
+        anime.title.toLowerCase().includes(query.toLowerCase())
+      )
+      return {
+        ...mockAnimeSearchResponse,
+        results: filteredResults
+      }
+    }
+    
+    const baseUrl = getApiBaseUrl()
+    
+    // If no API URL is configured and mock data is disabled, throw error
+    if (!baseUrl) {
+      throw new Error('Consumet API URL is required. Please configure your API URL in settings or enable mock data mode.')
+    }
+    
     try {
-      const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/${encodeURIComponent(query)}`, { params })
-      return response.data
+      const url = `${baseUrl}/${encodeURIComponent(query)}`
+      console.log('Making API request to:', url, 'with params:', params)
+      const response: AxiosResponse<{currentPage: number, hasNextPage: boolean, results: AnimeApiResponse[]}> = await axios.get(url, { params })
+      console.log('API response received:', response.data)
+      // Map API response to internal format
+      const mappedResults = response.data.results.map(mapApiResponseToAnime)
+      console.log('Mapped results:', mappedResults)
+      return {
+        currentPage: response.data.currentPage,
+        hasNextPage: response.data.hasNextPage,
+        results: mappedResults
+      }
     } catch (error) {
       console.warn('Animepahe API not available, using mock data:', error)
       // Return filtered mock data based on query
       const filteredResults = mockAnimeSearchResponse.results.filter(anime => 
         anime.title.toLowerCase().includes(query.toLowerCase())
       )
+      console.log('Using mock data with filtered results:', filteredResults)
       return {
         ...mockAnimeSearchResponse,
         results: filteredResults
@@ -44,6 +102,19 @@ export const searchAnime = async (
 
 // Get top airing anime (using search with popular terms)
 export const getTopAiringAnime = async (page: number = 1): Promise<AnimeSearchResponse> => {
+  // If mock data is enabled, always use mock data
+  if (shouldUseMockData()) {
+    console.log('Mock data enabled, using mock data for top airing anime')
+    return mockAnimeSearchResponse
+  }
+  
+  const baseUrl = getApiBaseUrl()
+  
+  // If no API URL is configured and mock data is disabled, throw error
+  if (!baseUrl) {
+    throw new Error('Consumet API URL is required. Please configure your API URL in settings or enable mock data mode.')
+  }
+  
   // Animepahe doesn't have a dedicated top airing endpoint, so we'll use a popular search term
   try {
     return await searchAnime('anime', page)
@@ -58,6 +129,19 @@ export const getRecentEpisodes = async (
   page: number = 1,
   _type: number = 1
 ): Promise<AnimeEpisodesResponse> => {
+  // If mock data is enabled, always use mock data
+  if (shouldUseMockData()) {
+    console.log('Mock data enabled, using mock data for recent episodes')
+    return mockAnimeEpisodesResponse
+  }
+  
+  const baseUrl = getApiBaseUrl()
+  
+  // If no API URL is configured and mock data is disabled, throw error
+  if (!baseUrl) {
+    throw new Error('Consumet API URL is required. Please configure your API URL in settings or enable mock data mode.')
+  }
+  
   try {
     // Animepahe doesn't have a dedicated recent episodes endpoint, so we'll use search
     const searchResult = await searchAnime('new', page)
@@ -83,7 +167,14 @@ export const getRecentEpisodes = async (
 // Get anime info
 export const getAnimeInfo = async (animeId: string): Promise<AnimeInfo> => {
   return requestCache.get('/info', { id: animeId }, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/info/${animeId}`)
+    const baseUrl = getApiBaseUrl()
+    
+    // If no API URL is configured, throw error to use fallback
+    if (!baseUrl) {
+      throw new Error('No Consumet API URL configured')
+    }
+    
+    const response: AxiosResponse = await axios.get(`${baseUrl}/info/${animeId}`)
     return response.data
   })
 }
@@ -93,9 +184,16 @@ export const getAnimeEpisodeStreamingLinks = async (
   episodeId: string
 ): Promise<{ headers: any; sources: StreamingLink[] }> => {
   return requestCache.get('/streaming-links', { episodeId }, async () => {
+    const baseUrl = getApiBaseUrl()
+    
+    // If no API URL is configured, throw error to use fallback
+    if (!baseUrl) {
+      throw new Error('No Consumet API URL configured')
+    }
+    
     // URL encode the episode ID to handle special characters and slashes
     const encodedEpisodeId = encodeURIComponent(episodeId)
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${encodedEpisodeId}`)
+    const response: AxiosResponse = await axios.get(`${baseUrl}/watch/${encodedEpisodeId}`)
     return response.data
   })
 }
@@ -103,7 +201,14 @@ export const getAnimeEpisodeStreamingLinks = async (
 // Get available servers for anime episode
 export const getAnimeEpisodeServers = async (episodeId: string): Promise<AnimeServer[]> => {
   return requestCache.get('/servers', { episodeId }, async () => {
-    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/servers/${episodeId}`)
+    const baseUrl = getApiBaseUrl()
+    
+    // If no API URL is configured, throw error to use fallback
+    if (!baseUrl) {
+      throw new Error('No Consumet API URL configured')
+    }
+    
+    const response: AxiosResponse = await axios.get(`${baseUrl}/servers/${episodeId}`)
     return response.data || []
   })
 }

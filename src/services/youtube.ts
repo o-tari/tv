@@ -10,7 +10,7 @@ import { createApiInstance } from '../utils/apiConfig'
 import { requestCache } from '../utils/requestCache'
 
 
-// Create API instance with current configuration
+// Create API instance with current settings
 const getApiInstance = () => {
   const config = createApiInstance()
   
@@ -72,6 +72,12 @@ export const searchVideos = async (
       nextPageToken: 'mock-search-next',
       totalResults: filteredVideos.length * 10, // Simulate more results
     }
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.apiKey) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
   const params: any = {
@@ -146,6 +152,12 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
     return video
   }
 
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.apiKey) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
   try {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/videos', {
@@ -201,6 +213,12 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
     return mockSearchResults
   }
 
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.apiKey) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
   const params: any = {
     part: 'snippet,statistics,contentDetails',
     chart: 'mostPopular',
@@ -238,6 +256,12 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
   if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 300))
     return mockChannel
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.apiKey) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
   try {
@@ -285,6 +309,12 @@ export const getChannelVideos = async (
     }
   }
 
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.apiKey) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
   const params: any = {
     part: 'snippet',
     channelId,
@@ -328,6 +358,12 @@ export const getRelatedVideos = async (
   if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 400))
     return mockRelatedVideos
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.apiKey) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
   const params: any = {

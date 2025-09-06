@@ -28,7 +28,7 @@ A production-ready TV-style web application built with React, TypeScript, and th
 
 - Node.js 18+ 
 - npm or yarn
-- YouTube Data API v3 key
+- YouTube Data API v3 key (optional - app works with mock data by default)
 
 ## Getting Started
 
@@ -45,35 +45,25 @@ cd youtube
 npm install
 ```
 
-### 3. Set up environment variables
-
-Create a `.env` file in the root directory:
-
-```env
-# YouTube API Configuration
-VITE_YT_API_KEY=your_youtube_api_key_here
-VITE_REGION=US
-VITE_LANG=en
-
-# Consumet API Configuration (for anime data)
-VITE_CONSUMET_API_URL=https://api.consumet.org
-```
-
-### 4. Get a YouTube API Key
-
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the YouTube Data API v3
-4. Create credentials (API Key)
-5. Copy the API key to your `.env` file
-
-### 5. Run the development server
+### 3. Run the development server
 
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+
+### 4. Configure API Settings
+
+The app uses a settings modal for all API settings. No environment variables are needed:
+
+1. Click the settings icon in the header
+2. Enter your YouTube API key (get one from [Google Cloud Console](https://console.cloud.google.com/))
+3. Configure region code (e.g., US, GB, JP) and language (e.g., en, es, fr)
+4. Set the Consumet API URL for anime data (default: https://api.consumet.org)
+5. Save your settings
+
+All settings are stored in your browser's local storage and persist between sessions.
 
 ## Available Scripts
 
@@ -90,7 +80,7 @@ Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
 ```
 src/
-├── app/                    # App configuration
+├── app/                    # App settings
 │   ├── App.tsx            # Main app component
 │   ├── Layout.tsx         # Layout wrapper
 │   └── providers/         # Context providers
@@ -123,7 +113,7 @@ src/
 ├── services/              # API services
 │   └── youtube.ts         # YouTube API client
 ├── store/                 # Redux store
-│   ├── index.ts           # Store configuration
+│   ├── index.ts           # Store settings
 │   └── slices/            # Redux slices
 │       ├── authSlice.ts   # Authentication state
 │       ├── uiSlice.ts     # UI state

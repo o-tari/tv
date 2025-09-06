@@ -1,20 +1,22 @@
 import { store } from '../store'
-import { selectYoutubeApiKey, selectUseMockData } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage } from '../store/slices/settingsSlice'
 
 export const getApiConfig = () => {
   const state = store.getState()
-  const uiApiKey = selectYoutubeApiKey(state)
+  const apiKey = selectYoutubeApiKey(state)
   const useMockData = selectUseMockData(state)
+  const regionCode = selectRegionCode(state)
+  const language = selectLanguage(state)
   
-  // Priority: UI API key > Environment API key
-  const apiKey = uiApiKey || import.meta.env.VITE_YT_API_KEY
-  const shouldUseMockData = useMockData || !apiKey || apiKey === 'your_youtube_api_key_here'
+  // New logic: if mock data is checked, always use mock data
+  // If unchecked, never use mock data (make real API requests)
+  const shouldUseMockData = useMockData
   
   return {
     apiKey,
     useMockData: shouldUseMockData,
-    regionCode: import.meta.env.VITE_REGION || 'US',
-    language: import.meta.env.VITE_LANG || 'en',
+    regionCode,
+    language,
   }
 }
 
