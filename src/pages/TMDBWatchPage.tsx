@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../store'
 import { selectTmdbApiKey } from '../store/slices/settingsSlice'
 import { getTMDBService } from '../services/tmdb'
-import { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBSeason } from '../types/tmdb'
+import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBSeason } from '../types/tmdb'
 import YouTubePlayer from '../components/YouTubePlayer'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -16,7 +16,6 @@ const TMDBWatchPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedSeason, setSelectedSeason] = useState<number>(1)
-  const [selectedEpisode, setSelectedEpisode] = useState<number>(1)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
@@ -62,11 +61,6 @@ const TMDBWatchPage = () => {
     return trailers.length > 0 ? trailers[0] : null
   }
 
-  const getCurrentSeason = (): TMDBSeason | null => {
-    if (!content || type !== 'tv' || !('seasons' in content)) return null
-    
-    return content.seasons.find(season => season.season_number === selectedSeason) || null
-  }
 
   const formatRuntime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60)
@@ -135,7 +129,6 @@ const TMDBWatchPage = () => {
 
   const trailer = getTrailerVideo()
   const isTV = type === 'tv'
-  const currentSeason = getCurrentSeason()
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -159,8 +152,6 @@ const TMDBWatchPage = () => {
               <div className="mb-6">
                 <YouTubePlayer
                   videoId={trailer.key}
-                  title={trailer.name}
-                  className="w-full aspect-video rounded-lg"
                 />
               </div>
             ) : (
