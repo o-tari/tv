@@ -7,6 +7,11 @@ import TMDBMediaCard from '../components/TMDBMediaCard'
 import SearchBar from '../components/SearchBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 
+interface SectionState {
+  displayedCount: number
+  hasMore: boolean
+}
+
 const MoviesTVPage = () => {
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
   const showUpcomingReleases = useAppSelector(selectShowUpcomingReleases)
@@ -24,6 +29,18 @@ const MoviesTVPage = () => {
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'trending' | 'search'>('trending')
+  
+  // Section states for limiting items and load more functionality
+  const [sectionStates, setSectionStates] = useState<Record<string, SectionState>>({
+    tvRecommendations: { displayedCount: 15, hasMore: false },
+    trendingMovies: { displayedCount: 15, hasMore: false },
+    trendingTV: { displayedCount: 15, hasMore: false },
+    discoverMovies: { displayedCount: 15, hasMore: false },
+    discoverTV: { displayedCount: 15, hasMore: false },
+    nowPlayingMovies: { displayedCount: 15, hasMore: false },
+    popularMovies: { displayedCount: 15, hasMore: false },
+    topRatedMovies: { displayedCount: 15, hasMore: false }
+  })
 
   useEffect(() => {
     if (tmdbApiKey) {
@@ -72,12 +89,30 @@ const MoviesTVPage = () => {
       setPopularMovies(filteredPopularMovies)
       setTopRatedMovies(filteredTopRatedMovies)
 
+      // Update section states to reflect if there are more items to load
+      setSectionStates(prev => ({
+        ...prev,
+        trendingMovies: { displayedCount: 15, hasMore: filteredMovies.length > 15 },
+        trendingTV: { displayedCount: 15, hasMore: filteredTV.length > 15 },
+        discoverMovies: { displayedCount: 15, hasMore: filteredDiscoverMovies.length > 15 },
+        discoverTV: { displayedCount: 15, hasMore: filteredDiscoverTV.length > 15 },
+        nowPlayingMovies: { displayedCount: 15, hasMore: filteredNowPlaying.length > 15 },
+        popularMovies: { displayedCount: 15, hasMore: filteredPopularMovies.length > 15 },
+        topRatedMovies: { displayedCount: 15, hasMore: filteredTopRatedMovies.length > 15 }
+      }))
+
       // Load TV recommendations (using a popular TV show as reference)
       if (filteredTV.length > 0) {
         try {
           const recommendationsResponse = await tmdbService.getTVRecommendations(filteredTV[0].id)
           const filteredRecommendations = tmdbService.filterByReleaseDate(recommendationsResponse.results, showUpcomingReleases)
           setTvRecommendations(filteredRecommendations)
+          
+          // Update TV recommendations section state
+          setSectionStates(prev => ({
+            ...prev,
+            tvRecommendations: { displayedCount: 15, hasMore: filteredRecommendations.length > 15 }
+          }))
         } catch (error) {
           console.error('Error loading TV recommendations:', error)
         }
@@ -128,6 +163,103 @@ const MoviesTVPage = () => {
     }
   }
 
+  const handleLoadMore = (sectionKey: string) => {
+    setSectionStates(prev => ({
+      ...prev,
+      [sectionKey]: {
+        ...prev[sectionKey],
+        displayedCount: Math.min(prev[sectionKey].displayedCount + 15, getTotalItems(sectionKey)),
+        hasMore: prev[sectionKey].displayedCount + 15 < getTotalItems(sectionKey)
+      }
+    }))
+  }
+
+  const getTotalItems = (sectionKey: string): number => {
+    switch (sectionKey) {
+      case 'tvRecommendations': return tvRecommendations.length
+      case 'trendingMovies': return trendingMovies.length
+      case 'trendingTV': return trendingTV.length
+      case 'discoverMovies': return discoverMovies.length
+      case 'discoverTV': return discoverTV.length
+      case 'nowPlayingMovies': return nowPlayingMovies.length
+      case 'popularMovies': return popularMovies.length
+      case 'topRatedMovies': return topRatedMovies.length
+      default: return 0
+    }
+  }
+
+  const getSectionItems = (sectionKey: string): TMDBContent[] => {
+    switch (sectionKey) {
+      case 'tvRecommendations': return tvRecommendations
+      case 'trendingMovies': return trendingMovies
+      case 'trendingTV': return trendingTV
+      case 'discoverMovies': return discoverMovies
+      case 'discoverTV': return discoverTV
+      case 'nowPlayingMovies': return nowPlayingMovies
+      case 'popularMovies': return popularMovies
+      case 'topRatedMovies': return topRatedMovies
+      default: return []
+    }
+  }
+
+  const renderSection = (title: string, sectionKey: string, type: 'movie' | 'tv') => {
+    const items = getSectionItems(sectionKey)
+    const sectionState = sectionStates[sectionKey]
+    const displayedItems = items.slice(0, sectionState.displayedCount)
+
+    if (loading) {
+      return (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            {title}
+          </h2>
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner />
+          </div>
+        </div>
+      )
+    }
+
+    if (displayedItems.length === 0) {
+      return null
+    }
+
+    return (
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          {title}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          {displayedItems.map((item) => (
+            <TMDBMediaCard
+              key={`${sectionKey}-${item.id}`}
+              id={item.id}
+              title={'title' in item ? item.title : item.name}
+              thumbnail={item.poster_path}
+              duration={null}
+              viewCount={item.vote_count}
+              publishedAt={'release_date' in item ? item.release_date : item.first_air_date}
+              channelTitle={null}
+              type={type}
+              rating={item.vote_average}
+              overview={item.overview}
+            />
+          ))}
+        </div>
+        {sectionState.hasMore && (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => handleLoadMore(sectionKey)}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Load More
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const renderContent = () => {
     if (activeTab === 'search') {
       if (searchLoading) {
@@ -172,240 +304,28 @@ const MoviesTVPage = () => {
     return (
       <div className="space-y-12">
         {/* TV Recommendations - First section after search */}
-        {tvRecommendations.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Recommended TV Shows
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {tvRecommendations.map((tv) => (
-                <TMDBMediaCard
-                  key={`tv-rec-${tv.id}`}
-                  id={tv.id}
-                  title={tv.name}
-                  thumbnail={tv.poster_path}
-                  duration={null}
-                  viewCount={tv.vote_count}
-                  publishedAt={tv.first_air_date}
-                  channelTitle={null}
-                  type="tv"
-                  rating={tv.vote_average}
-                  overview={tv.overview}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {renderSection('Recommended TV Shows', 'tvRecommendations', 'tv')}
 
         {/* Trending Movies */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Trending Movies
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {trendingMovies.map((movie) => (
-                <TMDBMediaCard
-                  key={`movie-${movie.id}`}
-                  id={movie.id}
-                  title={movie.title}
-                  thumbnail={movie.poster_path}
-                  duration={null}
-                  viewCount={movie.vote_count}
-                  publishedAt={movie.release_date}
-                  channelTitle={null}
-                  type="movie"
-                  rating={movie.vote_average}
-                  overview={movie.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Trending Movies', 'trendingMovies', 'movie')}
 
         {/* Trending TV Shows */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Trending TV Shows
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {trendingTV.map((tv) => (
-                <TMDBMediaCard
-                  key={`tv-${tv.id}`}
-                  id={tv.id}
-                  title={tv.name}
-                  thumbnail={tv.poster_path}
-                  duration={null}
-                  viewCount={tv.vote_count}
-                  publishedAt={tv.first_air_date}
-                  channelTitle={null}
-                  type="tv"
-                  rating={tv.vote_average}
-                  overview={tv.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Trending TV Shows', 'trendingTV', 'tv')}
 
         {/* Discover Movies */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Discover Movies
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {discoverMovies.map((movie) => (
-                <TMDBMediaCard
-                  key={`discover-movie-${movie.id}`}
-                  id={movie.id}
-                  title={movie.title}
-                  thumbnail={movie.poster_path}
-                  duration={null}
-                  viewCount={movie.vote_count}
-                  publishedAt={movie.release_date}
-                  channelTitle={null}
-                  type="movie"
-                  rating={movie.vote_average}
-                  overview={movie.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Discover Movies', 'discoverMovies', 'movie')}
 
         {/* Discover TV Shows */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Discover TV Shows
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {discoverTV.map((tv) => (
-                <TMDBMediaCard
-                  key={`discover-tv-${tv.id}`}
-                  id={tv.id}
-                  title={tv.name}
-                  thumbnail={tv.poster_path}
-                  duration={null}
-                  viewCount={tv.vote_count}
-                  publishedAt={tv.first_air_date}
-                  channelTitle={null}
-                  type="tv"
-                  rating={tv.vote_average}
-                  overview={tv.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Discover TV Shows', 'discoverTV', 'tv')}
 
         {/* Now Playing Movies */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Now Playing Movies
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {nowPlayingMovies.map((movie) => (
-                <TMDBMediaCard
-                  key={`now-playing-${movie.id}`}
-                  id={movie.id}
-                  title={movie.title}
-                  thumbnail={movie.poster_path}
-                  duration={null}
-                  viewCount={movie.vote_count}
-                  publishedAt={movie.release_date}
-                  channelTitle={null}
-                  type="movie"
-                  rating={movie.vote_average}
-                  overview={movie.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Now Playing Movies', 'nowPlayingMovies', 'movie')}
 
         {/* Popular Movies */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Popular Movies
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {popularMovies.map((movie) => (
-                <TMDBMediaCard
-                  key={`popular-movie-${movie.id}`}
-                  id={movie.id}
-                  title={movie.title}
-                  thumbnail={movie.poster_path}
-                  duration={null}
-                  viewCount={movie.vote_count}
-                  publishedAt={movie.release_date}
-                  channelTitle={null}
-                  type="movie"
-                  rating={movie.vote_average}
-                  overview={movie.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Popular Movies', 'popularMovies', 'movie')}
 
         {/* Top Rated Movies */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Top Rated Movies
-          </h2>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {topRatedMovies.map((movie) => (
-                <TMDBMediaCard
-                  key={`top-rated-${movie.id}`}
-                  id={movie.id}
-                  title={movie.title}
-                  thumbnail={movie.poster_path}
-                  duration={null}
-                  viewCount={movie.vote_count}
-                  publishedAt={movie.release_date}
-                  channelTitle={null}
-                  type="movie"
-                  rating={movie.vote_average}
-                  overview={movie.overview}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSection('Top Rated Movies', 'topRatedMovies', 'movie')}
       </div>
     )
   }
