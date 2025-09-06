@@ -1,9 +1,15 @@
-import { Link, useLocation } from 'react-router-dom'
-import { useAppSelector } from '../store'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAppSelector, useAppDispatch } from '../store'
+import { setSearchQuery } from '../store/slices/uiSlice'
+import { useTheme } from '../app/providers/ThemeProvider'
+import SearchBar from './SearchBar'
 
 const Sidebar = () => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const { sidebarOpen } = useAppSelector((state) => state.ui)
+  const { theme, toggleTheme } = useTheme()
 
   const navigationItems = [
     { label: 'Home', href: '/', icon: '🏠' },
@@ -20,6 +26,11 @@ const Sidebar = () => {
     return location.pathname.startsWith(href)
   }
 
+  const handleSearch = (query: string) => {
+    dispatch(setSearchQuery(query))
+    navigate(`/search?q=${encodeURIComponent(query)}`)
+  }
+
   return (
     <aside
       className={`fixed left-0 top-14 bottom-0 bg-white dark:bg-youtube-dark border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-40 ${
@@ -27,6 +38,13 @@ const Sidebar = () => {
       }`}
     >
       <nav className="h-full overflow-y-auto scrollbar-hide">
+        {/* Search Bar */}
+        {sidebarOpen && (
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+        )}
+
         <div className="py-4">
           {navigationItems.map((item, index) => (
             <Link
@@ -68,6 +86,26 @@ const Sidebar = () => {
                 <span className="mr-3">📋</span>
                 Playlists
               </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Section */}
+        {sidebarOpen && (
+          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Settings
+            </h3>
+            <div className="space-y-1">
+              <button
+                onClick={toggleTheme}
+                className="flex items-center w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              >
+                <span className="mr-3">
+                  {theme === 'light' ? '🌙' : '☀️'}
+                </span>
+                {theme === 'light' ? 'Dark mode' : 'Light mode'}
+              </button>
             </div>
           </div>
         )}
