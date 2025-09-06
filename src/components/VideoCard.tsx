@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { type Video } from '../types/youtube'
 import { formatDuration } from '../utils/formatTime'
 import { formatViewCount } from '../utils/formatNumber'
@@ -11,6 +11,8 @@ interface VideoCardProps {
 }
 
 const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
+  const navigate = useNavigate()
+  
   const getTimeAgo = (publishedAt: string) => {
     const now = new Date()
     const published = new Date(publishedAt)
@@ -22,6 +24,12 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`
     if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`
     return `${Math.floor(diffInSeconds / 31536000)} years ago`
+  }
+
+  const handleChannelClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigate(`/subscriptions?channel=${video.channelId}`)
   }
 
   if (variant === 'compact') {
@@ -43,9 +51,12 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
             <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
               {video.title}
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            <button
+              onClick={handleChannelClick}
+              className="text-xs text-gray-600 dark:text-gray-400 mt-1 hover:text-red-600 dark:hover:text-red-400 transition-colors text-left"
+            >
               {video.channelTitle}
-            </p>
+            </button>
             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {formatViewCount(video.viewCount)} • {getTimeAgo(video.publishedAt)}
             </p>
@@ -75,7 +86,12 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
               {video.title}
             </h3>
             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-              <span>{video.channelTitle}</span>
+              <button
+                onClick={handleChannelClick}
+                className="hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              >
+                {video.channelTitle}
+              </button>
               <span>•</span>
               <span>{formatViewCount(video.viewCount)}</span>
               <span>•</span>
@@ -112,9 +128,12 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
           <div className="flex items-start space-x-3">
             <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0"></div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+              <button
+                onClick={handleChannelClick}
+                className="text-xs text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors truncate text-left"
+              >
                 {video.channelTitle}
-              </p>
+              </button>
               <p className="text-xs text-gray-500 dark:text-gray-500">
                 {formatViewCount(video.viewCount)} • {getTimeAgo(video.publishedAt)}
               </p>
