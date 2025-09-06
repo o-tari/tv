@@ -34,6 +34,7 @@ function App() {
                 <Route path="/channel/:channelId" element={<ChannelPage />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/anime" element={<AnimePage />} />
+                <Route path="/anime/:animeId" element={<WatchPage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/watch-later" element={<WatchLaterPage />} />
