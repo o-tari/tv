@@ -1,5 +1,4 @@
 import { type ReactNode } from 'react'
-import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import MockDataNotification from '../components/MockDataNotification'
 import { useAppSelector } from '../store'
@@ -13,7 +12,6 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-youtube-dark text-gray-900 dark:text-white">
-      <Header />
       <div className="flex">
         <Sidebar />
         <main
