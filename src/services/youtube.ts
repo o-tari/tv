@@ -74,49 +74,49 @@ export const searchVideos = async (
     }
   }
 
-  try {
-    const params: any = {
-      part: 'snippet',
-      q: query,
-      type: filters.type || 'video',
-      maxResults: 25,
-      order: filters.sortBy || 'relevance',
+  const params: any = {
+    part: 'snippet',
+    q: query,
+    type: filters.type || 'video',
+    maxResults: 25,
+    order: filters.sortBy || 'relevance',
+  }
+
+  if (pageToken) {
+    params.pageToken = pageToken
+  }
+
+  if (filters.duration) {
+    params.videoDuration = filters.duration
+  }
+
+  if (filters.uploadDate) {
+    const now = new Date()
+    let publishedAfter: string
+
+    switch (filters.uploadDate) {
+      case 'hour':
+        publishedAfter = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
+        break
+      case 'today':
+        publishedAfter = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+        break
+      case 'week':
+        publishedAfter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        break
+      case 'month':
+        publishedAfter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        break
+      case 'year':
+        publishedAfter = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString()
+        break
+      default:
+        publishedAfter = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
     }
+    params.publishedAfter = publishedAfter
+  }
 
-    if (pageToken) {
-      params.pageToken = pageToken
-    }
-
-    if (filters.duration) {
-      params.videoDuration = filters.duration
-    }
-
-    if (filters.uploadDate) {
-      const now = new Date()
-      let publishedAfter: string
-
-      switch (filters.uploadDate) {
-        case 'hour':
-          publishedAfter = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
-          break
-        case 'today':
-          publishedAfter = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
-          break
-        case 'week':
-          publishedAfter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-          break
-        case 'month':
-          publishedAfter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
-          break
-        case 'year':
-          publishedAfter = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString()
-          break
-        default:
-          publishedAfter = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
-      }
-      params.publishedAfter = publishedAfter
-    }
-
+  return requestCache.get('/search', params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
@@ -135,10 +135,7 @@ export const searchVideos = async (
       nextPageToken: response.data.nextPageToken,
       totalResults: response.data.pageInfo.totalResults,
     }
-  } catch (error) {
-    handleApiError(error)
-    throw error // This will never be reached, but satisfies TypeScript
-  }
+  })
 }
 
 // Get video details
@@ -288,19 +285,19 @@ export const getChannelVideos = async (
     }
   }
 
-  try {
-    const params: any = {
-      part: 'snippet',
-      channelId,
-      type: 'video',
-      maxResults: 25,
-      order: 'date',
-    }
+  const params: any = {
+    part: 'snippet',
+    channelId,
+    type: 'video',
+    maxResults: 25,
+    order: 'date',
+  }
 
-    if (pageToken) {
-      params.pageToken = pageToken
-    }
+  if (pageToken) {
+    params.pageToken = pageToken
+  }
 
+  return requestCache.get('/search', params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
@@ -319,21 +316,7 @@ export const getChannelVideos = async (
       nextPageToken: response.data.nextPageToken,
       totalResults: response.data.pageInfo.totalResults,
     }
-  } catch (error) {
-    // If API key is set but API fails, throw the error instead of falling back to mock data
-    if (!shouldUseMockData()) {
-      throw new Error(`YouTube API error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-    
-    // Only fall back to mock data when no API key is set
-    console.warn('YouTube API failed, falling back to mock data for channel videos')
-    await new Promise(resolve => setTimeout(resolve, 400))
-    return {
-      items: mockVideos.slice(0, 3), // Show first 3 videos for channel
-      nextPageToken: 'mock-channel-next',
-      totalResults: 150,
-    }
-  }
+  })
 }
 
 
@@ -347,18 +330,18 @@ export const getRelatedVideos = async (
     return mockRelatedVideos
   }
 
-  try {
-    const params: any = {
-      part: 'snippet',
-      relatedToVideoId: videoId,
-      type: 'video',
-      maxResults: 25,
-    }
+  const params: any = {
+    part: 'snippet',
+    relatedToVideoId: videoId,
+    type: 'video',
+    maxResults: 25,
+  }
 
-    if (pageToken) {
-      params.pageToken = pageToken
-    }
+  if (pageToken) {
+    params.pageToken = pageToken
+  }
 
+  return requestCache.get('/search', params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
@@ -377,10 +360,7 @@ export const getRelatedVideos = async (
       nextPageToken: response.data.nextPageToken,
       totalResults: response.data.pageInfo.totalResults,
     }
-  } catch (error) {
-    handleApiError(error)
-    throw error // This will never be reached, but satisfies TypeScript
-  }
+  })
 }
 
 // Get video categories
