@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../store'
 import { selectTmdbApiKey } from '../store/slices/settingsSlice'
 import { getTMDBService } from '../services/tmdb'
-import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBSeason } from '../types/tmdb'
+import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBSeason, TMDBEpisode } from '../types/tmdb'
 import YouTubePlayer from '../components/YouTubePlayer'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -16,6 +16,8 @@ const TMDBWatchPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedSeason, setSelectedSeason] = useState<number>(1)
+  const [episodes, setEpisodes] = useState<TMDBEpisode[]>([])
+  const [episodesLoading, setEpisodesLoading] = useState(false)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
@@ -41,6 +43,8 @@ const TMDBWatchPage = () => {
         // Set first season as default
         if (tvDetails.seasons && tvDetails.seasons.length > 0) {
           setSelectedSeason(tvDetails.seasons[0].season_number)
+          // Load episodes for the first season
+          loadEpisodes(tvDetails.seasons[0].season_number)
         }
       }
     } catch (err) {
@@ -49,6 +53,27 @@ const TMDBWatchPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadEpisodes = async (seasonNumber: number) => {
+    if (!id || !tmdbApiKey || type !== 'tv') return
+
+    setEpisodesLoading(true)
+    try {
+      const tmdbService = getTMDBService(tmdbApiKey)
+      const seasonDetails = await tmdbService.getSeasonDetails(parseInt(id), seasonNumber)
+      setEpisodes(seasonDetails.episodes || [])
+    } catch (err) {
+      console.error('Error loading episodes:', err)
+      setEpisodes([])
+    } finally {
+      setEpisodesLoading(false)
+    }
+  }
+
+  const handleSeasonSelect = (seasonNumber: number) => {
+    setSelectedSeason(seasonNumber)
+    loadEpisodes(seasonNumber)
   }
 
   const getTrailerVideo = (): TMDBVideo | null => {
@@ -233,7 +258,7 @@ const TMDBWatchPage = () => {
                   {content.seasons.map((season) => (
                     <div key={season.id}>
                       <button
-                        onClick={() => setSelectedSeason(season.season_number)}
+                        onClick={() => handleSeasonSelect(season.season_number)}
                         className={`w-full text-left p-3 rounded-lg transition-colors ${
                           selectedSeason === season.season_number
                             ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
@@ -255,11 +280,53 @@ const TMDBWatchPage = () => {
                         )}
                       </button>
                       
-                      {selectedSeason === season.season_number && season.overview && (
+                      {selectedSeason === season.season_number && (
                         <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {season.overview}
-                          </p>
+                          {episodesLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <LoadingSpinner />
+                            </div>
+                          ) : episodes.length > 0 ? (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                Episodes ({episodes.length})
+                              </h4>
+                              {episodes.map((episode) => (
+                                <div key={episode.id} className="flex items-start space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded">
+                                  <div className="flex-shrink-0 w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {episode.episode_number}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                      {episode.name}
+                                    </h5>
+                                    {episode.air_date && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {formatDate(episode.air_date)}
+                                      </p>
+                                    )}
+                                    {episode.overview && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                        {episode.overview}
+                                      </p>
+                                    )}
+                                    {episode.vote_average > 0 && (
+                                      <div className="flex items-center mt-1">
+                                        <span className="text-yellow-500 text-xs mr-1">★</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          {episode.vote_average.toFixed(1)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                              No episodes available
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>

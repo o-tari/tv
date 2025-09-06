@@ -5,7 +5,8 @@ import type {
   TMDBMovieDetails, 
   TMDBTVDetails, 
   TMDBResponse, 
-  TMDBKeywordResponse 
+  TMDBKeywordResponse,
+  TMDBEpisode
 } from '../types/tmdb'
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
@@ -84,6 +85,20 @@ export class TMDBService {
     return this.makeRequest<TMDBTVDetails>(`/tv/${tvId}`, {
       append_to_response: 'videos'
     })
+  }
+
+  // Get season details with episodes
+  async getSeasonDetails(tvId: number, seasonNumber: number): Promise<{
+    _id: string
+    air_date: string
+    episodes: TMDBEpisode[]
+    name: string
+    overview: string
+    id: number
+    poster_path: string | null
+    season_number: number
+  }> {
+    return this.makeRequest(`/tv/${tvId}/season/${seasonNumber}`)
   }
 
   // Get popular movies
