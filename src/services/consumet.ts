@@ -67,35 +67,22 @@ export const searchAnime = async (
     
     const baseUrl = getApiBaseUrl()
     
-    // If no API URL is configured and mock data is disabled, throw error
+    // If no API URL is configured, throw error
     if (!baseUrl) {
-      throw new Error('Consumet API URL is required. Please configure your API URL in settings or enable mock data mode.')
+      throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
     }
     
-    try {
-      const url = `${baseUrl}/${encodeURIComponent(query)}`
-      console.log('Making API request to:', url, 'with params:', params)
-      const response: AxiosResponse<{currentPage: number, hasNextPage: boolean, results: AnimeApiResponse[]}> = await axios.get(url, { params })
-      console.log('API response received:', response.data)
-      // Map API response to internal format
-      const mappedResults = response.data.results.map(mapApiResponseToAnime)
-      console.log('Mapped results:', mappedResults)
-      return {
-        currentPage: response.data.currentPage,
-        hasNextPage: response.data.hasNextPage,
-        results: mappedResults
-      }
-    } catch (error) {
-      console.warn('Animepahe API not available, using mock data:', error)
-      // Return filtered mock data based on query
-      const filteredResults = mockAnimeSearchResponse.results.filter(anime => 
-        anime.title.toLowerCase().includes(query.toLowerCase())
-      )
-      console.log('Using mock data with filtered results:', filteredResults)
-      return {
-        ...mockAnimeSearchResponse,
-        results: filteredResults
-      }
+    const url = `${baseUrl}/${encodeURIComponent(query)}`
+    console.log('Making API request to:', url, 'with params:', params)
+    const response: AxiosResponse<{currentPage: number, hasNextPage: boolean, results: AnimeApiResponse[]}> = await axios.get(url, { params })
+    console.log('API response received:', response.data)
+    // Map API response to internal format
+    const mappedResults = response.data.results.map(mapApiResponseToAnime)
+    console.log('Mapped results:', mappedResults)
+    return {
+      currentPage: response.data.currentPage,
+      hasNextPage: response.data.hasNextPage,
+      results: mappedResults
     }
   })
 }
@@ -110,18 +97,13 @@ export const getTopAiringAnime = async (page: number = 1): Promise<AnimeSearchRe
   
   const baseUrl = getApiBaseUrl()
   
-  // If no API URL is configured and mock data is disabled, throw error
+  // If no API URL is configured, throw error
   if (!baseUrl) {
-    throw new Error('Consumet API URL is required. Please configure your API URL in settings or enable mock data mode.')
+    throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
   }
   
   // Animepahe doesn't have a dedicated top airing endpoint, so we'll use a popular search term
-  try {
-    return await searchAnime('anime', page)
-  } catch (error) {
-    console.warn('Animepahe API not available, using mock data for top airing:', error)
-    return mockAnimeSearchResponse
-  }
+  return await searchAnime('anime', page)
 }
 
 // Get recent episodes (using search with recent terms)
@@ -137,30 +119,25 @@ export const getRecentEpisodes = async (
   
   const baseUrl = getApiBaseUrl()
   
-  // If no API URL is configured and mock data is disabled, throw error
+  // If no API URL is configured, throw error
   if (!baseUrl) {
-    throw new Error('Consumet API URL is required. Please configure your API URL in settings or enable mock data mode.')
+    throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
   }
   
-  try {
-    // Animepahe doesn't have a dedicated recent episodes endpoint, so we'll use search
-    const searchResult = await searchAnime('new', page)
-    // Convert search results to episodes format
-    return {
-      currentPage: searchResult.currentPage,
-      hasNextPage: searchResult.hasNextPage,
-      results: searchResult.results.map(anime => ({
-        id: anime.id,
-        episodeId: anime.id,
-        episodeNumber: 1, // Default episode number
-        title: anime.title,
-        image: anime.image,
-        url: anime.url,
-      }))
-    }
-  } catch (error) {
-    console.warn('Animepahe API not available, using mock data for recent episodes:', error)
-    return mockAnimeEpisodesResponse
+  // Animepahe doesn't have a dedicated recent episodes endpoint, so we'll use search
+  const searchResult = await searchAnime('new', page)
+  // Convert search results to episodes format
+  return {
+    currentPage: searchResult.currentPage,
+    hasNextPage: searchResult.hasNextPage,
+    results: searchResult.results.map(anime => ({
+      id: anime.id,
+      episodeId: anime.id,
+      episodeNumber: 1, // Default episode number
+      title: anime.title,
+      image: anime.image,
+      url: anime.url,
+    }))
   }
 }
 
@@ -169,9 +146,9 @@ export const getAnimeInfo = async (animeId: string): Promise<AnimeInfo> => {
   return requestCache.get('/info', { id: animeId }, async () => {
     const baseUrl = getApiBaseUrl()
     
-    // If no API URL is configured, throw error to use fallback
+    // If no API URL is configured, throw error
     if (!baseUrl) {
-      throw new Error('No Consumet API URL configured')
+      throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
     }
     
     const response: AxiosResponse = await axios.get(`${baseUrl}/info/${animeId}`)
@@ -186,9 +163,9 @@ export const getAnimeEpisodeStreamingLinks = async (
   return requestCache.get('/streaming-links', { episodeId }, async () => {
     const baseUrl = getApiBaseUrl()
     
-    // If no API URL is configured, throw error to use fallback
+    // If no API URL is configured, throw error
     if (!baseUrl) {
-      throw new Error('No Consumet API URL configured')
+      throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
     }
     
     // URL encode the episode ID to handle special characters and slashes
@@ -203,9 +180,9 @@ export const getAnimeEpisodeServers = async (episodeId: string): Promise<AnimeSe
   return requestCache.get('/servers', { episodeId }, async () => {
     const baseUrl = getApiBaseUrl()
     
-    // If no API URL is configured, throw error to use fallback
+    // If no API URL is configured, throw error
     if (!baseUrl) {
-      throw new Error('No Consumet API URL configured')
+      throw new Error('Consumet API URL is required. Please configure your API URL in settings.')
     }
     
     const response: AxiosResponse = await axios.get(`${baseUrl}/servers/${episodeId}`)
