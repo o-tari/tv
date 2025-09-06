@@ -94,4 +94,9 @@ export const {
   unsubscribeFromChannel,
 } = historySlice.actions
 
+// Selectors
+export const selectWatchHistory = (state: { history: HistoryState }) => state.history.watchHistory
+export const selectWatchLater = (state: { history: HistoryState }) => state.history.watchLater
+export const selectSubscriptions = (state: { history: HistoryState }) => state.history.subscriptions
+
 export default historySlice.reducer

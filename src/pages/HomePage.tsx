@@ -5,6 +5,7 @@ import { fetchTrendingVideos } from '../store/slices/videosSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import ContinueWatching from '../components/ContinueWatching'
+import WatchLater from '../components/WatchLater'
 
 const HomePage = () => {
   const navigate = useNavigate()
@@ -59,6 +60,13 @@ const HomePage = () => {
         limit={4} 
         showMoreButton={true} 
         onMoreClick={() => navigate('/continue-watching')} 
+      />
+
+      {/* Watch Later Section */}
+      <WatchLater 
+        limit={4} 
+        showMoreButton={true} 
+        onMoreClick={() => navigate('/watch-later')} 
       />
 
       {/* Trending Section */}

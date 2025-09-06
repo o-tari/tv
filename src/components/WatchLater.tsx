@@ -1,29 +1,29 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectContinueWatching, removeFromContinueWatching } from '../store/slices/continueWatchingSlice'
+import { selectWatchLater, removeFromWatchLater } from '../store/slices/historySlice'
 import VideoCard from './VideoCard'
 import type { Video } from '../types/youtube'
 
-interface ContinueWatchingProps {
+interface WatchLaterProps {
   limit?: number
   showMoreButton?: boolean
   onMoreClick?: () => void
 }
 
-const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: ContinueWatchingProps) => {
+const WatchLater = ({ limit, showMoreButton = false, onMoreClick }: WatchLaterProps) => {
   const dispatch = useAppDispatch()
-  const continueWatchingVideos = useAppSelector(selectContinueWatching)
+  const watchLaterVideos = useAppSelector(selectWatchLater)
   const [showAll, setShowAll] = useState(false)
 
-  const displayedVideos = limit && !showAll ? continueWatchingVideos.slice(0, limit) : continueWatchingVideos
-  const hasMore = limit ? continueWatchingVideos.length > limit : false
+  const displayedVideos = limit && !showAll ? watchLaterVideos.slice(0, limit) : watchLaterVideos
+  const hasMore = limit ? watchLaterVideos.length > limit : false
 
   const handleRemove = (videoId: string, event: React.MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
-    console.log('Removing video from continue watching:', videoId)
-    dispatch(removeFromContinueWatching(videoId))
+    console.log('Removing video from watch later:', videoId)
+    dispatch(removeFromWatchLater(videoId))
   }
 
   const handleMoreClick = () => {
@@ -34,7 +34,7 @@ const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: Contin
     }
   }
 
-  if (continueWatchingVideos.length === 0) {
+  if (watchLaterVideos.length === 0) {
     return null
   }
 
@@ -42,7 +42,7 @@ const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: Contin
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Continue Watching
+          Watch Later
         </h2>
         {hasMore && showMoreButton && (
           <button
@@ -65,8 +65,8 @@ const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: Contin
             <button
               onClick={(e) => handleRemove(video.id, e)}
               className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
-              aria-label="Remove from Continue Watching"
-              title="Remove from Continue Watching"
+              aria-label="Remove from Watch Later"
+              title="Remove from Watch Later"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -79,4 +79,4 @@ const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: Contin
   )
 }
 
-export default ContinueWatching
+export default WatchLater
