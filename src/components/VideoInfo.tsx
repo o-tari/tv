@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { type Video } from '../types/youtube'
 import { formatViewCount, formatLikeCount } from '../utils/formatNumber'
 import { sanitizeHTML } from '../utils/sanitizeHTML'
@@ -10,6 +11,7 @@ interface VideoInfoProps {
 }
 
 const VideoInfo = ({ video }: VideoInfoProps) => {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const isSubscribed = useAppSelector(selectIsSubscribed(video.channelId))
   
@@ -65,6 +67,10 @@ const VideoInfo = ({ video }: VideoInfoProps) => {
       viewCount: '0', // Not available in video data
     }
     dispatch(toggleSubscription(channel))
+  }
+
+  const handleChannelClick = () => {
+    navigate(`/subscriptions?channel=${video.channelId}`)
   }
 
   return (
@@ -140,19 +146,24 @@ const VideoInfo = ({ video }: VideoInfoProps) => {
       {/* Channel info */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
         <div className="flex items-start space-x-3">
-          <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(video.channelTitle)}&background=random`}
-            alt={video.channelTitle}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {video.channelTitle}
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {formatViewCount(video.viewCount)} subscribers
-            </p>
-          </div>
+          <button
+            onClick={handleChannelClick}
+            className="flex items-start space-x-3 flex-1 min-w-0 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 -m-2 transition-colors group"
+          >
+            <img
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(video.channelTitle)}&background=random`}
+              alt={video.channelTitle}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">
+                {video.channelTitle}
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                {formatViewCount(video.viewCount)} subscribers
+              </p>
+            </div>
+          </button>
           <button
             onClick={handleSubscribe}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
