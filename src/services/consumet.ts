@@ -7,8 +7,14 @@ import {
   type AnimeServer
 } from '../types/anime'
 import { requestCache } from '../utils/requestCache'
+import { store } from '../store'
+import { selectConsumetApiUrl } from '../store/slices/settingsSlice'
 
-const API_BASE_URL = 'https://api.consumet.org/anime/gogoanime'
+const getApiBaseUrl = () => {
+  const state = store.getState()
+  const baseUrl = selectConsumetApiUrl(state)
+  return `${baseUrl}/anime/gogoanime`
+}
 
 // Search anime
 export const searchAnime = async (
@@ -18,7 +24,7 @@ export const searchAnime = async (
   const params = { q: query, page }
   
   return requestCache.get('/search', params, async () => {
-    const response: AxiosResponse = await axios.get(`${API_BASE_URL}/search`, { params })
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/search`, { params })
     return response.data
   })
 }
@@ -28,7 +34,7 @@ export const getTopAiringAnime = async (page: number = 1): Promise<AnimeSearchRe
   const params = { page }
   
   return requestCache.get('/top-airing', params, async () => {
-    const response: AxiosResponse = await axios.get(`${API_BASE_URL}/top-airing`, { params })
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/top-airing`, { params })
     return response.data
   })
 }
@@ -41,7 +47,7 @@ export const getRecentEpisodes = async (
   const params = { page, type }
   
   return requestCache.get('/recent-episodes', params, async () => {
-    const response: AxiosResponse = await axios.get(`${API_BASE_URL}/recent-episodes`, { params })
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/recent-episodes`, { params })
     return response.data
   })
 }
@@ -49,7 +55,7 @@ export const getRecentEpisodes = async (
 // Get anime info
 export const getAnimeInfo = async (animeId: string): Promise<AnimeInfo> => {
   return requestCache.get('/info', { id: animeId }, async () => {
-    const response: AxiosResponse = await axios.get(`${API_BASE_URL}/info/${animeId}`)
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/info/${animeId}`)
     return response.data
   })
 }
@@ -60,7 +66,7 @@ export const getAnimeEpisodeStreamingLinks = async (
   server: string = 'gogocdn'
 ): Promise<StreamingLink[]> => {
   return requestCache.get('/streaming-links', { episodeId, server }, async () => {
-    const response: AxiosResponse = await axios.get(`${API_BASE_URL}/watch/${episodeId}`, {
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/watch/${episodeId}`, {
       params: { server }
     })
     return response.data.sources || []
@@ -70,7 +76,7 @@ export const getAnimeEpisodeStreamingLinks = async (
 // Get available servers for anime episode
 export const getAnimeEpisodeServers = async (episodeId: string): Promise<AnimeServer[]> => {
   return requestCache.get('/servers', { episodeId }, async () => {
-    const response: AxiosResponse = await axios.get(`${API_BASE_URL}/servers/${episodeId}`)
+    const response: AxiosResponse = await axios.get(`${getApiBaseUrl()}/servers/${episodeId}`)
     return response.data || []
   })
 }

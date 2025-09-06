@@ -50,9 +50,13 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
+# YouTube API Configuration
 VITE_YT_API_KEY=your_youtube_api_key_here
 VITE_REGION=US
 VITE_LANG=en
+
+# Consumet API Configuration (for anime data)
+VITE_CONSUMET_API_URL=https://api.consumet.org
 ```
 
 ### 4. Get a YouTube API Key

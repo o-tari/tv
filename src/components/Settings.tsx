@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectYoutubeApiKey, selectUseMockData, setYoutubeApiKey, setUseMockData, resetSettings } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectConsumetApiUrl, setYoutubeApiKey, setUseMockData, setConsumetApiUrl, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
 
 interface SettingsProps {
@@ -12,14 +12,17 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
   const dispatch = useAppDispatch()
   const youtubeApiKey = useAppSelector(selectYoutubeApiKey)
   const useMockData = useAppSelector(selectUseMockData)
+  const consumetApiUrl = useAppSelector(selectConsumetApiUrl)
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
+  const [localConsumetApiUrl, setLocalConsumetApiUrl] = useState(consumetApiUrl)
   const [showApiKey, setShowApiKey] = useState(false)
 
   const handleSave = () => {
     dispatch(setYoutubeApiKey(localApiKey))
     dispatch(setUseMockData(localUseMockData))
+    dispatch(setConsumetApiUrl(localConsumetApiUrl))
     // Clear all cached data so it will be refetched with new settings
     dispatch(clearAllData())
     onClose()
@@ -30,12 +33,14 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
       dispatch(resetSettings())
       setLocalApiKey('')
       setLocalUseMockData(false)
+      setLocalConsumetApiUrl(import.meta.env.VITE_CONSUMET_API_URL || 'https://api.consumet.org')
     }
   }
 
   const handleCancel = () => {
     setLocalApiKey(youtubeApiKey)
     setLocalUseMockData(useMockData)
+    setLocalConsumetApiUrl(consumetApiUrl)
     onClose()
   }
 
@@ -110,6 +115,23 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               When enabled, the app will use mock data instead of the YouTube API. 
               {!localApiKey && !import.meta.env.VITE_YT_API_KEY && ' Enabled by default when no API key is configured.'}
+            </p>
+          </div>
+
+          {/* Consumet API URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Consumet API URL
+            </label>
+            <input
+              type="url"
+              value={localConsumetApiUrl}
+              onChange={(e) => setLocalConsumetApiUrl(e.target.value)}
+              placeholder="https://api.consumet.org"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Base URL for the Consumet API (used for anime data)
             </p>
           </div>
 
