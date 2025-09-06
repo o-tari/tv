@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { type Media, type VideoMedia, type AnimeMedia } from '../types/anime'
 import { formatViewCount } from '../utils/formatNumber'
 import { formatDuration } from '../utils/formatTime'
+import { getAnimeImage, getImageUrl } from '../utils/imageProxy'
 import LazyImage from './LazyImage'
 
 interface MediaCardProps {
@@ -75,10 +76,8 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
   )
 
   const renderAnimeCard = (anime: AnimeMedia) => {
-    // Fallback image if the API image is not available
-    const imageSrc = anime.image && anime.image.trim() !== '' 
-      ? anime.image 
-      : `https://via.placeholder.com/300x400/6366f1/ffffff?text=${encodeURIComponent(anime.title)}`
+    // Use the image proxy utility to handle CORS issues
+    const imageSrc = getAnimeImage(anime.image, anime.title, 'medium')
     
     return (
       <Link to={getMediaUrl()} className="block group max-w-sm">
@@ -126,11 +125,7 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
   }
 
   if (variant === 'compact') {
-    const imageSrc = media.image && media.image.trim() !== '' 
-      ? media.image 
-      : media.type === 'anime'
-        ? `https://via.placeholder.com/300x400/6366f1/ffffff?text=${encodeURIComponent(media.title)}`
-        : `https://via.placeholder.com/300x200/ef4444/ffffff?text=${encodeURIComponent(media.title)}`
+    const imageSrc = getImageUrl(media.image, media.title, media.type, 'small')
     
     return (
       <Link to={getMediaUrl()} className="block group max-w-md">
@@ -176,11 +171,7 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
   }
 
   if (variant === 'large') {
-    const imageSrc = media.image && media.image.trim() !== '' 
-      ? media.image 
-      : media.type === 'anime'
-        ? `https://via.placeholder.com/500x700/6366f1/ffffff?text=${encodeURIComponent(media.title)}`
-        : `https://via.placeholder.com/500x300/ef4444/ffffff?text=${encodeURIComponent(media.title)}`
+    const imageSrc = getImageUrl(media.image, media.title, media.type, 'large')
     
     return (
       <Link to={getMediaUrl()} className="block group max-w-lg">
