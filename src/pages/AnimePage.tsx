@@ -7,10 +7,10 @@ import {
   clearSearchResults,
   fetchTopAnime
 } from '../store/slices/animeSlice'
-import { selectAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import MediaGrid from '../components/MediaGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import SearchBar from '../components/SearchBar'
+import AnimeContinueWatching from '../components/AnimeContinueWatching'
 import { type Anime, type AnimeEpisode, type AnimeMedia } from '../types/anime'
 
 const AnimePage = () => {
@@ -42,7 +42,6 @@ const AnimePage = () => {
     recommendationsError,
   } = useAppSelector((state) => state.anime)
   
-  const animeContinueWatching = useAppSelector(selectAnimeContinueWatching)
 
   const [activeTab, setActiveTab] = useState<'trending' | 'recent' | 'search'>('trending')
   const [searchQuery, setSearchQuery] = useState('')
@@ -171,17 +170,7 @@ const AnimePage = () => {
         </div>
 
         {/* Continue Watching Section */}
-        {animeContinueWatching.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              ▶️ Continue Watching Anime
-            </h2>
-            <MediaGrid
-              media={animeContinueWatching.slice(0, 8)}
-              loading={false}
-            />
-          </div>
-        )}
+        <AnimeContinueWatching limit={8} />
 
         {/* Top Anime Section (Jikan API) */}
         <div className="mb-8">

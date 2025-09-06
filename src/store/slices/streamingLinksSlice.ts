@@ -1,6 +1,35 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import { getAnimeEpisodeStreamingLinks } from '../../services/consumet'
 import { type StreamingLink } from '../../types/anime'
+
+// Mock streaming links function since Jikan API doesn't provide streaming links
+const getMockStreamingLinks = async (episodeId: string): Promise<{ sources: StreamingLink[], headers: any }> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // Return mock streaming links
+  return {
+    sources: [
+      {
+        url: `https://example.com/stream/${episodeId}/1080p.mp4`,
+        quality: '1080',
+        isM3U8: false
+      },
+      {
+        url: `https://example.com/stream/${episodeId}/720p.mp4`,
+        quality: '720',
+        isM3U8: false
+      },
+      {
+        url: `https://example.com/stream/${episodeId}/480p.mp4`,
+        quality: '480',
+        isM3U8: false
+      }
+    ],
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+  }
+}
 
 interface StreamingLinksState {
   streamingLinks: StreamingLink[]
@@ -23,7 +52,7 @@ export const fetchStreamingLinks = createAsyncThunk(
   'streamingLinks/fetchStreamingLinks',
   async (episodeId: string, { rejectWithValue }) => {
     try {
-      const response = await getAnimeEpisodeStreamingLinks(episodeId)
+      const response = await getMockStreamingLinks(episodeId)
       return {
         episodeId,
         ...response,

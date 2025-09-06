@@ -1,4 +1,4 @@
-// Anime types based on Consumet API and Jikan API
+// Anime types based on Jikan API
 export interface Anime {
   id: string
   title: string
@@ -58,7 +58,7 @@ export interface AnimeServer {
   url: string
 }
 
-// API response interface that matches Consumet API schema
+// API response interface for anime data
 export interface AnimeApiResponse {
   id: string
   title: string

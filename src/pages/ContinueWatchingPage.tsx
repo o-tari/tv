@@ -1,10 +1,13 @@
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectContinueWatching, clearContinueWatching } from '../store/slices/continueWatchingSlice'
+import { selectAnimeContinueWatching, clearAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import ContinueWatching from '../components/ContinueWatching'
+import AnimeContinueWatching from '../components/AnimeContinueWatching'
 
 const ContinueWatchingPage = () => {
   const dispatch = useAppDispatch()
   const continueWatchingVideos = useAppSelector(selectContinueWatching)
+  const animeContinueWatching = useAppSelector(selectAnimeContinueWatching)
 
   const handleClearAll = () => {
     if (window.confirm('Are you sure you want to clear all continue watching videos?')) {
@@ -12,7 +15,13 @@ const ContinueWatchingPage = () => {
     }
   }
 
-  if (continueWatchingVideos.length === 0) {
+  const handleClearAllAnime = () => {
+    if (window.confirm('Are you sure you want to clear all continue watching anime?')) {
+      dispatch(clearAnimeContinueWatching())
+    }
+  }
+
+  if (continueWatchingVideos.length === 0 && animeContinueWatching.length === 0) {
     return (
       <div className="min-h-screen bg-white dark:bg-youtube-dark">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -23,17 +32,25 @@ const ContinueWatchingPage = () => {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              No videos to continue watching
+              No content to continue watching
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-8">
-              Start watching some videos to see them here.
+              Start watching some videos or anime to see them here.
             </p>
-            <a
-              href="/"
-              className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
-            >
-              Browse Videos
-            </a>
+            <div className="flex gap-4 justify-center">
+              <a
+                href="/"
+                className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Browse Videos
+              </a>
+              <a
+                href="/anime"
+                className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Browse Anime
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -49,19 +66,43 @@ const ContinueWatchingPage = () => {
               Continue Watching
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              {continueWatchingVideos.length} video{continueWatchingVideos.length !== 1 ? 's' : ''} in your queue
+              {continueWatchingVideos.length + animeContinueWatching.length} item{(continueWatchingVideos.length + animeContinueWatching.length) !== 1 ? 's' : ''} in your queue
             </p>
           </div>
           
-          <button
-            onClick={handleClearAll}
-            className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            Clear All
-          </button>
+          <div className="flex gap-2">
+            {continueWatchingVideos.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Clear All Videos
+              </button>
+            )}
+            {animeContinueWatching.length > 0 && (
+              <button
+                onClick={handleClearAllAnime}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Clear All Anime
+              </button>
+            )}
+          </div>
         </div>
 
-        <ContinueWatching />
+        {/* Anime Continue Watching Section */}
+        {animeContinueWatching.length > 0 && (
+          <div className="mb-8">
+            <AnimeContinueWatching />
+          </div>
+        )}
+
+        {/* Video Continue Watching Section */}
+        {continueWatchingVideos.length > 0 && (
+          <div className="mb-8">
+            <ContinueWatching />
+          </div>
+        )}
       </div>
     </div>
   )

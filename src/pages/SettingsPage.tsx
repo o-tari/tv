@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectYoutubeApiKey, selectUseMockData, selectConsumetApiUrl, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, setYoutubeApiKey, setUseMockData, setConsumetApiUrl, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, resetSettings } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 
@@ -9,7 +9,6 @@ const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme()
   const youtubeApiKey = useAppSelector(selectYoutubeApiKey)
   const useMockData = useAppSelector(selectUseMockData)
-  const consumetApiUrl = useAppSelector(selectConsumetApiUrl)
   const regionCode = useAppSelector(selectRegionCode)
   const language = useAppSelector(selectLanguage)
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
@@ -17,7 +16,6 @@ const SettingsPage = () => {
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
-  const [localConsumetApiUrl, setLocalConsumetApiUrl] = useState(consumetApiUrl)
   const [localRegionCode, setLocalRegionCode] = useState(regionCode)
   const [localLanguage, setLocalLanguage] = useState(language)
   const [localTmdbApiKey, setLocalTmdbApiKey] = useState(tmdbApiKey)
@@ -28,7 +26,6 @@ const SettingsPage = () => {
   const handleSave = () => {
     dispatch(setYoutubeApiKey(localApiKey))
     dispatch(setUseMockData(localUseMockData))
-    dispatch(setConsumetApiUrl(localConsumetApiUrl))
     dispatch(setRegionCode(localRegionCode))
     dispatch(setLanguage(localLanguage))
     dispatch(setTmdbApiKey(localTmdbApiKey))
@@ -41,8 +38,7 @@ const SettingsPage = () => {
     if (window.confirm('Are you sure you want to reset all settings?')) {
       dispatch(resetSettings())
       setLocalApiKey('')
-      setLocalUseMockData(true)
-      setLocalConsumetApiUrl('')
+      setLocalUseMockData(false)
       setLocalRegionCode('US')
       setLocalLanguage('en')
       setLocalTmdbApiKey('')
@@ -53,7 +49,6 @@ const SettingsPage = () => {
   const handleCancel = () => {
     setLocalApiKey(youtubeApiKey)
     setLocalUseMockData(useMockData)
-    setLocalConsumetApiUrl(consumetApiUrl)
     setLocalRegionCode(regionCode)
     setLocalLanguage(language)
     setLocalTmdbApiKey(tmdbApiKey)
@@ -143,22 +138,6 @@ const SettingsPage = () => {
                 </p>
               </div>
 
-              {/* Consumet API URL */}
-              <div>
-                <label className="block text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Consumet API URL
-                </label>
-                <input
-                  type="url"
-                  value={localConsumetApiUrl}
-                  onChange={(e) => setLocalConsumetApiUrl(e.target.value)}
-                  placeholder="https://api.consumet.org (optional)"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-base"
-                />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  Base URL for the Consumet API (used for anime data). Leave empty to use default.
-                </p>
-              </div>
 
               {/* Region Code */}
               <div>

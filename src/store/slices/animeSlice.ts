@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { type Anime, type AnimeInfo, type AnimeEpisode } from '../../types/anime'
-import * as consumetService from '../../services/consumet'
 import * as jikanService from '../../services/jikan'
 import { requestCache } from '../../utils/requestCache'
 
@@ -115,24 +114,40 @@ export const fetchTopAiringAnime = createAsyncThunk(
 export const fetchRecentEpisodes = createAsyncThunk(
   'anime/fetchRecentEpisodes',
   async ({ page = 1, type = 1 }: { page?: number; type?: number }) => {
-    const response = await consumetService.getRecentEpisodes(page, type)
-    return response
+    // Use Jikan's top anime with airing filter for recent episodes
+    const response = await jikanService.getTopAnime(page, 25, 'tv', 'airing')
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map(anime => ({
+        id: anime.mal_id.toString(),
+        episodeId: anime.mal_id.toString(),
+        episodeNumber: 1, // Default episode number
+        title: anime.title,
+        image: anime.images.jpg.large_image_url || anime.images.jpg.image_url,
+        url: `/anime/${anime.mal_id}`,
+      }))
+    }
   }
 )
 
 export const searchAnime = createAsyncThunk(
   'anime/searchAnime',
   async ({ query, page = 1 }: { query: string; page?: number }) => {
-    const response = await consumetService.searchAnime(query, page)
-    return response
+    const response = await jikanService.searchAnime(query, page, 25)
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map(jikanService.convertJikanAnimeToAnime)
+    }
   }
 )
 
 export const fetchAnimeInfo = createAsyncThunk(
   'anime/fetchAnimeInfo',
   async (animeId: string) => {
-    const response = await consumetService.getAnimeInfo(animeId)
-    return response
+    const anime = await jikanService.getAnimeById(parseInt(animeId))
+    return jikanService.convertJikanAnimeToAnime(anime)
   }
 )
 
@@ -149,17 +164,6 @@ export const fetchTopAnime = createAsyncThunk(
   }
 )
 
-export const searchAnimeJikan = createAsyncThunk(
-  'anime/searchAnimeJikan',
-  async ({ query, page = 1 }: { query: string; page?: number }) => {
-    const response = await jikanService.searchAnime(query, page, 25)
-    return {
-      currentPage: response.pagination.current_page,
-      hasNextPage: response.pagination.has_next_page,
-      results: response.data.map(jikanService.convertJikanAnimeToAnime)
-    }
-  }
-)
 
 export const fetchAnimeRecommendations = createAsyncThunk(
   'anime/fetchAnimeRecommendations',
@@ -366,28 +370,6 @@ const animeSlice = createSlice({
         state.topAnimeError = action.error.message || 'Failed to fetch top anime'
       })
 
-    // Search anime (Jikan)
-    builder
-      .addCase(searchAnimeJikan.pending, (state) => {
-        state.searchLoading = true
-        state.searchError = null
-      })
-      .addCase(searchAnimeJikan.fulfilled, (state, action) => {
-        state.searchLoading = false
-        if (action.meta.arg?.page && action.meta.arg.page > 1) {
-          // Load more
-          state.searchResults = [...state.searchResults, ...action.payload.results]
-        } else {
-          // Initial load
-          state.searchResults = action.payload.results
-        }
-        state.searchNextPage = action.payload.currentPage + 1
-        state.searchHasNextPage = action.payload.hasNextPage
-      })
-      .addCase(searchAnimeJikan.rejected, (state, action) => {
-        state.searchLoading = false
-        state.searchError = action.error.message || 'Failed to search anime'
-      })
 
     // Anime recommendations (Jikan)
     builder

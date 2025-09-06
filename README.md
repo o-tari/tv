@@ -60,8 +60,7 @@ The app uses a settings modal for all API settings. No environment variables are
 1. Click the settings icon in the header
 2. Enter your YouTube API key (get one from [Google Cloud Console](https://console.cloud.google.com/))
 3. Configure region code (e.g., US, GB, JP) and language (e.g., en, es, fr)
-4. Set the Consumet API URL for anime data (default: https://api.consumet.org)
-5. Save your settings
+4. Save your settings
 
 All settings are stored in your browser's local storage and persist between sessions.
 

@@ -4,7 +4,6 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 interface SettingsState {
   youtubeApiKey: string
   useMockData: boolean
-  consumetApiUrl: string
   regionCode: string
   language: string
   tmdbApiKey: string
@@ -31,7 +30,6 @@ const saveToStorage = (key: string, value: any) => {
 const initialState: SettingsState = {
   youtubeApiKey: loadFromStorage('youtubeApiKey', ''),
   useMockData: loadFromStorage('useMockData', false), // Default to false - user must explicitly enable mock data
-  consumetApiUrl: loadFromStorage('consumetApiUrl', ''),
   regionCode: loadFromStorage('regionCode', 'US'),
   language: loadFromStorage('language', 'en'),
   tmdbApiKey: loadFromStorage('tmdbApiKey', ''),
@@ -49,10 +47,6 @@ const settingsSlice = createSlice({
     setUseMockData: (state, action: PayloadAction<boolean>) => {
       state.useMockData = action.payload
       saveToStorage('useMockData', action.payload)
-    },
-    setConsumetApiUrl: (state, action: PayloadAction<string>) => {
-      state.consumetApiUrl = action.payload
-      saveToStorage('consumetApiUrl', action.payload)
     },
     setRegionCode: (state, action: PayloadAction<string>) => {
       state.regionCode = action.payload
@@ -73,14 +67,12 @@ const settingsSlice = createSlice({
     resetSettings: (state) => {
       state.youtubeApiKey = ''
       state.useMockData = false
-      state.consumetApiUrl = ''
       state.regionCode = 'US'
       state.language = 'en'
       state.tmdbApiKey = ''
       state.showUpcomingReleases = true
       saveToStorage('youtubeApiKey', '')
       saveToStorage('useMockData', false)
-      saveToStorage('consumetApiUrl', '')
       saveToStorage('regionCode', 'US')
       saveToStorage('language', 'en')
       saveToStorage('tmdbApiKey', '')
@@ -92,7 +84,6 @@ const settingsSlice = createSlice({
 export const {
   setYoutubeApiKey,
   setUseMockData,
-  setConsumetApiUrl,
   setRegionCode,
   setLanguage,
   setTmdbApiKey,
@@ -103,7 +94,6 @@ export const {
 // Selectors
 export const selectYoutubeApiKey = (state: { settings: SettingsState }) => state.settings.youtubeApiKey
 export const selectUseMockData = (state: { settings: SettingsState }) => state.settings.useMockData
-export const selectConsumetApiUrl = (state: { settings: SettingsState }) => state.settings.consumetApiUrl
 export const selectRegionCode = (state: { settings: SettingsState }) => state.settings.regionCode
 export const selectLanguage = (state: { settings: SettingsState }) => state.settings.language
 export const selectTmdbApiKey = (state: { settings: SettingsState }) => state.settings.tmdbApiKey
