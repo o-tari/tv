@@ -127,7 +127,6 @@ const WatchPage = () => {
                 videos={relatedVideos}
                 loading={relatedLoading}
                 variant="compact"
-                columns={1}
               />
             )}
           </div>

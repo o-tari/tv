@@ -6,25 +6,23 @@ interface VideoGridProps {
   videos: Video[]
   loading?: boolean
   variant?: 'default' | 'compact' | 'large'
-  columns?: number
 }
 
 const VideoGrid = ({ 
   videos, 
   loading = false, 
-  variant = 'default',
-  columns = 4 
+  variant = 'default'
 }: VideoGridProps) => {
   const getGridCols = () => {
-    switch (columns) {
-      case 1: return 'grid-cols-1'
-      case 2: return 'grid-cols-2'
-      case 3: return 'grid-cols-3'
-      case 4: return 'grid-cols-4'
-      case 5: return 'grid-cols-5'
-      case 6: return 'grid-cols-6'
-      default: return 'grid-cols-4'
+    // Use responsive grid classes that adapt to screen size
+    if (variant === 'compact') {
+      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
     }
+    if (variant === 'large') {
+      return 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'
+    }
+    // Default variant - more responsive
+    return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'
   }
 
   const getGap = () => {

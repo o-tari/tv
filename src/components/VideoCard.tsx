@@ -34,7 +34,7 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
 
   if (variant === 'compact') {
     return (
-      <Link to={`/watch/${video.id}`} className="block group">
+      <Link to={`/watch/${video.id}`} className="block group max-w-md">
         <div className="flex space-x-3">
           <div className="relative flex-shrink-0">
             <LazyImage
@@ -68,7 +68,7 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
 
   if (variant === 'large') {
     return (
-      <Link to={`/watch/${video.id}`} className="block group">
+      <Link to={`/watch/${video.id}`} className="block group max-w-lg">
         <div className="space-y-3">
           <div className="relative">
             <LazyImage
@@ -108,7 +108,7 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
 
   // Default variant
   return (
-    <Link to={`/watch/${video.id}`} className="block group">
+    <Link to={`/watch/${video.id}`} className="block group max-w-sm">
     <div className="space-y-3">
       <div className="relative">
         <LazyImage
