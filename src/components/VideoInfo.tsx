@@ -2,17 +2,21 @@ import { useState } from 'react'
 import { type Video } from '../types/youtube'
 import { formatViewCount, formatLikeCount } from '../utils/formatNumber'
 import { sanitizeHTML } from '../utils/sanitizeHTML'
+import { useAppSelector, useAppDispatch } from '../store'
+import { selectIsSubscribed, toggleSubscription } from '../store/slices/subscriptionsSlice'
 
 interface VideoInfoProps {
   video: Video
 }
 
 const VideoInfo = ({ video }: VideoInfoProps) => {
+  const dispatch = useAppDispatch()
+  const isSubscribed = useAppSelector(selectIsSubscribed(video.channelId))
+  
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [liked, setLiked] = useState(false)
   const [disliked, setDisliked] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [subscribed, setSubscribed] = useState(false)
 
   const getTimeAgo = (publishedAt: string) => {
     const now = new Date()
@@ -50,7 +54,17 @@ const VideoInfo = ({ video }: VideoInfoProps) => {
   }
 
   const handleSubscribe = () => {
-    setSubscribed(!subscribed)
+    // Create a channel object from video data for subscription
+    const channel = {
+      id: video.channelId,
+      title: video.channelTitle,
+      description: '', // Not available in video data
+      thumbnail: `https://ui-avatars.com/api/?name=${encodeURIComponent(video.channelTitle)}&background=random`,
+      subscriberCount: '0', // Not available in video data
+      videoCount: '0', // Not available in video data
+      viewCount: '0', // Not available in video data
+    }
+    dispatch(toggleSubscription(channel))
   }
 
   return (
@@ -142,12 +156,12 @@ const VideoInfo = ({ video }: VideoInfoProps) => {
           <button
             onClick={handleSubscribe}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              subscribed
+              isSubscribed
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
           >
-            {subscribed ? 'Subscribed' : 'Subscribe'}
+            {isSubscribed ? 'Subscribed' : 'Subscribe'}
           </button>
         </div>
       </div>
