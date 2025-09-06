@@ -1,6 +1,6 @@
-# YouTube Clone
+# TV App
 
-A production-ready YouTube-style web application built with React, TypeScript, and the YouTube Data API v3.
+A production-ready TV-style web application built with React, TypeScript, and the YouTube Data API v3.
 
 ## Features
 

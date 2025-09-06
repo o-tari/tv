@@ -24,7 +24,7 @@ const MockDataNotification = () => {
         </div>
         <div className="ml-3">
           <p className="text-sm text-yellow-700 dark:text-yellow-300">
-            <strong>Demo Mode:</strong> This app is using mock data. To use real YouTube data, 
+            <strong>Demo Mode:</strong> This app is using mock data. To use real TV data, 
             add your YouTube API key to the <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">.env</code> file.
           </p>
         </div>

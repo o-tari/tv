@@ -48,7 +48,7 @@ const Sidebar = () => {
                 </svg>
               </div>
               {sidebarOpen && (
-                <span className="text-xl font-bold text-gray-900 dark:text-white">YouTube</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-white">TV</span>
               )}
             </Link>
             

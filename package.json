@@ -1,8 +1,8 @@
 {
-  "name": "youtube-clone",
+  "name": "tv-app",
   "private": true,
   "version": "1.0.0",
-  "description": "A production-ready YouTube clone built with React, TypeScript, and Tailwind CSS",
+  "description": "A production-ready TV app built with React, TypeScript, and Tailwind CSS",
   "type": "module",
   "scripts": {
     "dev": "vite",

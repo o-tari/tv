@@ -56,7 +56,7 @@ const HomePage = () => {
           Trending
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          The most popular videos on YouTube right now
+          The most popular videos on TV right now
         </p>
       </div>
 
