@@ -7,6 +7,8 @@ interface SettingsState {
   consumetApiUrl: string
   regionCode: string
   language: string
+  tmdbApiKey: string
+  showUpcomingReleases: boolean
 }
 
 const loadFromStorage = (key: string, defaultValue: any) => {
@@ -32,6 +34,8 @@ const initialState: SettingsState = {
   consumetApiUrl: loadFromStorage('consumetApiUrl', ''),
   regionCode: loadFromStorage('regionCode', 'US'),
   language: loadFromStorage('language', 'en'),
+  tmdbApiKey: loadFromStorage('tmdbApiKey', ''),
+  showUpcomingReleases: loadFromStorage('showUpcomingReleases', true),
 }
 
 const settingsSlice = createSlice({
@@ -58,17 +62,29 @@ const settingsSlice = createSlice({
       state.language = action.payload
       saveToStorage('language', action.payload)
     },
+    setTmdbApiKey: (state, action: PayloadAction<string>) => {
+      state.tmdbApiKey = action.payload
+      saveToStorage('tmdbApiKey', action.payload)
+    },
+    setShowUpcomingReleases: (state, action: PayloadAction<boolean>) => {
+      state.showUpcomingReleases = action.payload
+      saveToStorage('showUpcomingReleases', action.payload)
+    },
     resetSettings: (state) => {
       state.youtubeApiKey = ''
       state.useMockData = false
       state.consumetApiUrl = ''
       state.regionCode = 'US'
       state.language = 'en'
+      state.tmdbApiKey = ''
+      state.showUpcomingReleases = true
       saveToStorage('youtubeApiKey', '')
       saveToStorage('useMockData', false)
       saveToStorage('consumetApiUrl', '')
       saveToStorage('regionCode', 'US')
       saveToStorage('language', 'en')
+      saveToStorage('tmdbApiKey', '')
+      saveToStorage('showUpcomingReleases', true)
     },
   },
 })
@@ -79,6 +95,8 @@ export const {
   setConsumetApiUrl,
   setRegionCode,
   setLanguage,
+  setTmdbApiKey,
+  setShowUpcomingReleases,
   resetSettings,
 } = settingsSlice.actions
 
@@ -88,5 +106,7 @@ export const selectUseMockData = (state: { settings: SettingsState }) => state.s
 export const selectConsumetApiUrl = (state: { settings: SettingsState }) => state.settings.consumetApiUrl
 export const selectRegionCode = (state: { settings: SettingsState }) => state.settings.regionCode
 export const selectLanguage = (state: { settings: SettingsState }) => state.settings.language
+export const selectTmdbApiKey = (state: { settings: SettingsState }) => state.settings.tmdbApiKey
+export const selectShowUpcomingReleases = (state: { settings: SettingsState }) => state.settings.showUpcomingReleases
 
 export default settingsSlice.reducer

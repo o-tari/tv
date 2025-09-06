@@ -1,17 +1,24 @@
 export interface Torrent {
-  id: string
+  id?: string
   title: string
   provider: string
   time: string
   size: string
   seeds: number
   peers: number
-  magnet: string
-  desc: string
-  category: string
+  magnet?: string
+  desc?: string
+  category?: string
   subcategory?: string
-  url: string
+  url?: string
   infoHash?: string
+  // Additional fields from torrent-search-api
+  date?: string
+  link?: string
+  quality?: string
+  language?: string
+  uploader?: string
+  verified?: boolean
 }
 
 export interface TorrentSearchResult {
@@ -46,4 +53,39 @@ export interface TorrentDetails {
     text: string
     date: string
   }>
+}
+
+// Types for torrent-search-api integration
+export interface TorrentSearchApiProvider {
+  name: string
+  public: boolean
+  categories: string[]
+}
+
+export interface TorrentSearchApiConfig {
+  providers: string[]
+  categories: string[]
+  defaultLimit: number
+  enablePublicProviders: boolean
+}
+
+export interface TorrentSearchApiResponse {
+  title: string
+  provider: string
+  time: string
+  size: string
+  seeds: number
+  peers: number
+  magnet?: string
+  desc?: string
+  category?: string
+  subcategory?: string
+  url?: string
+  infoHash?: string
+  date?: string
+  link?: string
+  quality?: string
+  language?: string
+  uploader?: string
+  verified?: boolean
 }

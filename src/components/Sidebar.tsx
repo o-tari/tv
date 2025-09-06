@@ -11,6 +11,7 @@ const Sidebar = () => {
 
   const navigationItems = [
     { label: 'YouTube', href: '/youtube', icon: '📺' },
+    { label: 'Movies & TV', href: '/movies-tv', icon: '🎬' },
     { label: 'Anime', href: '/anime', icon: '🎌' },
     { label: 'Torrent Search', href: '/torrents', icon: '🔍' },
   ]

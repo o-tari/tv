@@ -7,6 +7,9 @@ import {
 } from '../services/torrentSearch'
 import { type Torrent, type TorrentSearchParams } from '../types/torrent'
 import LoadingSpinner from '../components/LoadingSpinner'
+import TorrentProviderManager from '../components/TorrentProviderManager'
+import { useAppSelector } from '../store'
+import { selectUseMockData } from '../store/slices/settingsSlice'
 
 const TorrentSearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -17,12 +20,19 @@ const TorrentSearchPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [providers, setProviders] = useState<string[]>([])
   const [categories] = useState(getPopularCategories())
+  const [showProviderManager, setShowProviderManager] = useState(false)
+  const useMockData = useAppSelector(selectUseMockData)
 
   useEffect(() => {
     // Load active providers
     const activeProviders = getActiveProviders()
     setProviders(activeProviders.map(p => p.name))
   }, [])
+
+  const refreshProviders = () => {
+    const activeProviders = getActiveProviders()
+    setProviders(activeProviders.map(p => p.name))
+  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -87,18 +97,30 @@ const TorrentSearchPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Torrent Search
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Search torrents across multiple providers
-          </p>
-          <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Demo Mode:</strong> This is a demonstration using mock data. In a production app, 
-              you would integrate with actual torrent search APIs or implement web scraping for real torrent sites.
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Torrent Search
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Search torrents across multiple providers
+              </p>
+            </div>
+            <button
+              onClick={() => setShowProviderManager(true)}
+              className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              Manage Providers
+            </button>
           </div>
+          {useMockData && (
+            <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>Demo Mode:</strong> This is a demonstration using mock data. In a production app, 
+                you would integrate with actual torrent search APIs or implement web scraping for real torrent sites.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Search Form */}
@@ -271,8 +293,21 @@ const TorrentSearchPage = () => {
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No torrents found</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Try adjusting your search terms or category.
+              {useMockData 
+                ? 'Try adjusting your search terms or category.'
+                : 'Torrent search requires mock data to be enabled in settings. Please enable mock data mode to search for torrents.'
+              }
             </p>
+            {!useMockData && (
+              <div className="mt-4">
+                <a
+                  href="/settings"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Open Settings
+                </a>
+              </div>
+            )}
           </div>
         )}
 
@@ -286,6 +321,30 @@ const TorrentSearchPage = () => {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Enter a search term above to find torrents across multiple providers.
             </p>
+          </div>
+        )}
+
+        {/* Provider Manager Modal */}
+        {showProviderManager && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Torrent Provider Manager
+                  </h2>
+                  <button
+                    onClick={() => setShowProviderManager(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <TorrentProviderManager onProviderChange={refreshProviders} />
+              </div>
+            </div>
           </div>
         )}
       </div>
