@@ -18,6 +18,7 @@ const WatchLaterPage = lazy(() => import('../pages/WatchLaterPage'))
 const ContinueWatchingPage = lazy(() => import('../pages/ContinueWatchingPage'))
 const AnimePage = lazy(() => import('../pages/AnimePage'))
 const TorrentSearchPage = lazy(() => import('../pages/TorrentSearchPage'))
+const SettingsPage = lazy(() => import('../pages/SettingsPage'))
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/watch-later" element={<WatchLaterPage />} />
                 <Route path="/continue-watching" element={<ContinueWatchingPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>

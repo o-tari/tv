@@ -1,16 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
 import SearchBar from './SearchBar'
-import Settings from './Settings'
 
 const Sidebar = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { sidebarOpen } = useAppSelector((state) => state.ui)
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navigationItems = [
     { label: 'YouTube', href: '/youtube', icon: '📺' },
@@ -23,6 +20,10 @@ const Sidebar = () => {
       return location.pathname === '/youtube' || location.pathname === '/'
     }
     return location.pathname.startsWith(href)
+  }
+
+  const isSettingsActive = () => {
+    return location.pathname === '/settings'
   }
 
   const handleSearch = (query: string) => {
@@ -119,24 +120,22 @@ const Sidebar = () => {
           )}
         </div>
 
+        {/* Settings Button - Bottom of Sidebar */}
+        <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
+          <Link
+            to="/settings"
+            className={`flex items-center w-full px-2 py-2 text-sm font-medium transition-colors rounded ${
+              isSettingsActive()
+                ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            } ${sidebarOpen ? '' : 'justify-center'}`}
+          >
+            <span className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-lg`}>⚙️</span>
+            {sidebarOpen && <span>Settings</span>}
+          </Link>
+        </div>
+
       </nav>
-
-      {/* Settings Button - Bottom of Sidebar */}
-      <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="flex items-center w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-        >
-          <span className="mr-3">⚙️</span>
-          Settings
-        </button>
-      </div>
-
-      {/* Settings Modal */}
-      <Settings 
-        isOpen={settingsOpen} 
-        onClose={() => setSettingsOpen(false)} 
-      />
     </aside>
   )
 }
