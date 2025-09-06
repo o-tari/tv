@@ -8,6 +8,7 @@ import {
 } from './mockData'
 import { type Video, type Channel, type Comment, type SearchFilters, type SearchResponse } from '../types/youtube'
 import { createApiInstance } from '../utils/apiConfig'
+import { requestCache } from '../utils/requestCache'
 
 
 // Create API instance with current configuration
@@ -206,17 +207,17 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
     return mockSearchResults
   }
 
-  try {
-    const params: any = {
-      part: 'snippet,statistics,contentDetails',
-      chart: 'mostPopular',
-      maxResults: 25,
-    }
+  const params: any = {
+    part: 'snippet,statistics,contentDetails',
+    chart: 'mostPopular',
+    maxResults: 25,
+  }
 
-    if (pageToken) {
-      params.pageToken = pageToken
-    }
+  if (pageToken) {
+    params.pageToken = pageToken
+  }
 
+  return requestCache.get('/videos', params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/videos', { params })
     
@@ -237,10 +238,7 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
       nextPageToken: response.data.nextPageToken,
       totalResults: response.data.pageInfo.totalResults,
     }
-  } catch (error) {
-    handleApiError(error)
-    throw error // This will never be reached, but satisfies TypeScript
-  }
+  })
 }
 
 // Get channel details

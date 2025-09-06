@@ -18,12 +18,10 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
   const [showApiKey, setShowApiKey] = useState(false)
 
   const handleSave = () => {
-    console.log('Saving settings:', { localApiKey, localUseMockData })
     dispatch(setYoutubeApiKey(localApiKey))
     dispatch(setUseMockData(localUseMockData))
     // Clear all cached data so it will be refetched with new settings
     dispatch(clearAllData())
-    console.log('Settings saved successfully, data cleared')
     onClose()
   }
 

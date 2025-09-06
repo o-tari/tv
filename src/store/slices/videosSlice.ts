@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { type Video, type Channel, type Comment } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
+import { requestCache } from '../../utils/requestCache'
 
 interface VideosState {
   // Home page
@@ -192,6 +193,9 @@ const videosSlice = createSlice({
       state.channelVideosLoading = false
       state.channelVideosError = null
       state.channelVideosNextPageToken = null
+      
+      // Clear request cache to prevent using cached API responses
+      requestCache.clear()
     },
   },
   extraReducers: (builder) => {

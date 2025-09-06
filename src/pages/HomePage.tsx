@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchTrendingVideos } from '../store/slices/videosSlice'
@@ -10,6 +10,7 @@ import WatchLater from '../components/WatchLater'
 const HomePage = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const hasInitialized = useRef(false)
   const {
     trendingVideos,
     trendingLoading,
@@ -18,10 +19,18 @@ const HomePage = () => {
   } = useAppSelector((state) => state.videos)
 
   useEffect(() => {
-    if (trendingVideos.length === 0) {
+    if (trendingVideos.length === 0 && !hasInitialized.current && !trendingLoading) {
+      hasInitialized.current = true
       dispatch(fetchTrendingVideos())
     }
-  }, [dispatch, trendingVideos.length])
+  }, [dispatch, trendingVideos.length, trendingLoading])
+
+  // Reset initialization flag when data is cleared
+  useEffect(() => {
+    if (trendingVideos.length === 0) {
+      hasInitialized.current = false
+    }
+  }, [trendingVideos.length])
 
   const loadMore = useCallback(() => {
     if (trendingNextPageToken && !trendingLoading) {
