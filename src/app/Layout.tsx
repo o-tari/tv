@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import MockDataNotification from '../components/MockDataNotification'
+import Settings from '../components/Settings'
 import { useAppSelector } from '../store'
 
 interface LayoutProps {
@@ -9,6 +10,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { sidebarOpen } = useAppSelector((state) => state.ui)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-white dark:bg-youtube-dark text-gray-900 dark:text-white">
@@ -19,10 +21,16 @@ const Layout = ({ children }: LayoutProps) => {
             sidebarOpen ? 'ml-64' : 'ml-16'
           }`}
         >
-          <MockDataNotification />
+          <MockDataNotification onOpenSettings={() => setSettingsOpen(true)} />
           {children}
         </main>
       </div>
+
+      {/* Settings Modal */}
+      <Settings 
+        isOpen={settingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+      />
     </div>
   )
 }

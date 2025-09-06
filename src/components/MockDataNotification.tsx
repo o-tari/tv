@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react'
+import { useAppSelector } from '../store'
+import { selectUseMockData } from '../store/slices/settingsSlice'
 
-const MockDataNotification = () => {
+interface MockDataNotificationProps {
+  onOpenSettings?: () => void
+}
+
+const MockDataNotification = ({ onOpenSettings }: MockDataNotificationProps) => {
   const [show, setShow] = useState(false)
+  const useMockData = useAppSelector(selectUseMockData)
 
   useEffect(() => {
     const USE_MOCK_DATA = !import.meta.env.VITE_YT_API_KEY || 
       import.meta.env.VITE_YT_API_KEY === 'your_youtube_api_key_here'
     
-    if (USE_MOCK_DATA) {
+    if (USE_MOCK_DATA || useMockData) {
       setShow(true)
     }
-  }, [])
+  }, [useMockData])
 
   if (!show) return null
 
@@ -22,11 +29,21 @@ const MockDataNotification = () => {
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
         </div>
-        <div className="ml-3">
+        <div className="ml-3 flex-1">
           <p className="text-sm text-yellow-700 dark:text-yellow-300">
             <strong>Demo Mode:</strong> This app is using mock data. To use real TV data, 
             add your YouTube API key to the <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">.env</code> file.
           </p>
+          {onOpenSettings && (
+            <div className="mt-2">
+              <button
+                onClick={onOpenSettings}
+                className="text-sm text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 font-medium underline"
+              >
+                Configure API key in settings →
+              </button>
+            </div>
+          )}
         </div>
         <div className="ml-auto pl-3">
           <button
