@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from 'react'
+import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import MockDataNotification from '../components/MockDataNotification'
 import Settings from '../components/Settings'
@@ -14,7 +15,8 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-youtube-dark text-gray-900 dark:text-white">
-      <div className="flex">
+      <Header />
+      <div className="flex pt-14">
         <Sidebar />
         <main
           className={`flex-1 transition-all duration-300 ${
