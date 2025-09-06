@@ -1,4 +1,4 @@
-// import { Link } from 'react-router-dom' // Removed unused import
+import { useNavigate } from 'react-router-dom'
 import { type Channel } from '../types/youtube'
 import { formatSubscriberCount } from '../utils/formatNumber'
 import { useAppSelector, useAppDispatch } from '../store'
@@ -19,6 +19,7 @@ const ChannelCard = ({
   onClick,
   isSelected = false 
 }: ChannelCardProps) => {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const isSubscribed = useAppSelector(selectIsSubscribed(channel.id))
 
@@ -31,6 +32,9 @@ const ChannelCard = ({
   const handleCardClick = () => {
     if (onClick) {
       onClick()
+    } else {
+      // Navigate to subscriptions page with this channel selected
+      navigate(`/subscriptions?channel=${channel.id}`)
     }
   }
   if (variant === 'compact') {

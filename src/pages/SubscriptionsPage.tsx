@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectSubscriptions } from '../store/slices/subscriptionsSlice'
 import { fetchChannelVideos } from '../store/slices/videosSlice'
@@ -11,9 +12,18 @@ const SubscriptionsPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const subscriptions = useAppSelector(selectSubscriptions)
   const { channelVideosLoading, channelVideosError } = useAppSelector((state) => state.videos)
+  const [searchParams] = useSearchParams()
   
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null)
   const [allVideos, setAllVideos] = useState<Video[]>([])
+
+  // Check for channel ID in URL parameters
+  useEffect(() => {
+    const channelId = searchParams.get('channel')
+    if (channelId) {
+      setSelectedChannel(channelId)
+    }
+  }, [searchParams])
 
   // Load videos from all subscribed channels on mount
   useEffect(() => {
@@ -47,7 +57,20 @@ const SubscriptionsPage: React.FC = () => {
   }
 
   const handleChannelSelect = (channelId: string) => {
-    setSelectedChannel(selectedChannel === channelId ? null : channelId)
+    const newSelectedChannel = selectedChannel === channelId ? null : channelId
+    setSelectedChannel(newSelectedChannel)
+    
+    // Update URL to reflect the selected channel
+    const newSearchParams = new URLSearchParams(searchParams)
+    if (newSelectedChannel) {
+      newSearchParams.set('channel', newSelectedChannel)
+    } else {
+      newSearchParams.delete('channel')
+    }
+    
+    // Update URL without causing a page reload
+    const newUrl = `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`
+    window.history.replaceState({}, '', newUrl)
   }
 
   const getChannelVideos = (channelId: string) => {
