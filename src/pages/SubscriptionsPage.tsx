@@ -18,6 +18,7 @@ const SubscriptionsPage: React.FC = () => {
   const [allVideos, setAllVideos] = useState<Video[]>([])
   const [selectedChannelVideos, setSelectedChannelVideos] = useState<Video[]>([])
   const [selectedChannelTitle, setSelectedChannelTitle] = useState<string>('')
+  const [selectedChannelError, setSelectedChannelError] = useState<string | null>(null)
 
   // Check for channel ID in URL parameters
   useEffect(() => {
@@ -62,6 +63,7 @@ const SubscriptionsPage: React.FC = () => {
 
   const loadChannelVideos = async (channelId: string) => {
     try {
+      setSelectedChannelError(null) // Clear any previous errors
       const result = await dispatch(fetchChannelVideos({ channelId }))
       if (result.payload && typeof result.payload === 'object' && 'items' in result.payload) {
         const payload = result.payload as { items: Video[] }
@@ -79,7 +81,9 @@ const SubscriptionsPage: React.FC = () => {
     } catch (error) {
       console.error('Error loading channel videos:', error)
       setSelectedChannelVideos([])
-      setSelectedChannelTitle('Unknown Channel')
+      setSelectedChannelTitle('Error loading channel')
+      // Set a flag to show API error message
+      setSelectedChannelError(error instanceof Error ? error.message : 'Failed to load channel videos')
     }
   }
 
@@ -184,6 +188,34 @@ const SubscriptionsPage: React.FC = () => {
               </h2>
               {channelVideosLoading ? (
                 <LoadingSpinner />
+              ) : selectedChannelError ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    API Error
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {selectedChannelError}
+                  </p>
+                  <div className="space-x-4">
+                    <button
+                      onClick={() => loadChannelVideos(selectedChannel!)}
+                      className="btn-primary"
+                    >
+                      Try Again
+                    </button>
+                    <button
+                      onClick={() => setSelectedChannel(null)}
+                      className="btn-secondary"
+                    >
+                      View All Channels
+                    </button>
+                  </div>
+                </div>
               ) : selectedChannelVideos.length > 0 ? (
                 <VideoGrid
                   videos={selectedChannelVideos}
