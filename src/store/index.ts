@@ -9,6 +9,8 @@ import continueWatchingSlice from './slices/continueWatchingSlice'
 import settingsSlice from './slices/settingsSlice'
 import animeSlice from './slices/animeSlice'
 import animeContinueWatchingSlice from './slices/animeContinueWatchingSlice'
+import tmdbContinueWatchingSlice from './slices/tmdbContinueWatchingSlice'
+import tmdbWatchLaterSlice from './slices/tmdbWatchLaterSlice'
 import streamingLinksSlice from './slices/streamingLinksSlice'
 
 export const store = configureStore({
@@ -22,6 +24,8 @@ export const store = configureStore({
     settings: settingsSlice,
     anime: animeSlice,
     animeContinueWatching: animeContinueWatchingSlice,
+    tmdbContinueWatching: tmdbContinueWatchingSlice,
+    tmdbWatchLater: tmdbWatchLaterSlice,
     streamingLinks: streamingLinksSlice,
   },
   middleware: (getDefaultMiddleware) =>

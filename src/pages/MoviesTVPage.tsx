@@ -4,6 +4,8 @@ import { selectTmdbApiKey, selectShowUpcomingReleases } from '../store/slices/se
 import { getTMDBService } from '../services/tmdb'
 import type { TMDBMovie, TMDBTVShow, TMDBContent } from '../types/tmdb'
 import TMDBMediaCard from '../components/TMDBMediaCard'
+import TMDBContinueWatching from '../components/TMDBContinueWatching'
+import TMDBWatchLater from '../components/TMDBWatchLater'
 import SearchBar from '../components/SearchBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -243,6 +245,7 @@ const MoviesTVPage = () => {
               type={type}
               rating={item.vote_average}
               overview={item.overview}
+              content={item}
             />
           ))}
         </div>
@@ -281,28 +284,49 @@ const MoviesTVPage = () => {
       }
 
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-          {searchResults.map((item) => (
-            <TMDBMediaCard
-              key={`${item.id}-${'title' in item ? 'movie' : 'tv'}`}
-              id={item.id}
-              title={'title' in item ? item.title : item.name}
-              thumbnail={item.poster_path}
-              duration={null}
-              viewCount={item.vote_count}
-              publishedAt={'release_date' in item ? item.release_date : item.first_air_date}
-              channelTitle={null}
-              type={'title' in item ? 'movie' : 'tv'}
-              rating={item.vote_average}
-              overview={item.overview}
-            />
-          ))}
+        <div className="space-y-8">
+          {/* Continue Watching Section */}
+          <TMDBContinueWatching limit={10} />
+          
+          {/* Watch Later Section */}
+          <TMDBWatchLater limit={10} />
+          
+          {/* Search Results */}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              Search Results for "{searchQuery}"
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {searchResults.map((item) => (
+                <TMDBMediaCard
+                  key={`${item.id}-${'title' in item ? 'movie' : 'tv'}`}
+                  id={item.id}
+                  title={'title' in item ? item.title : item.name}
+                  thumbnail={item.poster_path}
+                  duration={null}
+                  viewCount={item.vote_count}
+                  publishedAt={'release_date' in item ? item.release_date : item.first_air_date}
+                  channelTitle={null}
+                  type={'title' in item ? 'movie' : 'tv'}
+                  rating={item.vote_average}
+                  overview={item.overview}
+                  content={item}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       )
     }
 
     return (
       <div className="space-y-12">
+        {/* Continue Watching Section */}
+        <TMDBContinueWatching limit={10} />
+        
+        {/* Watch Later Section */}
+        <TMDBWatchLater limit={10} />
+        
         {/* TV Recommendations - First section after search */}
         {renderSection('Recommended TV Shows', 'tvRecommendations', 'tv')}
 

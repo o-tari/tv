@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom'
+import { useAppDispatch, useAppSelector } from '../store'
+import { addMovieToContinueWatching, addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
+import { addToWatchLater, removeFromWatchLater, selectIsInWatchLater } from '../store/slices/tmdbWatchLaterSlice'
 import { formatViewCount } from '../utils/formatNumber'
 import LazyImage from './LazyImage'
+import type { TMDBContent } from '../types/tmdb'
 
 interface TMDBMediaCardProps {
   id: number
@@ -14,6 +18,7 @@ interface TMDBMediaCardProps {
   rating?: number
   overview?: string
   variant?: 'default' | 'compact' | 'large'
+  content?: TMDBContent // Full content object for continue watching
 }
 
 const TMDBMediaCard = ({
@@ -27,8 +32,11 @@ const TMDBMediaCard = ({
   type,
   rating,
   overview,
-  variant = 'default'
+  variant = 'default',
+  content
 }: TMDBMediaCardProps) => {
+  const dispatch = useAppDispatch()
+  const isInWatchLater = useAppSelector(selectIsInWatchLater(id, type))
   const getTimeAgo = (publishedAt: string) => {
     const now = new Date()
     const published = new Date(publishedAt)
@@ -60,6 +68,29 @@ const TMDBMediaCard = ({
     return `/tmdb-watch/${type}/${id}`
   }
 
+  const handleClick = () => {
+    if (content) {
+      if (type === 'movie') {
+        dispatch(addMovieToContinueWatching({ content, type: 'movie' }))
+      } else if (type === 'tv') {
+        dispatch(addTVToContinueWatching({ content, type: 'tv' }))
+      }
+    }
+  }
+
+  const handleWatchLaterClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (content) {
+      if (isInWatchLater) {
+        dispatch(removeFromWatchLater(`${type}-${id}`))
+      } else {
+        dispatch(addToWatchLater({ content, type }))
+      }
+    }
+  }
+
   const getImageSrc = () => {
     if (thumbnail) {
       return `https://image.tmdb.org/t/p/w500${thumbnail}`
@@ -68,7 +99,7 @@ const TMDBMediaCard = ({
   }
 
   const renderDefaultCard = () => (
-    <Link to={getMediaUrl()} className="block group max-w-sm">
+    <Link to={getMediaUrl()} onClick={handleClick} className="block group max-w-sm">
       <div className="space-y-3">
         <div className="relative">
           <LazyImage
@@ -88,6 +119,22 @@ const TMDBMediaCard = ({
               {rating.toFixed(1)}
             </span>
           )}
+          {/* Watch Later Button - appears on hover */}
+          <button
+            onClick={handleWatchLaterClick}
+            className="absolute top-2 left-2 bg-black bg-opacity-80 hover:bg-opacity-90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            title={isInWatchLater ? 'Remove from Watch Later' : 'Add to Watch Later'}
+          >
+            {isInWatchLater ? (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+          </button>
         </div>
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -122,7 +169,7 @@ const TMDBMediaCard = ({
   )
 
   const renderCompactCard = () => (
-    <Link to={getMediaUrl()} className="block group max-w-md">
+    <Link to={getMediaUrl()} onClick={handleClick} className="block group max-w-md">
       <div className="flex space-x-3">
         <div className="relative flex-shrink-0">
           <LazyImage
@@ -137,6 +184,22 @@ const TMDBMediaCard = ({
               {rating.toFixed(1)}
             </span>
           )}
+          {/* Watch Later Button - appears on hover */}
+          <button
+            onClick={handleWatchLaterClick}
+            className="absolute top-1 left-1 bg-black bg-opacity-80 hover:bg-opacity-90 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            title={isInWatchLater ? 'Remove from Watch Later' : 'Add to Watch Later'}
+          >
+            {isInWatchLater ? (
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+          </button>
         </div>
         <div className="flex-1 min-w-0 space-y-1">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -162,7 +225,7 @@ const TMDBMediaCard = ({
   )
 
   const renderLargeCard = () => (
-    <Link to={getMediaUrl()} className="block group max-w-lg">
+    <Link to={getMediaUrl()} onClick={handleClick} className="block group max-w-lg">
       <div className="space-y-4">
         <div className="relative">
           <LazyImage
@@ -182,6 +245,22 @@ const TMDBMediaCard = ({
               {rating.toFixed(1)}
             </span>
           )}
+          {/* Watch Later Button - appears on hover */}
+          <button
+            onClick={handleWatchLaterClick}
+            className="absolute top-3 left-3 bg-black bg-opacity-80 hover:bg-opacity-90 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            title={isInWatchLater ? 'Remove from Watch Later' : 'Add to Watch Later'}
+          >
+            {isInWatchLater ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+          </button>
         </div>
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">

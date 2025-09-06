@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAppSelector } from '../store'
+import { useAppSelector, useAppDispatch } from '../store'
 import { selectTmdbApiKey } from '../store/slices/settingsSlice'
+import { addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBSeason, TMDBEpisode } from '../types/tmdb'
 import YouTubePlayer from '../components/YouTubePlayer'
@@ -10,6 +11,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 const TMDBWatchPage = () => {
   const { id, type } = useParams<{ id: string; type: 'movie' | 'tv' }>()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
   
   const [content, setContent] = useState<TMDBMovieDetails | TMDBTVDetails | null>(null)
@@ -113,6 +115,14 @@ const TMDBWatchPage = () => {
     // Save to localStorage
     if (id && type === 'tv') {
       localStorage.setItem(`tmdb-tv-${id}-selected-episode`, JSON.stringify(episode))
+    }
+    
+    // Add to continue watching
+    if (content && type === 'tv') {
+      dispatch(addTVToContinueWatching({
+        content,
+        type: 'tv'
+      }))
     }
   }
 
