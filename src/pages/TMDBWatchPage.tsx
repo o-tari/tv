@@ -18,12 +18,34 @@ const TMDBWatchPage = () => {
   const [selectedSeason, setSelectedSeason] = useState<number>(1)
   const [episodes, setEpisodes] = useState<TMDBEpisode[]>([])
   const [episodesLoading, setEpisodesLoading] = useState(false)
+  const [selectedEpisode, setSelectedEpisode] = useState<TMDBEpisode | null>(null)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
       loadContent()
     }
   }, [id, type, tmdbApiKey])
+
+  // Load saved episode selection from localStorage
+  useEffect(() => {
+    if (id && type === 'tv' && tmdbApiKey && content) {
+      const savedEpisode = localStorage.getItem(`tmdb-tv-${id}-selected-episode`)
+      if (savedEpisode) {
+        try {
+          const episodeData = JSON.parse(savedEpisode)
+          setSelectedEpisode(episodeData)
+          // Also set the season if we have a saved episode
+          if (episodeData.season_number) {
+            setSelectedSeason(episodeData.season_number)
+            // Load episodes for the saved season
+            loadEpisodes(episodeData.season_number)
+          }
+        } catch (error) {
+          console.error('Error parsing saved episode data:', error)
+        }
+      }
+    }
+  }, [id, type, tmdbApiKey, content])
 
   const loadContent = async () => {
     if (!id || !type || !tmdbApiKey) return
@@ -63,6 +85,16 @@ const TMDBWatchPage = () => {
       const tmdbService = getTMDBService(tmdbApiKey)
       const seasonDetails = await tmdbService.getSeasonDetails(parseInt(id), seasonNumber)
       setEpisodes(seasonDetails.episodes || [])
+      
+      // If we have a saved episode and it's in this season, select it
+      if (selectedEpisode && selectedEpisode.season_number === seasonNumber) {
+        const savedEpisode = seasonDetails.episodes?.find(
+          ep => ep.episode_number === selectedEpisode.episode_number
+        )
+        if (savedEpisode) {
+          setSelectedEpisode(savedEpisode)
+        }
+      }
     } catch (err) {
       console.error('Error loading episodes:', err)
       setEpisodes([])
@@ -74,6 +106,14 @@ const TMDBWatchPage = () => {
   const handleSeasonSelect = (seasonNumber: number) => {
     setSelectedSeason(seasonNumber)
     loadEpisodes(seasonNumber)
+  }
+
+  const handleEpisodeSelect = (episode: TMDBEpisode) => {
+    setSelectedEpisode(episode)
+    // Save to localStorage
+    if (id && type === 'tv') {
+      localStorage.setItem(`tmdb-tv-${id}-selected-episode`, JSON.stringify(episode))
+    }
   }
 
   const getTrailerVideo = (): TMDBVideo | null => {
@@ -243,6 +283,57 @@ const TMDBWatchPage = () => {
                 {content.overview}
               </p>
             </div>
+
+            {/* Selected Episode Details */}
+            {isTV && selectedEpisode && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mt-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Selected Episode
+                </h2>
+                
+                <div className="flex items-start space-x-4">
+                  {selectedEpisode.still_path && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${selectedEpisode.still_path}`}
+                        alt={selectedEpisode.name}
+                        className="w-32 h-20 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {selectedEpisode.name}
+                      </h3>
+                      <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-sm font-medium">
+                        S{selectedEpisode.season_number}E{selectedEpisode.episode_number}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4 mb-3 text-sm text-gray-500 dark:text-gray-400">
+                      {selectedEpisode.air_date && (
+                        <span>{formatDate(selectedEpisode.air_date)}</span>
+                      )}
+                      {selectedEpisode.vote_average > 0 && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-500 mr-1">★</span>
+                          <span>{selectedEpisode.vote_average.toFixed(1)}</span>
+                          <span className="ml-1">({selectedEpisode.vote_count} votes)</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {selectedEpisode.overview && (
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {selectedEpisode.overview}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -292,12 +383,28 @@ const TMDBWatchPage = () => {
                                 Episodes ({episodes.length})
                               </h4>
                               {episodes.map((episode) => (
-                                <div key={episode.id} className="flex items-start space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <button
+                                  key={episode.id}
+                                  onClick={() => handleEpisodeSelect(episode)}
+                                  className={`w-full flex items-start space-x-3 p-2 rounded transition-colors ${
+                                    selectedEpisode?.id === episode.id
+                                      ? 'bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700'
+                                      : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                                  }`}
+                                >
+                                  <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${
+                                    selectedEpisode?.id === episode.id
+                                      ? 'bg-red-500 text-white'
+                                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                                  }`}>
                                     {episode.episode_number}
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  <div className="flex-1 min-w-0 text-left">
+                                    <h5 className={`text-sm font-medium truncate ${
+                                      selectedEpisode?.id === episode.id
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-gray-900 dark:text-white'
+                                    }`}>
                                       {episode.name}
                                     </h5>
                                     {episode.air_date && (
@@ -319,7 +426,7 @@ const TMDBWatchPage = () => {
                                       </div>
                                     )}
                                   </div>
-                                </div>
+                                </button>
                               ))}
                             </div>
                           ) : (
