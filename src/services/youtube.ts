@@ -23,7 +23,6 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   params: {
     key: API_KEY,
-    part: 'snippet,statistics,contentDetails',
     regionCode: REGION,
     hl: LANG,
   },
@@ -93,6 +92,7 @@ export const searchVideos = async (
 
   try {
     const params: any = {
+      part: 'snippet',
       q: query,
       type: filters.type || 'video',
       maxResults: 25,
@@ -220,6 +220,7 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
 
   try {
     const params: any = {
+      part: 'snippet,statistics,contentDetails',
       chart: 'mostPopular',
       maxResults: 25,
     }
@@ -304,6 +305,7 @@ export const getChannelVideos = async (
 
   try {
     const params: any = {
+      part: 'snippet',
       channelId,
       type: 'video',
       maxResults: 25,
@@ -409,6 +411,7 @@ export const getRelatedVideos = async (
 
   try {
     const params: any = {
+      part: 'snippet',
       relatedToVideoId: videoId,
       type: 'video',
       maxResults: 25,
