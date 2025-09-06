@@ -1,4 +1,4 @@
-import { type Video, type Channel, type Comment } from '../types/youtube'
+import { type Video, type Channel } from '../types/youtube'
 
 // Mock data for when API is not available
 export const mockVideos: Video[] = [
@@ -12,8 +12,6 @@ export const mockVideos: Video[] = [
     publishedAt: '2024-01-15T10:00:00Z',
     duration: 'PT15M30S',
     viewCount: '125000',
-    likeCount: '8500',
-    commentCount: '420',
   },
   {
     id: 'mock-2',
@@ -25,8 +23,6 @@ export const mockVideos: Video[] = [
     publishedAt: '2024-01-14T14:30:00Z',
     duration: 'PT22M15S',
     viewCount: '89000',
-    likeCount: '6200',
-    commentCount: '380',
   },
   {
     id: 'mock-3',
@@ -38,8 +34,6 @@ export const mockVideos: Video[] = [
     publishedAt: '2024-01-13T09:15:00Z',
     duration: 'PT18M45S',
     viewCount: '156000',
-    likeCount: '11200',
-    commentCount: '890',
   },
   {
     id: 'mock-4',
@@ -51,8 +45,6 @@ export const mockVideos: Video[] = [
     publishedAt: '2024-01-12T16:45:00Z',
     duration: 'PT25M20S',
     viewCount: '98000',
-    likeCount: '7800',
-    commentCount: '520',
   },
   {
     id: 'mock-5',
@@ -64,8 +56,6 @@ export const mockVideos: Video[] = [
     publishedAt: '2024-01-11T11:20:00Z',
     duration: 'PT20M10S',
     viewCount: '134000',
-    likeCount: '9500',
-    commentCount: '670',
   },
   {
     id: 'mock-6',
@@ -77,8 +67,6 @@ export const mockVideos: Video[] = [
     publishedAt: '2024-01-10T13:30:00Z',
     duration: 'PT16M35S',
     viewCount: '87000',
-    likeCount: '6400',
-    commentCount: '410',
   },
 ]
 
@@ -94,47 +82,6 @@ export const mockChannel: Channel = {
   country: 'US',
 }
 
-export const mockComments: Comment[] = [
-  {
-    id: 'comment-1',
-    authorDisplayName: 'John Developer',
-    authorProfileImageUrl: 'https://picsum.photos/40/40?random=200',
-    textDisplay: 'Great tutorial! This really helped me understand the concepts.',
-    likeCount: 45,
-    publishedAt: '2024-01-15T12:30:00Z',
-    updatedAt: '2024-01-15T12:30:00Z',
-    replies: [
-      {
-        id: 'reply-1',
-        authorDisplayName: 'Code Academy',
-        authorProfileImageUrl: 'https://picsum.photos/40/40?random=201',
-        textDisplay: 'Thanks for watching! Glad it was helpful.',
-        likeCount: 12,
-        publishedAt: '2024-01-15T13:00:00Z',
-        updatedAt: '2024-01-15T13:00:00Z',
-      },
-    ],
-  },
-  {
-    id: 'comment-2',
-    authorDisplayName: 'Sarah Coder',
-    authorProfileImageUrl: 'https://picsum.photos/40/40?random=202',
-    textDisplay: 'Could you make a follow-up video about testing?',
-    likeCount: 23,
-    publishedAt: '2024-01-15T14:15:00Z',
-    updatedAt: '2024-01-15T14:15:00Z',
-  },
-  {
-    id: 'comment-3',
-    authorDisplayName: 'Mike React',
-    authorProfileImageUrl: 'https://picsum.photos/40/40?random=203',
-    textDisplay: 'Excellent explanation! The code examples are very clear.',
-    likeCount: 67,
-    publishedAt: '2024-01-15T15:45:00Z',
-    updatedAt: '2024-01-15T15:45:00Z',
-  },
-]
-
 export const mockSearchResults = {
   items: mockVideos,
   nextPageToken: 'mock-next-page',
@@ -145,9 +92,4 @@ export const mockRelatedVideos = {
   items: mockVideos.slice(1, 4),
   nextPageToken: 'mock-related-next',
   totalResults: 500,
-}
-
-export const mockCommentsResponse = {
-  items: mockComments,
-  nextPageToken: 'mock-comments-next',
 }

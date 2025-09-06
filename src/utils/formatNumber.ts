@@ -64,15 +64,3 @@ export const formatSubscriberCount = (subscriberCount: string | number): string 
   return `${formatted} subscriber${count !== 1 ? 's' : ''}`
 }
 
-/**
- * Formats like count with appropriate suffix
- * @param likeCount - Like count as string or number
- * @returns Formatted like count string
- */
-export const formatLikeCount = (likeCount: string | number): string => {
-  const count = typeof likeCount === 'string' ? parseInt(likeCount, 10) : likeCount
-  
-  if (isNaN(count)) return '0'
-  
-  return formatNumber(count)
-}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
-import { fetchVideoDetails, fetchRelatedVideos, fetchVideoComments } from '../store/slices/videosSlice'
+import { fetchVideoDetails, fetchRelatedVideos } from '../store/slices/videosSlice'
 
 export const useVideo = (videoId: string) => {
   const dispatch = useAppDispatch()
@@ -11,16 +11,12 @@ export const useVideo = (videoId: string) => {
     relatedVideos,
     relatedLoading,
     relatedError,
-    comments,
-    commentsLoading,
-    commentsError,
   } = useAppSelector((state) => state.videos)
 
   useEffect(() => {
     if (videoId) {
       dispatch(fetchVideoDetails(videoId))
       dispatch(fetchRelatedVideos({ videoId }))
-      dispatch(fetchVideoComments({ videoId }))
     }
   }, [dispatch, videoId])
 
@@ -30,11 +26,6 @@ export const useVideo = (videoId: string) => {
     }
   }
 
-  const loadMoreComments = () => {
-    if (videoId && !commentsLoading) {
-      dispatch(fetchVideoComments({ videoId }))
-    }
-  }
 
   return {
     video: currentVideo,
@@ -43,10 +34,6 @@ export const useVideo = (videoId: string) => {
     relatedVideos,
     relatedLoading,
     relatedError,
-    comments,
-    commentsLoading,
-    commentsError,
     loadMoreRelated,
-    loadMoreComments,
   }
 }

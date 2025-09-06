@@ -6,7 +6,6 @@ import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { useVideo } from '../hooks/useVideo'
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
-import Comments from '../components/Comments'
 import VideoGrid from '../components/VideoGrid'
 
 const WatchPage = () => {
@@ -19,10 +18,6 @@ const WatchPage = () => {
     relatedVideos,
     relatedLoading,
     relatedError,
-    comments,
-    commentsLoading,
-    commentsError,
-    loadMoreComments,
   } = useVideo(videoId || '')
 
   // Add to history and continue watching when video loads
@@ -100,14 +95,6 @@ const WatchPage = () => {
 
             {/* Video info */}
             <VideoInfo video={video} />
-
-            {/* Comments */}
-            <Comments
-              comments={comments}
-              loading={commentsLoading}
-              error={commentsError}
-              onLoadMore={loadMoreComments}
-            />
           </div>
 
           {/* Sidebar */}

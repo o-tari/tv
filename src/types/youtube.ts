@@ -8,8 +8,6 @@ export interface Video {
   publishedAt: string
   duration: string
   viewCount: string
-  likeCount?: string
-  commentCount?: string
 }
 
 export interface Channel {
@@ -24,16 +22,6 @@ export interface Channel {
   country?: string
 }
 
-export interface Comment {
-  id: string
-  authorDisplayName: string
-  authorProfileImageUrl: string
-  textDisplay: string
-  likeCount: number
-  publishedAt: string
-  updatedAt: string
-  replies?: Comment[]
-}
 
 export interface SearchFilters {
   type?: 'video' | 'channel' | 'playlist'

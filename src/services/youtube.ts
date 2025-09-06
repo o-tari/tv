@@ -3,10 +3,9 @@ import {
   mockVideos, 
   mockChannel, 
   mockSearchResults, 
-  mockRelatedVideos, 
-  mockCommentsResponse 
+  mockRelatedVideos
 } from './mockData'
-import { type Video, type Channel, type Comment, type SearchFilters, type SearchResponse } from '../types/youtube'
+import { type Video, type Channel, type SearchFilters, type SearchResponse } from '../types/youtube'
 import { createApiInstance } from '../utils/apiConfig'
 import { requestCache } from '../utils/requestCache'
 
@@ -174,8 +173,6 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
       publishedAt: video.snippet.publishedAt,
       duration: video.contentDetails.duration,
       viewCount: video.statistics.viewCount,
-      likeCount: video.statistics.likeCount,
-      commentCount: video.statistics.commentCount,
     }
   } catch (error) {
     handleApiError(error)
@@ -232,8 +229,6 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
         publishedAt: item.snippet.publishedAt,
         duration: item.contentDetails.duration,
         viewCount: item.statistics.viewCount,
-        likeCount: item.statistics.likeCount,
-        commentCount: item.statistics.commentCount,
       })),
       nextPageToken: response.data.nextPageToken,
       totalResults: response.data.pageInfo.totalResults,
@@ -341,56 +336,6 @@ export const getChannelVideos = async (
   }
 }
 
-// Get video comments
-export const getVideoComments = async (
-  videoId: string,
-  pageToken?: string
-): Promise<{ items: Comment[]; nextPageToken?: string }> => {
-  if (shouldUseMockData()) {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return mockCommentsResponse
-  }
-
-  try {
-    const params: any = {
-      videoId,
-      maxResults: 20,
-      order: 'relevance',
-    }
-
-    if (pageToken) {
-      params.pageToken = pageToken
-    }
-
-    const api = getApiInstance()
-    const response: AxiosResponse = await api.get('/commentThreads', { params })
-    
-    return {
-      items: response.data.items.map((item: any) => ({
-        id: item.id,
-        authorDisplayName: item.snippet.topLevelComment.snippet.authorDisplayName,
-        authorProfileImageUrl: item.snippet.topLevelComment.snippet.authorProfileImageUrl,
-        textDisplay: item.snippet.topLevelComment.snippet.textDisplay,
-        likeCount: item.snippet.topLevelComment.snippet.likeCount,
-        publishedAt: item.snippet.topLevelComment.snippet.publishedAt,
-        updatedAt: item.snippet.topLevelComment.snippet.updatedAt,
-        replies: item.replies?.comments?.map((reply: any) => ({
-          id: reply.id,
-          authorDisplayName: reply.snippet.authorDisplayName,
-          authorProfileImageUrl: reply.snippet.authorProfileImageUrl,
-          textDisplay: reply.snippet.textDisplay,
-          likeCount: reply.snippet.likeCount,
-          publishedAt: reply.snippet.publishedAt,
-          updatedAt: reply.snippet.updatedAt,
-        })) || [],
-      })),
-      nextPageToken: response.data.nextPageToken,
-    }
-  } catch (error) {
-    handleApiError(error)
-    throw error // This will never be reached, but satisfies TypeScript
-  }
-}
 
 // Get related videos
 export const getRelatedVideos = async (

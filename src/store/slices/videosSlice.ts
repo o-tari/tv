@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { type Video, type Channel, type Comment } from '../../types/youtube'
+import { type Video, type Channel } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { requestCache } from '../../utils/requestCache'
 
@@ -28,11 +28,6 @@ interface VideosState {
   relatedError: string | null
   relatedNextPageToken: string | null
 
-  // Comments
-  comments: Comment[]
-  commentsLoading: boolean
-  commentsError: string | null
-  commentsNextPageToken: string | null
 
   // Channel
   currentChannel: Channel | null
@@ -65,10 +60,6 @@ const initialState: VideosState = {
   relatedError: null,
   relatedNextPageToken: null,
 
-  comments: [],
-  commentsLoading: false,
-  commentsError: null,
-  commentsNextPageToken: null,
 
   currentChannel: null,
   channelLoading: false,
@@ -112,13 +103,6 @@ export const fetchRelatedVideos = createAsyncThunk(
   }
 )
 
-export const fetchVideoComments = createAsyncThunk(
-  'videos/fetchVideoComments',
-  async ({ videoId, pageToken }: { videoId: string; pageToken?: string }) => {
-    const response = await youtubeService.getVideoComments(videoId, pageToken)
-    return response
-  }
-)
 
 export const fetchChannelDetails = createAsyncThunk(
   'videos/fetchChannelDetails',
@@ -150,7 +134,6 @@ const videosSlice = createSlice({
       state.currentVideo = null
       state.currentVideoError = null
       state.relatedVideos = []
-      state.comments = []
     },
     clearChannel: (state) => {
       state.currentChannel = null
@@ -180,10 +163,6 @@ const videosSlice = createSlice({
       state.relatedError = null
       state.relatedNextPageToken = null
       
-      state.comments = []
-      state.commentsLoading = false
-      state.commentsError = null
-      state.commentsNextPageToken = null
       
       state.currentChannel = null
       state.channelLoading = false
@@ -281,27 +260,6 @@ const videosSlice = createSlice({
         state.relatedError = action.error.message || 'Failed to fetch related videos'
       })
 
-    // Comments
-    builder
-      .addCase(fetchVideoComments.pending, (state) => {
-        state.commentsLoading = true
-        state.commentsError = null
-      })
-      .addCase(fetchVideoComments.fulfilled, (state, action) => {
-        state.commentsLoading = false
-        if (action.meta.arg) {
-          // Load more
-          state.comments = [...state.comments, ...action.payload.items]
-        } else {
-          // Initial load
-          state.comments = action.payload.items
-        }
-        state.commentsNextPageToken = action.payload.nextPageToken || null
-      })
-      .addCase(fetchVideoComments.rejected, (state, action) => {
-        state.commentsLoading = false
-        state.commentsError = action.error.message || 'Failed to fetch comments'
-      })
 
     // Channel details
     builder

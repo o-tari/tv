@@ -50,7 +50,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
         ) : (
           <div className="px-4 py-2">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Sign in to like videos, comment, and subscribe.
+              Sign in to subscribe to channels.
             </p>
             <button className="w-full btn-primary text-sm">
               Sign in
