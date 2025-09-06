@@ -16,6 +16,7 @@ const SubscriptionsPage = lazy(() => import('../pages/SubscriptionsPage'))
 const HistoryPage = lazy(() => import('../pages/HistoryPage'))
 const WatchLaterPage = lazy(() => import('../pages/WatchLaterPage'))
 const ContinueWatchingPage = lazy(() => import('../pages/ContinueWatchingPage'))
+const AnimePage = lazy(() => import('../pages/AnimePage'))
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/watch/:videoId" element={<WatchPage />} />
                 <Route path="/channel/:channelId" element={<ChannelPage />} />
                 <Route path="/explore" element={<ExplorePage />} />
+                <Route path="/anime" element={<AnimePage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/watch-later" element={<WatchLaterPage />} />

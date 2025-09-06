@@ -7,6 +7,7 @@ import videosSlice from './slices/videosSlice'
 import subscriptionsSlice from './slices/subscriptionsSlice'
 import continueWatchingSlice from './slices/continueWatchingSlice'
 import settingsSlice from './slices/settingsSlice'
+import animeSlice from './slices/animeSlice'
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     subscriptions: subscriptionsSlice,
     continueWatching: continueWatchingSlice,
     settings: settingsSlice,
+    anime: animeSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

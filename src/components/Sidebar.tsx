@@ -17,6 +17,7 @@ const Sidebar = () => {
   const navigationItems = [
     { label: 'Home', href: '/', icon: '🏠' },
     { label: 'Explore', href: '/explore', icon: '🔍' },
+    { label: 'Anime', href: '/anime', icon: '🎌' },
     { label: 'Subscriptions', href: '/subscriptions', icon: '📺' },
     { label: 'Continue Watching', href: '/continue-watching', icon: '▶️' },
     { label: 'History', href: '/history', icon: '🕒' },
