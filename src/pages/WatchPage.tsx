@@ -5,11 +5,17 @@ import { addToHistory } from '../store/slices/historySlice'
 import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { addToAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import { useVideo } from '../hooks/useVideo'
-import { fetchAnimeInfo } from '../store/slices/animeSlice'
+import { 
+  fetchAnimeInfo, 
+  fetchAnimeEpisodes, 
+  fetchAnimeRecommendations,
+  clearAnimeEpisodes 
+} from '../store/slices/animeSlice'
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import VideoGrid from '../components/VideoGrid'
 import StreamingLinks from '../components/StreamingLinks'
+import MediaGrid from '../components/MediaGrid'
 import { type AnimeMedia } from '../types/anime'
 
 const WatchPage = () => {
@@ -30,14 +36,34 @@ const WatchPage = () => {
   } = useVideo(videoId || '')
   
   // Anime state
-  const { currentAnime, currentAnimeLoading, currentAnimeError } = useAppSelector((state) => state.anime)
+  const { 
+    currentAnime, 
+    currentAnimeLoading, 
+    currentAnimeError,
+    animeEpisodes,
+    animeEpisodesLoading,
+    animeEpisodesError,
+    recommendations,
+    recommendationsLoading,
+    recommendationsError
+  } = useAppSelector((state) => state.anime)
 
-  // Fetch anime info if this is an anime page
+  // Fetch anime info, episodes, and recommendations if this is an anime page
   useEffect(() => {
     if (isAnime && animeId) {
+      const animeIdNum = parseInt(animeId)
       dispatch(fetchAnimeInfo(animeId))
+      dispatch(fetchAnimeEpisodes({ animeId: animeIdNum, page: 1 }))
+      dispatch(fetchAnimeRecommendations(animeIdNum))
     }
   }, [dispatch, isAnime, animeId])
+
+  // Clear episodes when leaving anime page
+  useEffect(() => {
+    if (!isAnime) {
+      dispatch(clearAnimeEpisodes())
+    }
+  }, [dispatch, isAnime])
 
   // Add to history and continue watching when content loads
   useEffect(() => {
@@ -131,25 +157,81 @@ const WatchPage = () => {
           <div className="lg:col-span-2 space-y-6">
             {isAnime ? (
               <>
-                {/* Anime Streaming Links */}
-                {currentAnime?.episodes && currentAnime.episodes.length > 0 ? (
-                  <StreamingLinks
-                    animeId={currentAnime.id}
-                    episodes={currentAnime.episodes.map((ep, index) => {
-                      // Clean the episode ID to avoid slashes and special characters
-                      const rawId = ep.episodeId || ep.id || `episode-${index}`
-                      const cleanId = rawId.replace(/[\/\\]/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '-')
-                      return {
-                        id: cleanId,
-                        episodeNumber: ep.episodeNumber || index + 1,
-                        title: ep.title || `Episode ${ep.episodeNumber || index + 1}`
-                      }
-                    })}
-                    onEpisodeSelect={(episodeId) => {
-                      // Handle episode selection if needed
-                      console.log('Selected episode:', episodeId)
-                    }}
-                  />
+                {/* Anime Episodes */}
+                {animeEpisodesLoading ? (
+                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-8 h-8 mx-auto mb-4 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-gray-600 dark:text-gray-400">Loading episodes...</p>
+                    </div>
+                  </div>
+                ) : animeEpisodesError ? (
+                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        Failed to load episodes
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        {animeEpisodesError}
+                      </p>
+                      <button
+                        onClick={() => animeId && dispatch(fetchAnimeEpisodes({ animeId: parseInt(animeId), page: 1 }))}
+                        className="btn-primary"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  </div>
+                ) : animeEpisodes.length > 0 ? (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Episodes ({animeEpisodes.length})
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {animeEpisodes.map((episode) => (
+                        <div
+                          key={episode.id}
+                          className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-red-600 text-white rounded flex items-center justify-center text-sm font-medium">
+                              {episode.episodeNumber}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {episode.title}
+                              </h3>
+                              {episode.title_japanese && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                  {episode.title_japanese}
+                                </p>
+                              )}
+                              {episode.aired && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Aired: {new Date(episode.aired).toLocaleDateString()}
+                                </p>
+                              )}
+                              {episode.filler && (
+                                <span className="inline-block px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded mt-1">
+                                  Filler
+                                </span>
+                              )}
+                              {episode.recap && (
+                                <span className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded mt-1 ml-1">
+                                  Recap
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ) : (
                   <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                     <div className="text-center">
@@ -222,18 +304,72 @@ const WatchPage = () => {
           {/* Sidebar */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {isAnime ? 'Related anime' : 'Related videos'}
+              {isAnime ? 'Recommendations' : 'Related videos'}
             </h3>
             
             {isAnime ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">🎌</span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Related anime coming soon
-                </p>
-              </div>
+              <>
+                {recommendationsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 mx-auto mb-4 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      Loading recommendations...
+                    </p>
+                  </div>
+                ) : recommendationsError ? (
+                  <div className="text-center py-4">
+                    <p className="text-red-600 dark:text-red-400 text-sm">
+                      Failed to load recommendations
+                    </p>
+                    <button
+                      onClick={() => animeId && dispatch(fetchAnimeRecommendations(parseInt(animeId)))}
+                      className="mt-2 btn-primary text-sm"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                ) : recommendations.length > 0 ? (
+                  <div className="space-y-3">
+                    {recommendations.slice(0, 6).map((anime) => (
+                      <div
+                        key={anime.id}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                      >
+                        <div className="flex-shrink-0 w-12 h-16 bg-gray-200 dark:bg-gray-600 rounded overflow-hidden">
+                          <img
+                            src={anime.image}
+                            alt={anime.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = '/placeholder-movie.svg'
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {anime.title}
+                          </h4>
+                          {anime.score && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              ⭐ {anime.score}/10
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">🎌</span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      No recommendations available
+                    </p>
+                  </div>
+                )}
+              </>
             ) : (
               <>
                 {relatedError ? (

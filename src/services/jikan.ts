@@ -173,6 +173,24 @@ export interface JikanVideoResponse {
   pagination: JikanPagination
 }
 
+export interface JikanEpisode {
+  mal_id: number
+  url: string | null
+  title: string
+  title_japanese: string | null
+  title_romanji: string | null
+  aired: string | null
+  score: number | null
+  filler: boolean
+  recap: boolean
+  forum_url: string | null
+}
+
+export interface JikanEpisodesResponse {
+  data: JikanEpisode[]
+  pagination: JikanPagination
+}
+
 // Search anime using Jikan API
 export const searchAnime = async (
   query: string,
@@ -243,6 +261,22 @@ export const getAnimeRecommendations = async (animeId: number): Promise<JikanRec
   })
 }
 
+// Get anime episodes
+export const getAnimeEpisodes = async (
+  animeId: number,
+  page: number = 1
+): Promise<JikanEpisodesResponse> => {
+  const params = { page }
+
+  return requestCache.get('/jikan/episodes', { id: animeId, ...params }, async () => {
+    const response: AxiosResponse<JikanEpisodesResponse> = await axios.get(
+      `${JIKAN_BASE_URL}/anime/${animeId}/episodes`,
+      { params }
+    )
+    return response.data
+  })
+}
+
 // Get anime video episodes
 export const getAnimeVideoEpisodes = async (
   animeId: number,
@@ -295,4 +329,22 @@ export const convertJikanAnimeToAnime = (jikanAnime: JikanAnime) => ({
   rating: jikanAnime.rating,
   studios: jikanAnime.studios.map(studio => studio.name),
   producers: jikanAnime.producers.map(producer => producer.name)
+})
+
+// Convert Jikan episode to internal format
+export const convertJikanEpisodeToAnimeEpisode = (jikanEpisode: JikanEpisode, episodeNumber: number) => ({
+  id: jikanEpisode.mal_id.toString(),
+  episodeId: jikanEpisode.mal_id.toString(),
+  episodeNumber,
+  title: jikanEpisode.title,
+  image: '', // Jikan episodes don't have images
+  url: jikanEpisode.url || '',
+  mal_id: jikanEpisode.mal_id,
+  title_japanese: jikanEpisode.title_japanese,
+  title_romanji: jikanEpisode.title_romanji,
+  aired: jikanEpisode.aired,
+  score: jikanEpisode.score,
+  filler: jikanEpisode.filler,
+  recap: jikanEpisode.recap,
+  forum_url: jikanEpisode.forum_url
 })

@@ -51,6 +51,13 @@ interface AnimeState {
   videoEpisodesError: string | null
   videoEpisodesNextPage: number | null
   videoEpisodesHasNextPage: boolean
+
+  // Anime episodes (Jikan)
+  animeEpisodes: AnimeEpisode[]
+  animeEpisodesLoading: boolean
+  animeEpisodesError: string | null
+  animeEpisodesNextPage: number | null
+  animeEpisodesHasNextPage: boolean
 }
 
 const initialState: AnimeState = {
@@ -96,6 +103,13 @@ const initialState: AnimeState = {
   videoEpisodesError: null,
   videoEpisodesNextPage: null,
   videoEpisodesHasNextPage: false,
+
+  // Anime episodes (Jikan)
+  animeEpisodes: [],
+  animeEpisodesLoading: false,
+  animeEpisodesError: null,
+  animeEpisodesNextPage: null,
+  animeEpisodesHasNextPage: false,
 }
 
 // Async thunks
@@ -183,6 +197,20 @@ export const fetchAnimeRecommendations = createAsyncThunk(
   }
 )
 
+export const fetchAnimeEpisodes = createAsyncThunk(
+  'anime/fetchAnimeEpisodes',
+  async ({ animeId, page = 1 }: { animeId: number; page?: number }) => {
+    const response = await jikanService.getAnimeEpisodes(animeId, page)
+    return {
+      currentPage: response.pagination.current_page,
+      hasNextPage: response.pagination.has_next_page,
+      results: response.data.map((episode, index) => 
+        jikanService.convertJikanEpisodeToAnimeEpisode(episode, index + 1)
+      )
+    }
+  }
+)
+
 export const fetchAnimeVideoEpisodes = createAsyncThunk(
   'anime/fetchAnimeVideoEpisodes',
   async ({ animeId, page = 1 }: { animeId: number; page?: number }) => {
@@ -222,6 +250,13 @@ const animeSlice = createSlice({
       state.currentEpisode = null
       state.currentEpisodeLoading = false
       state.currentEpisodeError = null
+    },
+    clearAnimeEpisodes: (state) => {
+      state.animeEpisodes = []
+      state.animeEpisodesLoading = false
+      state.animeEpisodesError = null
+      state.animeEpisodesNextPage = null
+      state.animeEpisodesHasNextPage = false
     },
     clearAllData: (state) => {
       // Clear all anime data when settings change
@@ -267,6 +302,13 @@ const animeSlice = createSlice({
       state.videoEpisodesError = null
       state.videoEpisodesNextPage = null
       state.videoEpisodesHasNextPage = false
+
+      // Clear anime episodes
+      state.animeEpisodes = []
+      state.animeEpisodesLoading = false
+      state.animeEpisodesError = null
+      state.animeEpisodesNextPage = null
+      state.animeEpisodesHasNextPage = false
 
       // Clear request cache to prevent using cached API responses
       requestCache.clear()
@@ -396,6 +438,29 @@ const animeSlice = createSlice({
         state.recommendationsError = action.error.message || 'Failed to fetch recommendations'
       })
 
+    // Anime episodes (Jikan)
+    builder
+      .addCase(fetchAnimeEpisodes.pending, (state) => {
+        state.animeEpisodesLoading = true
+        state.animeEpisodesError = null
+      })
+      .addCase(fetchAnimeEpisodes.fulfilled, (state, action) => {
+        state.animeEpisodesLoading = false
+        if (action.meta.arg?.page && action.meta.arg.page > 1) {
+          // Load more
+          state.animeEpisodes = [...state.animeEpisodes, ...action.payload.results]
+        } else {
+          // Initial load
+          state.animeEpisodes = action.payload.results
+        }
+        state.animeEpisodesNextPage = action.payload.currentPage + 1
+        state.animeEpisodesHasNextPage = action.payload.hasNextPage
+      })
+      .addCase(fetchAnimeEpisodes.rejected, (state, action) => {
+        state.animeEpisodesLoading = false
+        state.animeEpisodesError = action.error.message || 'Failed to fetch anime episodes'
+      })
+
     // Video episodes (Jikan)
     builder
       .addCase(fetchAnimeVideoEpisodes.pending, (state) => {
@@ -425,6 +490,7 @@ export const {
   clearSearchResults,
   clearCurrentAnime,
   clearCurrentEpisode,
+  clearAnimeEpisodes,
   clearAllData,
 } = animeSlice.actions
 

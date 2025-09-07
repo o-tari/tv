@@ -34,6 +34,15 @@ export interface AnimeEpisode {
   title: string
   image: string
   url: string
+  // Jikan episode fields
+  mal_id?: number
+  title_japanese?: string | null
+  title_romanji?: string | null
+  aired?: string | null
+  score?: number | null
+  filler?: boolean
+  recap?: boolean
+  forum_url?: string | null
 }
 
 export interface AnimeInfo extends Anime {
