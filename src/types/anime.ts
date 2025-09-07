@@ -107,6 +107,22 @@ export interface AnimeMedia extends BaseMedia {
   status?: string
   totalEpisodes?: number
   subOrDub?: string
+  // Jikan-specific fields
+  score?: number | null
+  scoredBy?: number | null
+  rank?: number | null
+  popularity?: number | null
+  members?: number | null
+  favorites?: number | null
+  year?: number | null
+  season?: string | null
+  duration?: string
+  rating?: string
+  studios?: string[]
+  producers?: string[]
+  otherName?: string
+  animeType?: string
+  releaseDate?: string
 }
 
 export type Media = VideoMedia | AnimeMedia

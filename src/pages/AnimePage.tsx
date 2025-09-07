@@ -112,6 +112,22 @@ const AnimePage = () => {
     status: anime.status,
     totalEpisodes: anime.totalEpisodes,
     subOrDub: anime.subOrDub,
+    // Jikan-specific fields
+    score: anime.score,
+    scoredBy: anime.scoredBy,
+    rank: anime.rank,
+    popularity: anime.popularity,
+    members: anime.members,
+    favorites: anime.favorites,
+    year: anime.year,
+    season: anime.season,
+    duration: anime.duration,
+    rating: anime.rating,
+    studios: anime.studios,
+    producers: anime.producers,
+    otherName: anime.otherName,
+    animeType: anime.type,
+    releaseDate: anime.releaseDate,
   })
 
   // Convert episodes to media format for MediaGrid
@@ -169,146 +185,9 @@ const AnimePage = () => {
           </div>
         </div>
 
-        {/* Continue Watching Section */}
-        <AnimeContinueWatching limit={8} />
-
-        {/* Top Anime Section (Jikan API) */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            🏆 Top Anime
-          </h2>
-          {topAnimeError ? (
-            <div className="text-center py-8">
-              <p className="text-red-600 dark:text-red-400">
-                Failed to load top anime: {topAnimeError}
-              </p>
-              <button
-                onClick={() => dispatch(fetchTopAnime({ page: 1, filter: 'bypopularity' }))}
-                className="mt-4 btn-primary"
-              >
-                Try again
-              </button>
-            </div>
-          ) : (
-            <InfiniteScroll
-              onLoadMore={loadMoreTopAnime}
-              hasMore={topAnimeHasNextPage}
-              loading={topAnimeLoading}
-            >
-              <MediaGrid
-                media={topAnimeMedia}
-                loading={topAnimeLoading && topAnimeMedia.length === 0}
-              />
-            </InfiniteScroll>
-          )}
-        </div>
-
-        {/* Recommendations Section (Jikan API) */}
-        {recommendations.length > 0 && (
+        {/* Show search results when searching */}
+        {searchQuery && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              💡 Recommendations
-            </h2>
-            {recommendationsError ? (
-              <div className="text-center py-8">
-                <p className="text-red-600 dark:text-red-400">
-                  Failed to load recommendations: {recommendationsError}
-                </p>
-              </div>
-            ) : (
-              <MediaGrid
-                media={recommendationsMedia.slice(0, 12)}
-                loading={recommendationsLoading}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex space-x-1 mb-8">
-          <button
-            onClick={() => handleTabChange('trending')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'trending'
-                ? 'bg-red-600 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            🔥 Top Airing
-          </button>
-          <button
-            onClick={() => handleTabChange('recent')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'recent'
-                ? 'bg-red-600 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            🆕 Recent Episodes
-          </button>
-          {searchQuery && (
-            <button
-              onClick={() => handleTabChange('search')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'search'
-                  ? 'bg-red-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              🔍 Search Results
-            </button>
-          )}
-        </div>
-
-        {/* Content */}
-        {activeTab === 'trending' ? (
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Top Airing Anime
-            </h2>
-            <InfiniteScroll
-              onLoadMore={loadMoreTopAiring}
-              hasMore={topAiringHasNextPage}
-              loading={topAiringLoading}
-            >
-              <MediaGrid
-                media={topAiringMedia}
-                loading={topAiringLoading && topAiringMedia.length === 0}
-              />
-            </InfiniteScroll>
-          </div>
-        ) : activeTab === 'recent' ? (
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Recent Episodes
-            </h2>
-            {recentEpisodesError ? (
-              <div className="text-center py-8">
-                <p className="text-red-600 dark:text-red-400">
-                  Failed to load recent episodes: {recentEpisodesError}
-                </p>
-                <button
-                  onClick={() => dispatch(fetchRecentEpisodes({ page: 1 }))}
-                  className="mt-4 btn-primary"
-                >
-                  Try again
-                </button>
-              </div>
-            ) : (
-              <InfiniteScroll
-                onLoadMore={loadMoreRecent}
-                hasMore={recentEpisodesHasNextPage}
-                loading={recentEpisodesLoading}
-              >
-                <MediaGrid
-                  media={recentEpisodesMedia}
-                  loading={recentEpisodesLoading && recentEpisodesMedia.length === 0}
-                />
-              </InfiniteScroll>
-            )}
-          </div>
-        ) : (
-          <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Search Results for "{searchQuery}"
             </h2>
@@ -351,6 +230,145 @@ const AnimePage = () => {
               </InfiniteScroll>
             )}
           </div>
+        )}
+
+        {/* Show other content only when not searching */}
+        {!searchQuery && (
+          <>
+            {/* Continue Watching Section */}
+            <AnimeContinueWatching limit={8} />
+
+            {/* Top Anime Section (Jikan API) */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                🏆 Top Anime
+              </h2>
+              {topAnimeError ? (
+                <div className="text-center py-8">
+                  <p className="text-red-600 dark:text-red-400">
+                    Failed to load top anime: {topAnimeError}
+                  </p>
+                  <button
+                    onClick={() => dispatch(fetchTopAnime({ page: 1, filter: 'bypopularity' }))}
+                    className="mt-4 btn-primary"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : (
+                <InfiniteScroll
+                  onLoadMore={loadMoreTopAnime}
+                  hasMore={topAnimeHasNextPage}
+                  loading={topAnimeLoading}
+                >
+                  <MediaGrid
+                    media={topAnimeMedia}
+                    loading={topAnimeLoading && topAnimeMedia.length === 0}
+                  />
+                </InfiniteScroll>
+              )}
+            </div>
+
+            {/* Recommendations Section (Jikan API) */}
+            {recommendations.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  💡 Recommendations
+                </h2>
+                {recommendationsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-600 dark:text-red-400">
+                      Failed to load recommendations: {recommendationsError}
+                    </p>
+                  </div>
+                ) : (
+                  <MediaGrid
+                    media={recommendationsMedia.slice(0, 12)}
+                    loading={recommendationsLoading}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Tabs - only show when not searching */}
+        {!searchQuery && (
+          <div className="flex space-x-1 mb-8">
+            <button
+              onClick={() => handleTabChange('trending')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'trending'
+                  ? 'bg-red-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              🔥 Top Airing
+            </button>
+            <button
+              onClick={() => handleTabChange('recent')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'recent'
+                  ? 'bg-red-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              🆕 Recent Episodes
+            </button>
+          </div>
+        )}
+
+        {/* Tab Content - only show when not searching */}
+        {!searchQuery && (
+          <>
+            {activeTab === 'trending' ? (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Top Airing Anime
+                </h2>
+                <InfiniteScroll
+                  onLoadMore={loadMoreTopAiring}
+                  hasMore={topAiringHasNextPage}
+                  loading={topAiringLoading}
+                >
+                  <MediaGrid
+                    media={topAiringMedia}
+                    loading={topAiringLoading && topAiringMedia.length === 0}
+                  />
+                </InfiniteScroll>
+              </div>
+            ) : activeTab === 'recent' ? (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Recent Episodes
+                </h2>
+                {recentEpisodesError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-600 dark:text-red-400">
+                      Failed to load recent episodes: {recentEpisodesError}
+                    </p>
+                    <button
+                      onClick={() => dispatch(fetchRecentEpisodes({ page: 1 }))}
+                      className="mt-4 btn-primary"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                ) : (
+                  <InfiniteScroll
+                    onLoadMore={loadMoreRecent}
+                    hasMore={recentEpisodesHasNextPage}
+                    loading={recentEpisodesLoading}
+                  >
+                    <MediaGrid
+                      media={recentEpisodesMedia}
+                      loading={recentEpisodesLoading && recentEpisodesMedia.length === 0}
+                    />
+                  </InfiniteScroll>
+                )}
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>

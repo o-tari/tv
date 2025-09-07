@@ -113,7 +113,7 @@ export const fetchTopAiringAnime = createAsyncThunk(
 
 export const fetchRecentEpisodes = createAsyncThunk(
   'anime/fetchRecentEpisodes',
-  async ({ page = 1, type = 1 }: { page?: number; type?: number }) => {
+  async ({ page = 1 }: { page?: number; type?: number }) => {
     // Use Jikan's top anime with airing filter for recent episodes
     const response = await jikanService.getTopAnime(page, 25, 'tv', 'airing')
     return {
@@ -147,7 +147,11 @@ export const fetchAnimeInfo = createAsyncThunk(
   'anime/fetchAnimeInfo',
   async (animeId: string) => {
     const anime = await jikanService.getAnimeById(parseInt(animeId))
-    return jikanService.convertJikanAnimeToAnime(anime)
+    const convertedAnime = jikanService.convertJikanAnimeToAnime(anime)
+    return {
+      ...convertedAnime,
+      episodes: [] // Initialize empty episodes array
+    }
   }
 )
 
@@ -169,7 +173,13 @@ export const fetchAnimeRecommendations = createAsyncThunk(
   'anime/fetchAnimeRecommendations',
   async (animeId: number) => {
     const response = await jikanService.getAnimeRecommendations(animeId)
-    return response.map(rec => jikanService.convertJikanAnimeToAnime(rec.entry))
+    return response.map(rec => ({
+      id: rec.entry.mal_id.toString(),
+      title: rec.entry.title,
+      image: rec.entry.images.jpg.large_image_url || rec.entry.images.jpg.image_url,
+      url: `/anime/${rec.entry.mal_id}`,
+      type: 'anime' as const,
+    }))
   }
 )
 
