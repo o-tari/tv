@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
-import type { TMDBContent, TMDBEpisode } from '../../types/tmdb'
+import type { TMDBContent } from '../../types/tmdb'
 
 interface TMDBContinueWatchingItem {
   id: string // unique identifier combining type and id

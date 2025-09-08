@@ -28,7 +28,6 @@ const TMDBMediaCard = ({
   duration,
   viewCount,
   publishedAt,
-  channelTitle,
   type,
   rating,
   overview,
@@ -37,18 +36,6 @@ const TMDBMediaCard = ({
 }: TMDBMediaCardProps) => {
   const dispatch = useAppDispatch()
   const isInWatchLater = useAppSelector(selectIsInWatchLater(id, type))
-  const getTimeAgo = (publishedAt: string) => {
-    const now = new Date()
-    const published = new Date(publishedAt)
-    const diffInSeconds = Math.floor((now.getTime() - published.getTime()) / 1000)
-
-    if (diffInSeconds < 60) return 'Just now'
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`
-    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`
-    return `${Math.floor(diffInSeconds / 31536000)} years ago`
-  }
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)

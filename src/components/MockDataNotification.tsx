@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAppSelector, store } from '../store'
-import { selectUseMockData, selectYoutubeApiKey } from '../store/slices/settingsSlice'
+import { useAppSelector } from '../store'
+import { selectUseMockData } from '../store/slices/settingsSlice'
 
 interface MockDataNotificationProps {
   onOpenSettings?: () => void

@@ -1,7 +1,6 @@
 import type { 
   TMDBMovie, 
   TMDBTVShow, 
-  TMDBKeyword, 
   TMDBMovieDetails, 
   TMDBTVDetails, 
   TMDBResponse, 
@@ -18,7 +17,7 @@ export class TMDBService {
     this.apiKey = apiKey
   }
 
-  private async makeRequest<T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T> {
+  private async makeRequest<T>(endpoint: string, params: Record<string, string | number | boolean> = {}): Promise<T> {
     const url = new URL(`${TMDB_BASE_URL}${endpoint}`)
     url.searchParams.set('api_key', this.apiKey)
     
@@ -175,7 +174,6 @@ export class TMDBService {
     with_runtime_lte?: number
     with_release_type?: string
     with_origin_country?: string
-    with_original_language?: string
     without_genres?: string
     without_keywords?: string
     without_companies?: string

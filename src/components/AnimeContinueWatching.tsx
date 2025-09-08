@@ -42,13 +42,6 @@ const AnimeContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: A
     return `/anime/${item.id}`
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   if (animeContinueWatching.length === 0) {
     return null

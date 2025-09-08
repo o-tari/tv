@@ -1,7 +1,6 @@
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectTMDBWatchLater, removeFromWatchLater } from '../store/slices/tmdbWatchLaterSlice'
 import TMDBMediaCard from './TMDBMediaCard'
-import LoadingSpinner from './LoadingSpinner'
 
 interface TMDBWatchLaterProps {
   limit?: number
@@ -40,7 +39,7 @@ const TMDBWatchLater = ({ limit }: TMDBWatchLaterProps) => {
               title={item.title}
               thumbnail={item.thumbnail}
               duration={null}
-              viewCount={null}
+              viewCount={undefined}
               publishedAt={item.publishedAt}
               channelTitle={null}
               type={item.type}

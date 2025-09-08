@@ -4,7 +4,7 @@ import { useAppSelector, useAppDispatch } from '../store'
 import { selectTmdbApiKey } from '../store/slices/settingsSlice'
 import { addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
-import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBSeason, TMDBEpisode } from '../types/tmdb'
+import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
 import YouTubePlayer from '../components/YouTubePlayer'
 import LoadingSpinner from '../components/LoadingSpinner'
 

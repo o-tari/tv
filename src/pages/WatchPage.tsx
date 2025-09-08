@@ -14,8 +14,6 @@ import {
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import VideoGrid from '../components/VideoGrid'
-import StreamingLinks from '../components/StreamingLinks'
-import MediaGrid from '../components/MediaGrid'
 import { type AnimeMedia } from '../types/anime'
 
 const WatchPage = () => {

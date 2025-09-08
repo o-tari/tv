@@ -76,7 +76,7 @@ export const searchVideos = async (
 
   // Check if API key is available when not using mock data
   const config = createApiInstance()
-  if (!config.apiKey) {
+  if (!config.params.key) {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
@@ -154,7 +154,7 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
 
   // Check if API key is available when not using mock data
   const config = createApiInstance()
-  if (!config.apiKey) {
+  if (!config.params.key) {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
@@ -215,7 +215,7 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
 
   // Check if API key is available when not using mock data
   const config = createApiInstance()
-  if (!config.apiKey) {
+  if (!config.params.key) {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
@@ -260,7 +260,7 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
 
   // Check if API key is available when not using mock data
   const config = createApiInstance()
-  if (!config.apiKey) {
+  if (!config.params.key) {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
@@ -311,7 +311,7 @@ export const getChannelVideos = async (
 
   // Check if API key is available when not using mock data
   const config = createApiInstance()
-  if (!config.apiKey) {
+  if (!config.params.key) {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
@@ -362,7 +362,7 @@ export const getRelatedVideos = async (
 
   // Check if API key is available when not using mock data
   const config = createApiInstance()
-  if (!config.apiKey) {
+  if (!config.params.key) {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
