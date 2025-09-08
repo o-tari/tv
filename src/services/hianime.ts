@@ -15,7 +15,10 @@ import type {
   HiAnimeInfo,
   HiAnimeEpisodesResponse,
   HiAnimeServersResponse,
-  HiAnimeEpisodeSources
+  HiAnimeEpisodeSources,
+  HiAnimeSeason,
+  HiAnimeRelatedAnime,
+  HiAnimeRecommendedAnime
 } from '../types/hianime'
 
 const CACHE_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
@@ -367,6 +370,55 @@ class HiAnimeService {
       animeType: completed.type,
       duration: undefined,
       rating: undefined
+    }
+  }
+
+  // Convert season to media format
+  convertSeasonToMedia(season: HiAnimeSeason): HiAnimeMedia {
+    return {
+      id: season.id,
+      title: season.name,
+      image: season.poster,
+      url: `/hianime/${season.id}`,
+      type: 'hianime',
+      description: season.title,
+      animeType: 'TV',
+      totalEpisodes: 0,
+      subOrDub: 'sub'
+    }
+  }
+
+  // Convert related anime to media format
+  convertRelatedAnimeToMedia(related: HiAnimeRelatedAnime): HiAnimeMedia {
+    return {
+      id: related.id,
+      title: related.name,
+      image: related.poster,
+      url: `/hianime/${related.id}`,
+      type: 'hianime',
+      jname: related.jname,
+      episodes: related.episodes,
+      totalEpisodes: related.episodes.sub || related.episodes.dub || 0,
+      subOrDub: related.episodes.sub ? 'sub' : 'dub',
+      animeType: related.type
+    }
+  }
+
+  // Convert recommended anime to media format
+  convertRecommendedAnimeToMedia(recommended: HiAnimeRecommendedAnime): HiAnimeMedia {
+    return {
+      id: recommended.id,
+      title: recommended.name,
+      image: recommended.poster,
+      url: `/hianime/${recommended.id}`,
+      type: 'hianime',
+      jname: recommended.jname,
+      episodes: recommended.episodes,
+      totalEpisodes: recommended.episodes.sub || recommended.episodes.dub || 0,
+      subOrDub: recommended.episodes.sub ? 'sub' : 'dub',
+      animeType: recommended.type,
+      duration: recommended.duration,
+      rating: recommended.rating || undefined
     }
   }
 

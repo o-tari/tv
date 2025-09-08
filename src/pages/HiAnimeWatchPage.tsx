@@ -280,7 +280,8 @@ const HiAnimeWatchPage = () => {
   }
 
   const { info, moreInfo } = animeInfo.anime || {}
-  const { mostPopularAnimes } = animeInfo || {}
+  const { mostPopularAnimes, seasons, relatedAnimes, recommendedAnimes } = animeInfo || {}
+  
   const popularAnimes = (mostPopularAnimes || []).map(anime => ({
     id: anime.id,
     title: anime.name,
@@ -292,6 +293,46 @@ const HiAnimeWatchPage = () => {
     totalEpisodes: anime.episodes.sub || anime.episodes.dub || 0,
     subOrDub: anime.episodes.sub ? 'sub' : 'dub',
     animeType: anime.type
+  }))
+
+  const seasonsData = (seasons || []).map(season => ({
+    id: season.id,
+    title: season.name,
+    image: season.poster,
+    url: `/hianime/${season.id}`,
+    type: 'hianime' as const,
+    description: season.title,
+    animeType: 'TV' as const,
+    totalEpisodes: 0,
+    subOrDub: 'sub' as const
+  }))
+
+  const relatedAnimesData = (relatedAnimes || []).map(anime => ({
+    id: anime.id,
+    title: anime.name,
+    image: anime.poster,
+    url: `/hianime/${anime.id}`,
+    type: 'hianime' as const,
+    jname: anime.jname,
+    episodes: anime.episodes,
+    totalEpisodes: anime.episodes.sub || anime.episodes.dub || 0,
+    subOrDub: anime.episodes.sub ? 'sub' : 'dub',
+    animeType: anime.type
+  }))
+
+  const recommendedAnimesData = (recommendedAnimes || []).map(anime => ({
+    id: anime.id,
+    title: anime.name,
+    image: anime.poster,
+    url: `/hianime/${anime.id}`,
+    type: 'hianime' as const,
+    jname: anime.jname,
+    episodes: anime.episodes,
+    totalEpisodes: anime.episodes.sub || anime.episodes.dub || 0,
+    subOrDub: anime.episodes.sub ? 'sub' : 'dub',
+    animeType: anime.type,
+    duration: anime.duration,
+    rating: anime.rating || undefined
   }))
 
   return (
@@ -665,6 +706,73 @@ const HiAnimeWatchPage = () => {
                 </a>
               </div>
             </div>
+
+            {/* Seasons */}
+            {seasonsData.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Seasons
+                </h3>
+                <div className="space-y-3">
+                  {seasonsData.map((season, index) => (
+                    <div
+                      key={season.id}
+                      className={`flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                        season.id === animeId
+                          ? 'bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => navigate(`/hianime/${season.id}`)}
+                    >
+                      <img
+                        src={season.image}
+                        alt={season.title}
+                        className="w-12 h-16 object-cover rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {season.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {season.description}
+                        </p>
+                        {season.id === animeId && (
+                          <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-600 text-white rounded">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Related Animes */}
+            {relatedAnimesData.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Related Animes
+                </h3>
+                <MediaGrid
+                  media={relatedAnimesData}
+                  loading={false}
+                />
+              </div>
+            )}
+
+            {/* Recommended Animes */}
+            {recommendedAnimesData.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Recommended Animes
+                </h3>
+                <MediaGrid
+                  media={recommendedAnimesData}
+                  loading={false}
+                />
+              </div>
+            )}
 
             {/* Most Popular Animes */}
             {popularAnimes.length > 0 && (

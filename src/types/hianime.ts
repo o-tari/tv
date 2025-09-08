@@ -155,6 +155,36 @@ export interface HiAnimeMostFavorite {
   type: string
 }
 
+// Season types
+export interface HiAnimeSeason {
+  id: string
+  name: string
+  title: string
+  poster: string
+  isCurrent: boolean
+}
+
+// Related and Recommended Anime types
+export interface HiAnimeRelatedAnime {
+  id: string
+  name: string
+  jname: string
+  poster: string
+  episodes: HiAnimeEpisodes
+  type: string
+}
+
+export interface HiAnimeRecommendedAnime {
+  id: string
+  name: string
+  jname: string
+  poster: string
+  duration: string
+  type: string
+  rating: string | null
+  episodes: HiAnimeEpisodes
+}
+
 export interface HiAnimeLatestCompleted {
   id: string
   name: string
@@ -169,8 +199,10 @@ export interface HiAnimeInfoResponse {
     info: HiAnimeInfo
     moreInfo: HiAnimeMoreInfo
   }
-  seasons: any[]
+  seasons: HiAnimeSeason[]
   mostPopularAnimes: HiAnimeMostPopular[]
+  relatedAnimes: HiAnimeRelatedAnime[]
+  recommendedAnimes: HiAnimeRecommendedAnime[]
 }
 
 // Re-export HiAnimeMedia from anime types for convenience
