@@ -14,6 +14,7 @@ import {
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import VideoGrid from '../components/VideoGrid'
+import AnimeEpisodeBatches from '../components/AnimeEpisodeBatches'
 import { type AnimeMedia } from '../types/anime'
 
 const WatchPage = () => {
@@ -156,95 +157,16 @@ const WatchPage = () => {
             {isAnime ? (
               <>
                 {/* Anime Episodes */}
-                {animeEpisodesLoading ? (
-                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-8 h-8 mx-auto mb-4 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-gray-600 dark:text-gray-400">Loading episodes...</p>
-                    </div>
-                  </div>
-                ) : animeEpisodesError ? (
-                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        Failed to load episodes
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        {animeEpisodesError}
-                      </p>
-                      <button
-                        onClick={() => animeId && dispatch(fetchAnimeEpisodes({ animeId: parseInt(animeId), page: 1 }))}
-                        className="btn-primary"
-                      >
-                        Try again
-                      </button>
-                    </div>
-                  </div>
-                ) : animeEpisodes.length > 0 ? (
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      Episodes ({animeEpisodes.length})
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {animeEpisodes.map((episode) => (
-                        <div
-                          key={episode.id}
-                          className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-red-600 text-white rounded flex items-center justify-center text-sm font-medium">
-                              {episode.episodeNumber}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {episode.title}
-                              </h3>
-                              {episode.title_japanese && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                  {episode.title_japanese}
-                                </p>
-                              )}
-                              {episode.aired && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  Aired: {new Date(episode.aired).toLocaleDateString()}
-                                </p>
-                              )}
-                              {episode.filler && (
-                                <span className="inline-block px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded mt-1">
-                                  Filler
-                                </span>
-                              )}
-                              {episode.recap && (
-                                <span className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded mt-1 ml-1">
-                                  Recap
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                        <span className="text-2xl">🎌</span>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        {currentAnime?.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        No episodes available
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <AnimeEpisodeBatches
+                  episodes={animeEpisodes}
+                  animeId={animeId || ''}
+                  animeTitle={currentAnime?.title || ''}
+                  animeImage={currentAnime?.image || ''}
+                  totalEpisodes={currentAnime?.totalEpisodes}
+                  loading={animeEpisodesLoading}
+                  error={animeEpisodesError}
+                  onRetry={() => animeId && dispatch(fetchAnimeEpisodes({ animeId: parseInt(animeId), page: 1 }))}
+                />
 
                 {/* Anime info */}
                 {currentAnime && (

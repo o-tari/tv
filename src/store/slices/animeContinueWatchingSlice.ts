@@ -5,6 +5,14 @@ interface AnimeContinueWatchingState {
   anime: AnimeMedia[]
 }
 
+interface AnimeEpisodeProgress {
+  animeId: string
+  episodeId: string
+  episodeNumber: number
+  episodeTitle: string
+  lastWatched: number
+}
+
 const loadFromStorage = (): AnimeMedia[] => {
   try {
     const stored = localStorage.getItem('animeContinueWatching')
@@ -19,6 +27,24 @@ const saveToStorage = (anime: AnimeMedia[]) => {
     localStorage.setItem('animeContinueWatching', JSON.stringify(anime))
   } catch (error) {
     console.error('Error saving anime continue watching to localStorage:', error)
+  }
+}
+
+const saveEpisodeProgress = (progress: AnimeEpisodeProgress) => {
+  try {
+    localStorage.setItem(`anime-${progress.animeId}-episode-progress`, JSON.stringify(progress))
+  } catch (error) {
+    console.error('Error saving anime episode progress to localStorage:', error)
+  }
+}
+
+const getEpisodeProgress = (animeId: string): AnimeEpisodeProgress | null => {
+  try {
+    const stored = localStorage.getItem(`anime-${animeId}-episode-progress`)
+    return stored ? JSON.parse(stored) : null
+  } catch (error) {
+    console.error('Error loading anime episode progress from localStorage:', error)
+    return null
   }
 }
 
@@ -63,6 +89,18 @@ const animeContinueWatchingSlice = createSlice({
         saveToStorage(state.anime)
       }
     },
+    saveAnimeEpisodeProgress: (_, action: PayloadAction<{
+      animeId: string
+      episodeId: string
+      episodeNumber: number
+      episodeTitle: string
+    }>) => {
+      const progress: AnimeEpisodeProgress = {
+        ...action.payload,
+        lastWatched: Date.now()
+      }
+      saveEpisodeProgress(progress)
+    },
   },
 })
 
@@ -71,10 +109,13 @@ export const {
   removeFromAnimeContinueWatching,
   clearAnimeContinueWatching,
   updateAnimeLastWatched,
+  saveAnimeEpisodeProgress,
 } = animeContinueWatchingSlice.actions
 
 // Selectors
 export const selectAnimeContinueWatching = (state: { animeContinueWatching: AnimeContinueWatchingState }) => 
   state.animeContinueWatching.anime
+
+export const selectAnimeEpisodeProgress = (animeId: string) => getEpisodeProgress(animeId)
 
 export default animeContinueWatchingSlice.reducer
