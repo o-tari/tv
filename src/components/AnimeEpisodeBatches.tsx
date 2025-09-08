@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToAnimeContinueWatching, saveAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
 import { selectAnimeContinueWatching, selectAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
@@ -62,7 +62,11 @@ const AnimeEpisodeBatches = ({
 
   // Get episode count from totalEpisodes prop or episodes array length
   const episodeCount = totalEpisodes || episodes.length
-  const episodeRanges = episodeCount > 100 ? createEpisodeRanges(episodeCount) : []
+  
+  // Memoize episode ranges to prevent unnecessary re-renders
+  const episodeRanges = useMemo(() => {
+    return createEpisodeRanges(episodeCount)
+  }, [episodeCount])
   
   // Get current range selection with fallback
   const currentRange = episodeRanges.find(range => range.id === selectedRange) || episodeRanges[0]
@@ -71,7 +75,7 @@ const AnimeEpisodeBatches = ({
 
   // Auto-select range containing saved episode from continue watching
   useEffect(() => {
-    if (episodeCount > 100 && episodeRanges.length > 0 && !isInitialized) {
+    if (episodeRanges.length > 0 && !isInitialized) {
       const episodeProgress = selectAnimeEpisodeProgress(animeId)
       if (episodeProgress) {
         // Find which range contains the saved episode
@@ -107,7 +111,7 @@ const AnimeEpisodeBatches = ({
       }
       setIsInitialized(true)
     }
-  }, [episodeCount, episodeRanges, episodes, continueWatching, animeId, isInitialized])
+  }, [episodeRanges, episodes, continueWatching, animeId, isInitialized])
 
   const handleRangeChange = (rangeId: string) => {
     setSelectedRange(rangeId)
@@ -140,20 +144,15 @@ const AnimeEpisodeBatches = ({
     
   }
 
-  const formatEpisodeNumber = (episodeNumber: number) => {
-    return episodeNumber.toString()
-  }
 
-  // Generate episode numbers for the current range
-  const generateEpisodeNumbers = () => {
-    const episodeNumbers = []
+  // Memoize episode numbers for the current range
+  const episodeNumbers = useMemo(() => {
+    const numbers = []
     for (let i = startEpisode; i <= endEpisode; i++) {
-      episodeNumbers.push(i)
+      numbers.push(i)
     }
-    return episodeNumbers
-  }
-
-  const episodeNumbers = generateEpisodeNumbers()
+    return numbers
+  }, [startEpisode, endEpisode])
 
   if (loading) {
     return (
@@ -249,132 +248,75 @@ const AnimeEpisodeBatches = ({
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Episodes ({episodeCount})
         </h2>
-        {episodeCount > 100 && (
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {episodeRanges.length} range{episodeRanges.length !== 1 ? 's' : ''} available
-          </span>
-        )}
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {episodeRanges.length} range{episodeRanges.length !== 1 ? 's' : ''} available
+        </span>
       </div>
 
-      {episodeCount <= 100 ? (
-        // Show episodes directly if 100 or fewer
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {episodes.map((episode) => (
-            <div
-              key={episode.id}
-              onClick={() => handleEpisodeSelect(episode)}
-              className={`bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer ${
-                selectedEpisode?.id === episode.id
-                  ? 'ring-2 ring-red-500 border-red-500'
-                  : 'hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              <div className="flex items-start space-x-3">
-                <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${
-                  selectedEpisode?.id === episode.id
-                    ? 'bg-red-600 text-white'
-                    : 'bg-red-600 text-white'
-                }`}>
-                  {formatEpisodeNumber(episode.episodeNumber)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {episode.title}
-                  </h3>
-                  {episode.title_japanese && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {episode.title_japanese}
-                    </p>
-                  )}
-                  {episode.aired && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Aired: {new Date(episode.aired).toLocaleDateString()}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {episode.filler && (
-                      <span className="inline-block px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
-                        Filler
-                      </span>
-                    )}
-                    {episode.recap && (
-                      <span className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                        Recap
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* Always use dropdown and episode number buttons layout */}
+      <div className="space-y-4">
+        {/* Episode Range Dropdown */}
+        <div className="flex items-center space-x-4">
+          <label htmlFor="episode-range" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Episode Range:
+          </label>
+          <select
+            id="episode-range"
+            value={selectedRange || (episodeRanges.length > 0 ? episodeRanges[0].id : '')}
+            onChange={(e) => handleRangeChange(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-red-500"
+          >
+            {episodeRanges.length === 0 ? (
+              <option value="">Loading...</option>
+            ) : (
+              episodeRanges.map((range) => (
+                <option key={range.id} value={range.id}>
+                  {range.label}
+                </option>
+              ))
+            )}
+          </select>
         </div>
-      ) : (
-        // Show dropdown and episode number buttons if more than 100 episodes
-        <div className="space-y-4">
-          {/* Episode Range Dropdown */}
-          <div className="flex items-center space-x-4">
-            <label htmlFor="episode-range" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Episode Range:
-            </label>
-            <select
-              id="episode-range"
-              value={selectedRange || (episodeRanges.length > 0 ? episodeRanges[0].id : '')}
-              onChange={(e) => handleRangeChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            >
-              {episodeRanges.length === 0 ? (
-                <option value="">Loading...</option>
-              ) : (
-                episodeRanges.map((range) => (
-                  <option key={range.id} value={range.id}>
-                    {range.label}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
 
-          {/* Episode Number Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {episodeNumbers.map((episodeNumber) => {
-              // Find the actual episode data if available
-              const episode = episodes.find(ep => ep.episodeNumber === episodeNumber)
-              const isSelected = selectedEpisode?.episodeNumber === episodeNumber
-              
-              return (
-                <button
-                  key={episodeNumber}
-                  onClick={() => {
-                    if (episode) {
-                      handleEpisodeSelect(episode)
-                    } else {
-                      // Create a mock episode for episodes not yet loaded
-                      const mockEpisode: AnimeEpisode = {
-                        id: `${animeId}-episode-${episodeNumber}`,
-                        episodeId: `${animeId}-episode-${episodeNumber}`,
-                        episodeNumber,
-                        title: `Episode ${episodeNumber}`,
-                        image: animeImage,
-                        url: `/anime/${animeId}/episode/${episodeNumber}`
-                      }
-                      handleEpisodeSelect(mockEpisode)
+        {/* Episode Number Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {episodeNumbers.map((episodeNumber) => {
+            // Find the actual episode data if available
+            const episode = episodes.find(ep => ep.episodeNumber === episodeNumber)
+            const isSelected = selectedEpisode?.episodeNumber === episodeNumber
+            
+            return (
+              <button
+                key={episodeNumber}
+                onClick={() => {
+                  if (episode) {
+                    handleEpisodeSelect(episode)
+                  } else {
+                    // Create a mock episode for episodes not yet loaded
+                    const mockEpisode: AnimeEpisode = {
+                      id: `${animeId}-episode-${episodeNumber}`,
+                      episodeId: `${animeId}-episode-${episodeNumber}`,
+                      episodeNumber,
+                      title: `Episode ${episodeNumber}`,
+                      image: animeImage,
+                      url: `/anime/${animeId}/episode/${episodeNumber}`
                     }
-                  }}
-                  className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all ${
-                    isSelected
-                      ? 'bg-red-600 text-white border-red-600'
-                      : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                  }`}
-                  title={episode?.title || `Episode ${episodeNumber}`}
-                >
-                  {episodeNumber}
-                </button>
-              )
-            })}
-          </div>
-
+                    handleEpisodeSelect(mockEpisode)
+                  }
+                }}
+                className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all ${
+                  isSelected
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                }`}
+                title={episode?.title || `Episode ${episodeNumber}`}
+              >
+                {episodeNumber}
+              </button>
+            )
+          })}
         </div>
-      )}
+      </div>
     </div>
   )
 }
