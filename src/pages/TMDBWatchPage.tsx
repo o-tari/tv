@@ -151,6 +151,61 @@ const TMDBWatchPage = () => {
     })
   }
 
+  const generateExternalLink = (): string => {
+    if (!content) return ''
+    
+    if (type === 'tv' && selectedEpisode) {
+      // For TV shows: https://1337x.to/search/avatar+the+last+airbender+s01e01/1/
+      const title = (content as TMDBTVDetails).name
+      const seasonNum = selectedEpisode.season_number.toString().padStart(2, '0')
+      const episodeNum = selectedEpisode.episode_number.toString().padStart(2, '0')
+      // Convert title to lowercase and replace spaces/special chars with +
+      const searchTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\++/g, '+')
+      const searchQuery = `${searchTitle}+s${seasonNum}e${episodeNum}`
+      return `https://1337x.to/search/${searchQuery}/1/`
+    } else if (type === 'movie') {
+      // For movies: https://1337x.to/search/blade+runner/1/
+      const title = (content as TMDBMovieDetails).title
+      // Convert title to lowercase and replace spaces/special chars with +
+      const searchTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\++/g, '+')
+      return `https://1337x.to/search/${searchTitle}/1/`
+    }
+    
+    return ''
+  }
+
+  const generateGeneralExternalLink = (): string => {
+    if (!content) return ''
+    
+    if (type === 'tv') {
+      // For TV shows general search: https://1337x.to/search/avatar+the+last+airbender/1/
+      const title = (content as TMDBTVDetails).name
+      // Convert title to lowercase and replace spaces/special chars with +
+      const searchTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\++/g, '+')
+      return `https://1337x.to/search/${searchTitle}/1/`
+    } else if (type === 'movie') {
+      // For movies: https://1337x.to/search/blade+runner/1/
+      const title = (content as TMDBMovieDetails).title
+      // Convert title to lowercase and replace spaces/special chars with +
+      const searchTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\++/g, '+')
+      return `https://1337x.to/search/${searchTitle}/1/`
+    }
+    
+    return ''
+  }
+
+  const generateSeasonExternalLink = (seasonNumber: number): string => {
+    if (!content || type !== 'tv') return ''
+    
+    // For TV show seasons: https://1337x.to/search/avatar+the+last+airbender+s01/1/
+    const title = (content as TMDBTVDetails).name
+    const seasonNum = seasonNumber.toString().padStart(2, '0')
+    // Convert title to lowercase and replace spaces/special chars with +
+    const searchTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\++/g, '+')
+    const searchQuery = `${searchTitle}+s${seasonNum}`
+    return `https://1337x.to/search/${searchQuery}/1/`
+  }
+
   if (!tmdbApiKey) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -297,9 +352,24 @@ const TMDBWatchPage = () => {
             {/* Selected Episode Details */}
             {isTV && selectedEpisode && (
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mt-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  Selected Episode
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Selected Episode
+                  </h2>
+                  
+                  {/* External Link for Selected Episode */}
+                  <a
+                    href={generateExternalLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    title={`Search for ${(content as TMDBTVDetails).name} S${selectedEpisode.season_number.toString().padStart(2, '0')}E${selectedEpisode.episode_number.toString().padStart(2, '0')} on 1337x`}
+                  >
+                    <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
                 
                 <div className="flex items-start space-x-4">
                   {selectedEpisode.still_path && (
@@ -358,28 +428,46 @@ const TMDBWatchPage = () => {
                 <div className="space-y-4">
                   {content.seasons.map((season) => (
                     <div key={season.id}>
-                      <button
-                        onClick={() => handleSeasonSelect(season.season_number)}
-                        className={`w-full text-left p-3 rounded-lg transition-colors ${
-                          selectedSeason === season.season_number
-                            ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">
-                            Season {season.season_number}
-                          </span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {season.episode_count} episodes
-                          </span>
+                      <div className={`p-3 rounded-lg transition-colors ${
+                        selectedSeason === season.season_number
+                          ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                      }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <button
+                            onClick={() => handleSeasonSelect(season.season_number)}
+                            className="flex-1 text-left hover:opacity-80 transition-opacity"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold">
+                                Season {season.season_number}
+                              </span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {season.episode_count} episodes
+                              </span>
+                            </div>
+                            {season.air_date && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {formatDate(season.air_date)}
+                              </p>
+                            )}
+                          </button>
+                          
+                          {/* External Link for Season */}
+                          <a
+                            href={generateSeasonExternalLink(season.season_number)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-3 inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                            title={`Search for Season ${season.season_number} on 1337x`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
                         </div>
-                        {season.air_date && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {formatDate(season.air_date)}
-                          </p>
-                        )}
-                      </button>
+                      </div>
                       
                       {selectedSeason === season.season_number && (
                         <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -451,6 +539,32 @@ const TMDBWatchPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Content Poster */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <div className="flex justify-center mb-4">
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${content.poster_path}`}
+                  alt={isTV ? (content as TMDBTVDetails).name : (content as TMDBMovieDetails).title}
+                  className="w-full max-w-xs rounded-lg shadow-lg"
+                />
+              </div>
+              
+              {/* External Link for Content */}
+              <div className="flex justify-end">
+                <a
+                  href={generateGeneralExternalLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                  title={`Search for ${isTV ? (content as TMDBTVDetails).name : (content as TMDBMovieDetails).title} on 1337x`}
+                >
+                  <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
 
             {/* Additional Info */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
