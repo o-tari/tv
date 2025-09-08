@@ -7,6 +7,7 @@ import { selectContinueWatching } from '../store/slices/continueWatchingSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import SearchBar from '../components/SearchBar'
+import ChannelsSection from '../components/ChannelsSection'
 
 const YouTubePage = () => {
   const navigate = useNavigate()
@@ -111,6 +112,9 @@ const YouTubePage = () => {
             />
           </div>
         )}
+
+        {/* Channels Section */}
+        <ChannelsSection />
 
         {/* Subscriptions Section */}
         {subscriptions.length > 0 && (

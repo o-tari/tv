@@ -1,16 +1,23 @@
 import { Link } from 'react-router-dom'
+import { useAppSelector, useAppDispatch } from '../store'
 import { type Media, type VideoMedia, type AnimeMedia, type HiAnimeMedia } from '../types/anime'
+import { type Channel } from '../types/youtube'
 import { formatViewCount } from '../utils/formatNumber'
 import { formatDuration } from '../utils/formatTime'
 import { getAnimeImage, getImageUrl } from '../utils/imageProxy'
+import { addChannel, selectIsChannelSaved } from '../store/slices/channelsSlice'
+import { fetchChannelDetails } from '../store/slices/videosSlice'
 import LazyImage from './LazyImage'
 
 interface MediaCardProps {
   media: Media
   variant?: 'default' | 'compact' | 'large'
+  searchType?: 'video' | 'channel' | 'playlist'
 }
 
-const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
+const MediaCard = ({ media, variant = 'default', searchType }: MediaCardProps) => {
+  const dispatch = useAppDispatch()
+  const isChannelSaved = useAppSelector(selectIsChannelSaved(media.type === 'video' ? media.channelId : ''))
   const getTimeAgo = (publishedAt: string) => {
     const now = new Date()
     const published = new Date(publishedAt)
@@ -28,6 +35,31 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
     e.preventDefault()
     e.stopPropagation()
     // Handle channel navigation for videos
+  }
+
+  const handleAddChannel = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (media.type === 'video') {
+      try {
+        // Fetch full channel details from API
+        const channelDetails = await dispatch(fetchChannelDetails(media.channelId)).unwrap()
+        dispatch(addChannel(channelDetails))
+      } catch (error) {
+        // Fallback to basic channel info if API fails
+        const channel: Channel = {
+          id: media.channelId,
+          title: media.channelTitle,
+          description: '',
+          thumbnail: '',
+          subscriberCount: '0',
+          videoCount: '0',
+          viewCount: '0'
+        }
+        dispatch(addChannel(channel))
+      }
+    }
   }
 
   const getMediaUrl = () => {
@@ -53,6 +85,27 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
           <span className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
             {formatDuration(video.duration)}
           </span>
+          {searchType === 'channel' && (
+            <button
+              onClick={handleAddChannel}
+              className={`absolute top-2 right-2 p-2 rounded-full transition-colors ${
+                isChannelSaved
+                  ? 'bg-green-600 text-white'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
+              title={isChannelSaved ? 'Channel saved' : 'Add channel'}
+            >
+              {isChannelSaved ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">

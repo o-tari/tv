@@ -93,6 +93,7 @@ const SearchPage = () => {
         <VideoGrid
           videos={searchResults}
           loading={searchLoading && searchResults.length === 0}
+          searchType={localFilters.type}
         />
       </InfiniteScroll>
     </div>

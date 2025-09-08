@@ -13,6 +13,7 @@ import hianimeContinueWatchingSlice from './slices/hianimeContinueWatchingSlice'
 import tmdbContinueWatchingSlice from './slices/tmdbContinueWatchingSlice'
 import tmdbWatchLaterSlice from './slices/tmdbWatchLaterSlice'
 import streamingLinksSlice from './slices/streamingLinksSlice'
+import channelsSlice from './slices/channelsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +30,7 @@ export const store = configureStore({
     tmdbContinueWatching: tmdbContinueWatchingSlice,
     tmdbWatchLater: tmdbWatchLaterSlice,
     streamingLinks: streamingLinksSlice,
+    channels: channelsSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -6,12 +6,14 @@ interface MediaGridProps {
   media: Media[]
   loading?: boolean
   variant?: 'default' | 'compact' | 'large'
+  searchType?: 'video' | 'channel' | 'playlist'
 }
 
 const MediaGrid = ({
   media,
   loading = false,
-  variant = 'default'
+  variant = 'default',
+  searchType
 }: MediaGridProps) => {
   const getGridCols = () => {
     // Use responsive grid classes that adapt to screen size
@@ -64,7 +66,7 @@ const MediaGrid = ({
   return (
     <div className={`grid ${getGridCols()} ${getGap()}`}>
       {media.map((item, index) => (
-        <MediaCard key={`${item.id}-${index}`} media={item} variant={variant} />
+        <MediaCard key={`${item.id}-${index}`} media={item} variant={variant} searchType={searchType} />
       ))}
     </div>
   )
