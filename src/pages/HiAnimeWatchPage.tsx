@@ -3,16 +3,37 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../store'
 import { selectHianimeApiKey } from '../store/slices/settingsSlice'
 import { hianimeService } from '../services/hianime'
-import type { HiAnimeInfoResponse } from '../types/hianime'
+import type { 
+  HiAnimeInfoResponse, 
+  HiAnimeEpisodesResponse, 
+  HiAnimeServersResponse,
+  HiAnimeEpisode,
+  HiAnimeServer
+} from '../types/hianime'
 import MediaGrid from '../components/MediaGrid'
 
 const HiAnimeWatchPage = () => {
   const { animeId } = useParams<{ animeId: string }>()
   const navigate = useNavigate()
   const hianimeApiKey = useAppSelector(selectHianimeApiKey)
+  
+  // State for anime info
   const [animeInfo, setAnimeInfo] = useState<HiAnimeInfoResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // State for episodes
+  const [episodes, setEpisodes] = useState<HiAnimeEpisodesResponse | null>(null)
+  const [episodesLoading, setEpisodesLoading] = useState(false)
+  const [episodesError, setEpisodesError] = useState<string | null>(null)
+  
+  // State for current episode and servers
+  const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(null)
+  const [servers, setServers] = useState<HiAnimeServersResponse | null>(null)
+  const [serversLoading, setServersLoading] = useState(false)
+  const [serversError, setServersError] = useState<string | null>(null)
+  const [selectedServer, setSelectedServer] = useState<HiAnimeServer | null>(null)
+  const [selectedLanguage, setSelectedLanguage] = useState<'sub' | 'dub'>('sub')
 
   useEffect(() => {
     if (!animeId) {
@@ -28,6 +49,7 @@ const HiAnimeWatchPage = () => {
 
     hianimeService.setApiKey(hianimeApiKey)
     loadAnimeInfo()
+    loadEpisodes()
   }, [animeId, hianimeApiKey, navigate])
 
   const loadAnimeInfo = async () => {
@@ -43,6 +65,65 @@ const HiAnimeWatchPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadEpisodes = async () => {
+    if (!animeId) return
+
+    try {
+      setEpisodesLoading(true)
+      setEpisodesError(null)
+      const data = await hianimeService.getAnimeEpisodes(animeId)
+      setEpisodes(data)
+      
+      // Set first episode as selected by default
+      if (data.episodes.length > 0) {
+        setSelectedEpisode(data.episodes[0])
+        loadEpisodeServers(data.episodes[0].episodeId)
+      }
+    } catch (err) {
+      setEpisodesError(err instanceof Error ? err.message : 'Failed to load episodes')
+    } finally {
+      setEpisodesLoading(false)
+    }
+  }
+
+  const loadEpisodeServers = async (episodeId: string) => {
+    try {
+      setServersLoading(true)
+      setServersError(null)
+      const data = await hianimeService.getEpisodeServers(episodeId)
+      setServers(data)
+      
+      // Set first available server as selected
+      const availableServers = data[selectedLanguage] || data.sub || data.dub
+      if (availableServers.length > 0) {
+        setSelectedServer(availableServers[0])
+      }
+    } catch (err) {
+      setServersError(err instanceof Error ? err.message : 'Failed to load episode servers')
+    } finally {
+      setServersLoading(false)
+    }
+  }
+
+  const handleEpisodeSelect = (episode: HiAnimeEpisode) => {
+    setSelectedEpisode(episode)
+    loadEpisodeServers(episode.episodeId)
+  }
+
+  const handleLanguageChange = (language: 'sub' | 'dub') => {
+    setSelectedLanguage(language)
+    if (servers) {
+      const availableServers = servers[language] || servers.sub || servers.dub
+      if (availableServers.length > 0) {
+        setSelectedServer(availableServers[0])
+      }
+    }
+  }
+
+  const handleServerSelect = (server: HiAnimeServer) => {
+    setSelectedServer(server)
   }
 
   if (loading) {
@@ -100,9 +181,9 @@ const HiAnimeWatchPage = () => {
     )
   }
 
-  const { info, moreInfo } = animeInfo.anime
-  const { mostPopularAnimes } = animeInfo
-  const popularAnimes = mostPopularAnimes.map(anime => ({
+  const { info, moreInfo } = animeInfo.anime || {}
+  const { mostPopularAnimes } = animeInfo || {}
+  const popularAnimes = (mostPopularAnimes || []).map(anime => ({
     id: anime.id,
     title: anime.name,
     image: anime.poster,
@@ -129,178 +210,267 @@ const HiAnimeWatchPage = () => {
           Back to HiAnime
         </button>
 
-        {/* Anime Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Poster */}
-          <div className="lg:col-span-1">
-            <img
-              src={info.poster}
-              alt={info.name}
-              className="w-full rounded-lg shadow-lg"
-            />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Video Player Area */}
+            <div className="aspect-video bg-gray-900 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+              {selectedEpisode && selectedServer ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    {selectedEpisode.title}
+                  </h3>
+                  <p className="text-gray-300">
+                    Server: {selectedServer.serverName} | Language: {selectedLanguage.toUpperCase()}
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Episode streaming would be implemented here
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-600 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-300">Select an episode to start watching</p>
+                </div>
+              )}
+            </div>
 
-          {/* Details */}
-          <div className="lg:col-span-2">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              {info.name}
-            </h1>
-            
-            {moreInfo.japanese && (
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
-                {moreInfo.japanese}
-              </p>
+            {/* Episode Selection */}
+            {episodes && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Episodes ({episodes.totalEpisodes})
+                  </h2>
+                  
+                  {/* Language Toggle */}
+                  <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                    <button
+                      onClick={() => handleLanguageChange('sub')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        selectedLanguage === 'sub'
+                          ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Sub
+                    </button>
+                    <button
+                      onClick={() => handleLanguageChange('dub')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        selectedLanguage === 'dub'
+                          ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Dub
+                    </button>
+                  </div>
+                </div>
+
+                {episodesLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">Loading episodes...</p>
+                  </div>
+                ) : episodesError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-600 dark:text-red-400 mb-4">{episodesError}</p>
+                    <button
+                      onClick={loadEpisodes}
+                      className="btn-primary"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                    {episodes.episodes.map((episode) => (
+                      <button
+                        key={episode.episodeId}
+                        onClick={() => handleEpisodeSelect(episode)}
+                        className={`p-3 rounded-lg text-left transition-colors ${
+                          selectedEpisode?.episodeId === episode.episodeId
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">
+                            Episode {episode.number}
+                          </span>
+                          {episode.isFiller && (
+                            <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">
+                              Filler
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs opacity-90 truncate">
+                          {episode.title}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Type:</span>
-                <p className="text-gray-900 dark:text-white">{info.stats.type}</p>
+            {/* Server Selection */}
+            {servers && selectedEpisode && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Streaming Servers
+                </h3>
+                
+                {serversLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">Loading servers...</p>
+                  </div>
+                ) : serversError ? (
+                  <div className="text-center py-4">
+                    <p className="text-red-600 dark:text-red-400 text-sm mb-2">{serversError}</p>
+                    <button
+                      onClick={() => selectedEpisode && loadEpisodeServers(selectedEpisode.episodeId)}
+                      className="btn-primary text-sm"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Sub Servers */}
+                    {servers.sub.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Subbed Servers
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {servers.sub.map((server) => (
+                            <button
+                              key={`sub-${server.serverId}`}
+                              onClick={() => handleServerSelect(server)}
+                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                selectedServer?.serverId === server.serverId && selectedLanguage === 'sub'
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
+                              }`}
+                            >
+                              {server.serverName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dub Servers */}
+                    {servers.dub.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Dubbed Servers
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {servers.dub.map((server) => (
+                            <button
+                              key={`dub-${server.serverId}`}
+                              onClick={() => handleServerSelect(server)}
+                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                selectedServer?.serverId === server.serverId && selectedLanguage === 'dub'
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
+                              }`}
+                            >
+                              {server.serverName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Status:</span>
-                <p className="text-gray-900 dark:text-white">{moreInfo.status}</p>
+            )}
+
+            {/* Anime Info */}
+            <div className="space-y-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {info.name}
+              </h1>
+              
+              <div className="flex flex-wrap gap-2">
+                {moreInfo.genres.map((genre: string, index: number) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
+                  >
+                    {genre}
+                  </span>
+                ))}
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Episodes:</span>
-                <p className="text-gray-900 dark:text-white">
-                  Sub: {info.stats.episodes.sub || 'N/A'} | Dub: {info.stats.episodes.dub || 'N/A'}
+
+              <div className="prose dark:prose-invert max-w-none">
+                <p className="text-gray-700 dark:text-gray-300">
+                  {info.description}
                 </p>
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration:</span>
-                <p className="text-gray-900 dark:text-white">{info.stats.duration}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Rating:</span>
-                <p className="text-gray-900 dark:text-white">{info.stats.rating}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Quality:</span>
-                <p className="text-gray-900 dark:text-white">{info.stats.quality}</p>
-              </div>
-              {moreInfo.malscore && (
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">MAL Score:</span>
-                  <p className="text-gray-900 dark:text-white">{moreInfo.malscore}</p>
+                  <span className="text-gray-500 dark:text-gray-400">Type:</span>
+                  <p className="text-gray-900 dark:text-white">{info.stats.type}</p>
                 </div>
-              )}
-              <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Aired:</span>
-                <p className="text-gray-900 dark:text-white">{moreInfo.aired}</p>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Episodes:</span>
+                  <p className="text-gray-900 dark:text-white">
+                    Sub: {info.stats.episodes.sub || 'N/A'} | Dub: {info.stats.episodes.dub || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Duration:</span>
+                  <p className="text-gray-900 dark:text-white">{info.stats.duration}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Rating:</span>
+                  <p className="text-gray-900 dark:text-white">{info.stats.rating}</p>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Genres */}
-            {moreInfo.genres.length > 0 && (
-              <div className="mb-6">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-2">Genres:</span>
-                <div className="flex flex-wrap gap-2">
-                  {moreInfo.genres.map((genre: string, index: number) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm"
-                    >
-                      {genre}
-                    </span>
-                  ))}
-                </div>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Anime Poster */}
+            <div>
+              <img
+                src={info.poster}
+                alt={info.name}
+                className="w-full rounded-lg shadow-lg"
+              />
+            </div>
+
+            {/* Most Popular Animes */}
+            {popularAnimes.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Most Popular Animes
+                </h3>
+                <MediaGrid
+                  media={popularAnimes}
+                  loading={false}
+                />
               </div>
             )}
-
-            {/* Studios & Producers */}
-            <div className="mb-6">
-              {moreInfo.studios && (
-                <div className="mb-2">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Studio:</span>
-                  <p className="text-gray-900 dark:text-white">{moreInfo.studios}</p>
-                </div>
-              )}
-              {moreInfo.producers.length > 0 && (
-                <div>
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Producers:</span>
-                  <p className="text-gray-900 dark:text-white">{moreInfo.producers.join(', ')}</p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
-
-        {/* Description */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Description</h2>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-            {info.description}
-          </p>
-        </div>
-
-        {/* Characters & Voice Actors */}
-        {info.charactersVoiceActors.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Characters & Voice Actors</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {info.charactersVoiceActors.map((item: any, index: number) => (
-                <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <img
-                      src={item.character.poster}
-                      alt={item.character.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{item.character.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{item.character.cast}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={item.voiceActor.poster}
-                      alt={item.voiceActor.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.voiceActor.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.voiceActor.cast}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Promotional Videos */}
-        {info.promotionalVideos.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Promotional Videos</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {info.promotionalVideos.map((video: any, index: number) => (
-                <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">{video.title}</h3>
-                  <div className="aspect-video">
-                    <iframe
-                      src={video.source}
-                      title={video.title}
-                      className="w-full h-full rounded"
-                      allowFullScreen
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Most Popular Animes */}
-        {popularAnimes.length > 0 && (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Most Popular Animes</h2>
-            <MediaGrid
-              media={popularAnimes}
-              loading={false}
-            />
-          </div>
-        )}
       </div>
     </div>
   )

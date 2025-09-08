@@ -176,6 +176,33 @@ export interface HiAnimeInfoResponse {
 // Re-export HiAnimeMedia from anime types for convenience
 export type { HiAnimeMedia } from './anime'
 
+// Episode types for watch page
+export interface HiAnimeEpisode {
+  title: string
+  episodeId: string
+  number: number
+  isFiller: boolean
+}
+
+export interface HiAnimeEpisodesResponse {
+  totalEpisodes: number
+  episodes: HiAnimeEpisode[]
+}
+
+// Server types for streaming
+export interface HiAnimeServer {
+  serverName: string
+  serverId: number
+}
+
+export interface HiAnimeServersResponse {
+  sub: HiAnimeServer[]
+  dub: HiAnimeServer[]
+  raw: HiAnimeServer[]
+  episodeId: string
+  episodeNo: number
+}
+
 // Cache types
 export interface HiAnimeCacheData {
   data: any

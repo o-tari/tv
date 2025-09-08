@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { type Media, type VideoMedia, type AnimeMedia } from '../types/anime'
+import { type Media, type VideoMedia, type AnimeMedia, type HiAnimeMedia } from '../types/anime'
 import { formatViewCount } from '../utils/formatNumber'
 import { formatDuration } from '../utils/formatTime'
 import { getAnimeImage, getImageUrl } from '../utils/imageProxy'
@@ -33,6 +33,8 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
   const getMediaUrl = () => {
     if (media.type === 'video') {
       return `/watch/${media.id}`
+    } else if (media.type === 'hianime') {
+      return `/hianime/${media.id}`
     } else {
       return `/anime/${media.id}`
     }
@@ -247,7 +249,13 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
   }
 
   // Default variant
-  return media.type === 'video' ? renderVideoCard(media as VideoMedia) : renderAnimeCard(media as AnimeMedia)
+  if (media.type === 'video') {
+    return renderVideoCard(media as VideoMedia)
+  } else if (media.type === 'hianime') {
+    return renderAnimeCard(media as HiAnimeMedia)
+  } else {
+    return renderAnimeCard(media as AnimeMedia)
+  }
 }
 
 export default MediaCard

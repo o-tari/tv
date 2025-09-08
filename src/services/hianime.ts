@@ -12,7 +12,9 @@ import type {
   HiAnimeMostPopular,
   HiAnimeMostFavorite,
   HiAnimeLatestCompleted,
-  HiAnimeInfo
+  HiAnimeInfo,
+  HiAnimeEpisodesResponse,
+  HiAnimeServersResponse
 } from '../types/hianime'
 
 const CACHE_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
@@ -116,7 +118,18 @@ class HiAnimeService {
   }
 
   async getAnimeInfo(id: string): Promise<HiAnimeInfoResponse> {
-    return this.makeRequest<HiAnimeInfoResponse>('/anime/info', { id })
+    const response = await this.makeRequest<{success: boolean, data: HiAnimeInfoResponse}>('/anime/info', { id })
+    return response.data
+  }
+
+  async getAnimeEpisodes(animeId: string): Promise<HiAnimeEpisodesResponse> {
+    const response = await this.makeRequest<{success: boolean, data: HiAnimeEpisodesResponse}>(`/anime/episodes/${animeId}`)
+    return response.data
+  }
+
+  async getEpisodeServers(episodeId: string): Promise<HiAnimeServersResponse> {
+    const response = await this.makeRequest<{success: boolean, data: HiAnimeServersResponse}>('/anime/servers', { episodeId })
+    return response.data
   }
 
   // Convert HiAnime data to unified media format
