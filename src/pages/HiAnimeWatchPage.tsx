@@ -43,6 +43,7 @@ const HiAnimeWatchPage = () => {
   const [streamingUrl, setStreamingUrl] = useState<string | null>(null)
   const [streamingUrlLoading, setStreamingUrlLoading] = useState(false)
   const [streamingUrlError, setStreamingUrlError] = useState<string | null>(null)
+  const [streamingData, setStreamingData] = useState<{ url: string; isEmbed: boolean; sources?: any } | null>(null)
 
   useEffect(() => {
     if (!animeId) {
@@ -157,6 +158,7 @@ const HiAnimeWatchPage = () => {
       setStreamingUrlError(null)
       const data = await hianimeService.getEpisodeStreamingUrl(episodeId, serverId, selectedLanguage)
       setStreamingUrl(data.url)
+      setStreamingData(data)
     } catch (err) {
       setStreamingUrlError(err instanceof Error ? err.message : 'Failed to load streaming URL')
     } finally {
@@ -341,49 +343,52 @@ const HiAnimeWatchPage = () => {
                   </div>
                 </div>
               ) : streamingUrl ? (
-                streamingUrl.includes('hianime.to') ? (
+                <div className="w-full h-full">
                   <iframe
                     src={streamingUrl}
                     className="w-full h-full"
                     title={`${selectedEpisode?.title || 'Episode'} - ${selectedServer?.serverName || 'Server'}`}
-                    allow="autoplay; fullscreen; picture-in-picture"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    loading="lazy"
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                    <div className="text-center p-8">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-blue-600 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
+                  {/* Streaming Info */}
+                  {streamingData?.sources && (
+                    <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+                      <h4 className="text-sm font-semibold text-white mb-2">Streaming Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <p className="text-gray-400">Quality Sources:</p>
+                          <p className="text-gray-300">
+                            {streamingData.sources.sources?.length || 0} source(s) available
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">Subtitles:</p>
+                          <p className="text-gray-300">
+                            {streamingData.sources.tracks?.length || 0} language(s) available
+                          </p>
+                        </div>
+                        {streamingData.sources.intro && (
+                          <div>
+                            <p className="text-gray-400">Intro:</p>
+                            <p className="text-gray-300">
+                              {Math.floor(streamingData.sources.intro.start / 60)}:{(streamingData.sources.intro.start % 60).toString().padStart(2, '0')} - {Math.floor(streamingData.sources.intro.end / 60)}:{(streamingData.sources.intro.end % 60).toString().padStart(2, '0')}
+                            </p>
+                          </div>
+                        )}
+                        {streamingData.sources.outro && (
+                          <div>
+                            <p className="text-gray-400">Outro:</p>
+                            <p className="text-gray-300">
+                              {Math.floor(streamingData.sources.outro.start / 60)}:{(streamingData.sources.outro.start % 60).toString().padStart(2, '0')} - {Math.floor(streamingData.sources.outro.end / 60)}:{(streamingData.sources.outro.end % 60).toString().padStart(2, '0')}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <h3 className="text-lg font-semibold text-white mb-2">
-                        Episode Ready to Stream
-                      </h3>
-                      <p className="text-gray-300 mb-4">
-                        {selectedEpisode?.title}
-                      </p>
-                      <p className="text-sm text-gray-400 mb-4">
-                        Server: {selectedServer?.serverName} | Language: {selectedLanguage.toUpperCase()}
-                      </p>
-                      <div className="bg-gray-700 rounded-lg p-4 mb-4">
-                        <p className="text-sm text-gray-300">
-                          <strong>Streaming URL:</strong> {streamingUrl}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          This URL was fetched from the HiAnime API. Click below to open in a new tab.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          window.open(streamingUrl, '_blank')
-                        }}
-                        className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                      >
-                        Open in New Tab
-                      </button>
                     </div>
-                  </div>
-                )
+                  )}
+                </div>
               ) : selectedEpisode && selectedServer ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">

@@ -203,6 +203,17 @@ export interface HiAnimeServersResponse {
   episodeNo: number
 }
 
+// Episode sources response
+export interface HiAnimeEpisodeSources {
+  headers: { Referer: string }
+  tracks: Array<{ url: string; lang: string }>
+  intro: { start: number; end: number }
+  outro: { start: number; end: number }
+  sources: Array<{ url: string; type: string }>
+  anilistID: number
+  malID: number
+}
+
 // Cache types
 export interface HiAnimeCacheData {
   data: any

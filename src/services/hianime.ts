@@ -14,7 +14,8 @@ import type {
   HiAnimeLatestCompleted,
   HiAnimeInfo,
   HiAnimeEpisodesResponse,
-  HiAnimeServersResponse
+  HiAnimeServersResponse,
+  HiAnimeEpisodeSources
 } from '../types/hianime'
 
 const CACHE_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
@@ -132,20 +133,52 @@ class HiAnimeService {
     return response.data
   }
 
-  async getEpisodeStreamingUrl(episodeId: string, serverId: number, category: 'sub' | 'dub' = 'sub'): Promise<{ url: string }> {
-    // HiAnime RapidAPI doesn't provide streaming URLs, only server lists
-    // So we'll create the embed URL directly using the HiAnime embed format
+  async getEpisodeSources(episodeId: string, serverId: number, category: 'sub' | 'dub' = 'sub'): Promise<HiAnimeEpisodeSources> {
+    const serverName = this.getServerName(serverId)
+    const response = await this.makeRequest<{
+      success: boolean
+      data: HiAnimeEpisodeSources
+    }>('/anime/episode-srcs', { 
+      id: episodeId, 
+      server: serverName, 
+      category 
+    })
+    return response.data
+  }
+
+  async getEpisodeStreamingUrl(episodeId: string, serverId: number, category: 'sub' | 'dub' = 'sub'): Promise<{ url: string; isEmbed: boolean; sources?: HiAnimeEpisodeSources }> {
+    // First try to get actual streaming sources
+    try {
+      const sources = await this.getEpisodeSources(episodeId, serverId, category)
+      if (sources.sources && sources.sources.length > 0) {
+        // For iframe embedding, we'll use the HiAnime embed URL instead of direct streaming
+        // This provides better compatibility and controls
+        const cleanEpisodeId = episodeId.replace(/\?ep=\d+/, '')
+        const serverName = this.getServerName(serverId)
+        const episodeNumber = this.extractEpisodeNumber(episodeId)
+        
+        const embedUrl = `https://hianime.to/embed/${cleanEpisodeId}?ep=${episodeNumber}&server=${serverName}&category=${category}`
+        
+        console.log('Created HiAnime embed URL with sources data:', embedUrl)
+        return { 
+          url: embedUrl, 
+          isEmbed: true,
+          sources: sources // Include sources data for additional info
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to get episode sources, falling back to embed URL:', error)
+    }
     
-    // Clean the episode ID for the embed URL
+    // Fallback to embed URL if sources API fails
     const cleanEpisodeId = episodeId.replace(/\?ep=\d+/, '')
     const serverName = this.getServerName(serverId)
     const episodeNumber = this.extractEpisodeNumber(episodeId)
     
-    // Create the HiAnime embed URL
     const embedUrl = `https://hianime.to/embed/${cleanEpisodeId}?ep=${episodeNumber}&server=${serverName}&category=${category}`
     
-    console.log('Created HiAnime embed URL:', embedUrl)
-    return { url: embedUrl }
+    console.log('Created HiAnime embed URL (fallback):', embedUrl)
+    return { url: embedUrl, isEmbed: true }
   }
 
   private getServerName(serverId: number): string {
