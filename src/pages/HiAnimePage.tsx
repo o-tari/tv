@@ -5,6 +5,7 @@ import { hianimeService } from '../services/hianime'
 import type { HiAnimeHomeResponse } from '../types/hianime'
 import MediaGrid from '../components/MediaGrid'
 import SearchBar from '../components/SearchBar'
+import HiAnimeContinueWatching from '../components/HiAnimeContinueWatching'
 
 const HiAnimePage = () => {
   const hianimeApiKey = useAppSelector(selectHianimeApiKey)
@@ -129,6 +130,9 @@ const HiAnimePage = () => {
 
         {/* All Sections */}
         <div className="space-y-12">
+          {/* Continue Watching Section */}
+          <HiAnimeContinueWatching limit={6} />
+
           {/* Spotlight Section */}
           {homeData?.spotlightAnimes && homeData.spotlightAnimes.length > 0 && (
             <div>

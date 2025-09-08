@@ -132,6 +132,36 @@ class HiAnimeService {
     return response.data
   }
 
+  async getEpisodeStreamingUrl(episodeId: string, serverId: number, category: 'sub' | 'dub' = 'sub'): Promise<{ url: string }> {
+    // HiAnime RapidAPI doesn't provide streaming URLs, only server lists
+    // So we'll create the embed URL directly using the HiAnime embed format
+    
+    // Clean the episode ID for the embed URL
+    const cleanEpisodeId = episodeId.replace(/\?ep=\d+/, '')
+    const serverName = this.getServerName(serverId)
+    const episodeNumber = this.extractEpisodeNumber(episodeId)
+    
+    // Create the HiAnime embed URL
+    const embedUrl = `https://hianime.to/embed/${cleanEpisodeId}?ep=${episodeNumber}&server=${serverName}&category=${category}`
+    
+    console.log('Created HiAnime embed URL:', embedUrl)
+    return { url: embedUrl }
+  }
+
+  private getServerName(serverId: number): string {
+    const serverMap: { [key: number]: string } = {
+      1: 'hd-2',
+      4: 'hd-1', 
+      6: 'hd-3'
+    }
+    return serverMap[serverId] || 'hd-1'
+  }
+
+  private extractEpisodeNumber(episodeId: string): string {
+    const match = episodeId.match(/\?ep=(\d+)/)
+    return match ? match[1] : '1'
+  }
+
   // Convert HiAnime data to unified media format
   convertSpotlightToMedia(spotlight: HiAnimeSpotlight): HiAnimeMedia {
     return {

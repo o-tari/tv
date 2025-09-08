@@ -77,7 +77,7 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
     </Link>
   )
 
-  const renderAnimeCard = (anime: AnimeMedia) => {
+  const renderAnimeCard = (anime: AnimeMedia | HiAnimeMedia) => {
     // Use the image proxy utility to handle CORS issues
     const imageSrc = getAnimeImage(anime.image, anime.title, 'medium')
     
@@ -97,9 +97,14 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
                 {anime.totalEpisodes} eps
               </span>
             )}
-            {anime.score && (
+            {'score' in anime && anime.score && (
               <span className="bg-yellow-600 bg-opacity-90 text-white text-xs px-1.5 py-0.5 rounded">
                 ⭐ {anime.score}
+              </span>
+            )}
+            {'rating' in anime && anime.rating && (
+              <span className="bg-yellow-600 bg-opacity-90 text-white text-xs px-1.5 py-0.5 rounded">
+                ⭐ {anime.rating}
               </span>
             )}
           </div>
@@ -127,7 +132,7 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
                   {anime.status}
                 </p>
               )}
-              {anime.year && (
+              {'year' in anime && anime.year && (
                 <p className="text-xs text-gray-500 dark:text-gray-500">
                   {anime.year}
                 </p>

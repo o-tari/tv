@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAppSelector } from '../store'
+import { useAppDispatch, useAppSelector } from '../store'
 import { selectHianimeApiKey } from '../store/slices/settingsSlice'
+import { 
+  addToHiAnimeContinueWatching, 
+  saveHiAnimeEpisodeProgress
+} from '../store/slices/hianimeContinueWatchingSlice'
 import { hianimeService } from '../services/hianime'
 import type { 
   HiAnimeInfoResponse, 
@@ -15,6 +19,7 @@ import MediaGrid from '../components/MediaGrid'
 const HiAnimeWatchPage = () => {
   const { animeId } = useParams<{ animeId: string }>()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const hianimeApiKey = useAppSelector(selectHianimeApiKey)
   
   // State for anime info
@@ -34,6 +39,9 @@ const HiAnimeWatchPage = () => {
   const [serversError, setServersError] = useState<string | null>(null)
   const [selectedServer, setSelectedServer] = useState<HiAnimeServer | null>(null)
   const [selectedLanguage, setSelectedLanguage] = useState<'sub' | 'dub'>('sub')
+  const [streamingUrl, setStreamingUrl] = useState<string | null>(null)
+  const [streamingUrlLoading, setStreamingUrlLoading] = useState(false)
+  const [streamingUrlError, setStreamingUrlError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!animeId) {
@@ -99,6 +107,8 @@ const HiAnimeWatchPage = () => {
       const availableServers = data[selectedLanguage] || data.sub || data.dub
       if (availableServers.length > 0) {
         setSelectedServer(availableServers[0])
+        // Load streaming URL for the first server
+        loadStreamingUrl(episodeId, availableServers[0].serverId)
       }
     } catch (err) {
       setServersError(err instanceof Error ? err.message : 'Failed to load episode servers')
@@ -107,23 +117,62 @@ const HiAnimeWatchPage = () => {
     }
   }
 
+  const loadStreamingUrl = async (episodeId: string, serverId: number) => {
+    try {
+      setStreamingUrlLoading(true)
+      setStreamingUrlError(null)
+      const data = await hianimeService.getEpisodeStreamingUrl(episodeId, serverId, selectedLanguage)
+      setStreamingUrl(data.url)
+    } catch (err) {
+      setStreamingUrlError(err instanceof Error ? err.message : 'Failed to load streaming URL')
+    } finally {
+      setStreamingUrlLoading(false)
+    }
+  }
+
   const handleEpisodeSelect = (episode: HiAnimeEpisode) => {
     setSelectedEpisode(episode)
     loadEpisodeServers(episode.episodeId)
+    
+    // Save to continue watching
+    if (animeInfo?.anime?.info) {
+      const animeMedia = hianimeService.convertInfoToMedia(animeInfo.anime.info)
+      dispatch(addToHiAnimeContinueWatching(animeMedia))
+      
+      // Save episode progress
+      dispatch(saveHiAnimeEpisodeProgress({
+        animeId: animeInfo.anime.info.id,
+        episodeId: episode.episodeId,
+        episodeNumber: episode.number,
+        episodeTitle: episode.title,
+        language: selectedLanguage
+      }))
+    }
   }
 
   const handleLanguageChange = (language: 'sub' | 'dub') => {
     setSelectedLanguage(language)
+    // Clear previous streaming URL
+    setStreamingUrl(null)
     if (servers) {
       const availableServers = servers[language] || servers.sub || servers.dub
       if (availableServers.length > 0) {
         setSelectedServer(availableServers[0])
+        // Load streaming URL for the new server
+        if (selectedEpisode) {
+          loadStreamingUrl(selectedEpisode.episodeId, availableServers[0].serverId)
+        }
       }
     }
   }
 
   const handleServerSelect = (server: HiAnimeServer) => {
     setSelectedServer(server)
+    // Clear previous streaming URL and load new one
+    setStreamingUrl(null)
+    if (selectedEpisode) {
+      loadStreamingUrl(selectedEpisode.episodeId, server.serverId)
+    }
   }
 
   if (loading) {
@@ -214,32 +263,109 @@ const HiAnimeWatchPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player Area */}
-            <div className="aspect-video bg-gray-900 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-              {selectedEpisode && selectedServer ? (
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
+            <div className="aspect-video bg-gray-900 dark:bg-gray-800 rounded-lg overflow-hidden">
+              {streamingUrlLoading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                    <p className="text-gray-300">Loading player...</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    {selectedEpisode.title}
-                  </h3>
-                  <p className="text-gray-300">
-                    Server: {selectedServer.serverName} | Language: {selectedLanguage.toUpperCase()}
-                  </p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Episode streaming would be implemented here
-                  </p>
+                </div>
+              ) : streamingUrlError ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Failed to load player
+                    </h3>
+                    <p className="text-gray-300 mb-4">
+                      {streamingUrlError}
+                    </p>
+                    <button
+                      onClick={() => selectedEpisode && selectedServer && loadStreamingUrl(selectedEpisode.episodeId, selectedServer.serverId)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              ) : streamingUrl ? (
+                streamingUrl.includes('hianime.to') ? (
+                  <iframe
+                    src={streamingUrl}
+                    className="w-full h-full"
+                    title={`${selectedEpisode?.title || 'Episode'} - ${selectedServer?.serverName || 'Server'}`}
+                    allow="autoplay; fullscreen; picture-in-picture"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                    <div className="text-center p-8">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-blue-600 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        Episode Ready to Stream
+                      </h3>
+                      <p className="text-gray-300 mb-4">
+                        {selectedEpisode?.title}
+                      </p>
+                      <p className="text-sm text-gray-400 mb-4">
+                        Server: {selectedServer?.serverName} | Language: {selectedLanguage.toUpperCase()}
+                      </p>
+                      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-gray-300">
+                          <strong>Streaming URL:</strong> {streamingUrl}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          This URL was fetched from the HiAnime API. Click below to open in a new tab.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          window.open(streamingUrl, '_blank')
+                        }}
+                        className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                      >
+                        Open in New Tab
+                      </button>
+                    </div>
+                  </div>
+                )
+              ) : selectedEpisode && selectedServer ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {selectedEpisode.title}
+                    </h3>
+                    <p className="text-gray-300">
+                      Server: {selectedServer.serverName} | Language: {selectedLanguage.toUpperCase()}
+                    </p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Loading streaming URL...
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-600 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-600 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-300">Select an episode to start watching</p>
                   </div>
-                  <p className="text-gray-300">Select an episode to start watching</p>
                 </div>
               )}
             </div>
@@ -365,7 +491,7 @@ const HiAnimeWatchPage = () => {
                                   : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
                               }`}
                             >
-                              {server.serverName}
+                              {server.serverName} (ID: {server.serverId})
                             </button>
                           ))}
                         </div>
@@ -389,7 +515,7 @@ const HiAnimeWatchPage = () => {
                                   : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
                               }`}
                             >
-                              {server.serverName}
+                              {server.serverName} (ID: {server.serverId})
                             </button>
                           ))}
                         </div>

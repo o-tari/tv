@@ -9,6 +9,7 @@ import continueWatchingSlice from './slices/continueWatchingSlice'
 import settingsSlice from './slices/settingsSlice'
 import animeSlice from './slices/animeSlice'
 import animeContinueWatchingSlice from './slices/animeContinueWatchingSlice'
+import hianimeContinueWatchingSlice from './slices/hianimeContinueWatchingSlice'
 import tmdbContinueWatchingSlice from './slices/tmdbContinueWatchingSlice'
 import tmdbWatchLaterSlice from './slices/tmdbWatchLaterSlice'
 import streamingLinksSlice from './slices/streamingLinksSlice'
@@ -24,6 +25,7 @@ export const store = configureStore({
     settings: settingsSlice,
     anime: animeSlice,
     animeContinueWatching: animeContinueWatchingSlice,
+    hianimeContinueWatching: hianimeContinueWatchingSlice,
     tmdbContinueWatching: tmdbContinueWatchingSlice,
     tmdbWatchLater: tmdbWatchLaterSlice,
     streamingLinks: streamingLinksSlice,

@@ -63,8 +63,8 @@ const MediaGrid = ({
 
   return (
     <div className={`grid ${getGridCols()} ${getGap()}`}>
-      {media.map((item) => (
-        <MediaCard key={item.id} media={item} variant={variant} />
+      {media.map((item, index) => (
+        <MediaCard key={`${item.id}-${index}`} media={item} variant={variant} />
       ))}
     </div>
   )
