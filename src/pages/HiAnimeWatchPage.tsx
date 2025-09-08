@@ -370,6 +370,23 @@ const HiAnimeWatchPage = () => {
               )}
             </div>
 
+            {/* External Link for Selected Episode */}
+            {selectedEpisode && (
+              <div className="flex justify-center">
+                <a
+                  href={`https://hianime.to/watch/${animeId}?ep=${selectedEpisode.episodeId.split('?ep=').pop() || selectedEpisode.episodeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                  title={`Open Episode ${selectedEpisode.number} on HiAnime.to`}
+                >
+                  <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            )}
+
             {/* Episode Selection */}
             {episodes && (
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
@@ -581,6 +598,20 @@ const HiAnimeWatchPage = () => {
                 alt={info.name}
                 className="w-full rounded-lg shadow-lg"
               />
+              {/* External Link for Anime */}
+              <div className="mt-3 flex justify-center">
+                <a
+                  href={`https://hianime.to/watch/${animeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                  title="Open on HiAnime.to"
+                >
+                  <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
             </div>
 
             {/* Most Popular Animes */}
