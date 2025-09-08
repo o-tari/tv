@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppSelector } from '../store'
 import { selectHianimeApiKey } from '../store/slices/settingsSlice'
 import { hianimeService } from '../services/hianime'
-import type { HiAnimeHomeResponse } from '../types/hianime'
+import type { HiAnimeHomeResponse, HiAnimeSearchResponse, HiAnimeMedia } from '../types/hianime'
 import MediaGrid from '../components/MediaGrid'
 import SearchBar from '../components/SearchBar'
 import HiAnimeContinueWatching from '../components/HiAnimeContinueWatching'
@@ -12,6 +12,13 @@ const HiAnimePage = () => {
   const [homeData, setHomeData] = useState<HiAnimeHomeResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Search state
+  const [searchResults, setSearchResults] = useState<HiAnimeMedia[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearchResults, setShowSearchResults] = useState(false)
 
   useEffect(() => {
     if (!hianimeApiKey) {
@@ -42,8 +49,32 @@ const HiAnimePage = () => {
     loadHomeData()
   }
 
-  const handleSearch = (_query: string) => {
-    // TODO: Implement search functionality
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setShowSearchResults(false)
+      setSearchResults([])
+      setSearchQuery('')
+      return
+    }
+
+    try {
+      setSearchLoading(true)
+      setSearchError(null)
+      setSearchQuery(query)
+      
+      const response = await hianimeService.searchAnime(query)
+      const mediaResults = response.animes.map(anime => 
+        hianimeService.convertSearchAnimeToMedia(anime)
+      )
+      
+      setSearchResults(mediaResults)
+      setShowSearchResults(true)
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : 'Failed to search anime')
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
   }
 
   if (loading) {
@@ -125,11 +156,76 @@ const HiAnimePage = () => {
           <div className="max-w-2xl">
             <SearchBar onSearch={handleSearch} />
           </div>
+          
+          {/* Search Results */}
+          {showSearchResults && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Search Results for "{searchQuery}"
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowSearchResults(false)
+                    setSearchResults([])
+                    setSearchQuery('')
+                  }}
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Clear Search
+                </button>
+              </div>
+              
+              {searchLoading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 mx-auto mb-4 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-gray-600 dark:text-gray-400">Searching anime...</p>
+                </div>
+              ) : searchError ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    Search failed
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {searchError}
+                  </p>
+                  <button
+                    onClick={() => handleSearch(searchQuery)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : searchResults.length > 0 ? (
+                <MediaGrid media={searchResults} />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    No results found
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Try searching with different keywords
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
 
-        {/* All Sections */}
-        <div className="space-y-12">
+        {/* All Sections - Only show when not searching */}
+        {!showSearchResults && (
+          <div className="space-y-12">
           {/* Continue Watching Section */}
           <HiAnimeContinueWatching limit={6} />
 
@@ -268,7 +364,8 @@ const HiAnimePage = () => {
               </div>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

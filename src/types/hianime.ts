@@ -246,6 +246,39 @@ export interface HiAnimeEpisodeSources {
   malID: number
 }
 
+// Search types
+export interface HiAnimeSearchAnime {
+  id: string
+  name: string
+  jname: string
+  poster: string
+  duration: string
+  type: string
+  rating: string | null
+  episodes: HiAnimeEpisodes
+}
+
+export interface HiAnimeSearchFilters {
+  sort: string
+  status: string
+  rated: string
+  genres: string
+  type: string
+  score: string
+  language: string
+  season: string
+}
+
+export interface HiAnimeSearchResponse {
+  animes: HiAnimeSearchAnime[]
+  mostPopularAnimes: HiAnimeMostPopular[]
+  searchQuery: string
+  searchFilters: HiAnimeSearchFilters
+  totalPages: number
+  hasNextPage: boolean
+  currentPage: number
+}
+
 // Cache types
 export interface HiAnimeCacheData {
   data: any

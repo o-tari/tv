@@ -18,7 +18,9 @@ import type {
   HiAnimeEpisodeSources,
   HiAnimeSeason,
   HiAnimeRelatedAnime,
-  HiAnimeRecommendedAnime
+  HiAnimeRecommendedAnime,
+  HiAnimeSearchResponse,
+  HiAnimeSearchAnime
 } from '../types/hianime'
 
 const CACHE_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
@@ -123,6 +125,31 @@ class HiAnimeService {
 
   async getAnimeInfo(id: string): Promise<HiAnimeInfoResponse> {
     const response = await this.makeRequest<{success: boolean, data: HiAnimeInfoResponse}>('/anime/info', { id })
+    return response.data
+  }
+
+  async searchAnime(query: string, filters?: {
+    page?: number
+    type?: string
+    status?: string
+    rated?: string
+    score?: string
+    season?: string
+    language?: string
+    sort?: string
+    genres?: string
+  }): Promise<HiAnimeSearchResponse> {
+    const params: Record<string, unknown> = { q: query }
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params[key] = value
+        }
+      })
+    }
+
+    const response = await this.makeRequest<{success: boolean, data: HiAnimeSearchResponse}>('/anime/search', params)
     return response.data
   }
 
@@ -419,6 +446,24 @@ class HiAnimeService {
       animeType: recommended.type,
       duration: recommended.duration,
       rating: recommended.rating || undefined
+    }
+  }
+
+  // Convert search anime to media format
+  convertSearchAnimeToMedia(searchAnime: HiAnimeSearchAnime): HiAnimeMedia {
+    return {
+      id: searchAnime.id,
+      title: searchAnime.name,
+      image: searchAnime.poster,
+      url: `/hianime/${searchAnime.id}`,
+      type: 'hianime',
+      jname: searchAnime.jname,
+      episodes: searchAnime.episodes,
+      totalEpisodes: searchAnime.episodes.sub || searchAnime.episodes.dub || 0,
+      subOrDub: searchAnime.episodes.sub ? 'sub' : 'dub',
+      animeType: searchAnime.type,
+      duration: searchAnime.duration,
+      rating: searchAnime.rating || undefined
     }
   }
 
