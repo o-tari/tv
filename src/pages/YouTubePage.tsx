@@ -27,7 +27,7 @@ const YouTubePage = () => {
   useEffect(() => {
     if (trendingVideos.length === 0 && !hasInitialized.current && !trendingLoading) {
       hasInitialized.current = true
-      dispatch(fetchTrendingVideos('1'))
+      dispatch(fetchTrendingVideos()) // Don't pass pageToken for initial load
     }
   }, [dispatch, trendingVideos.length, trendingLoading])
 
@@ -42,7 +42,7 @@ const YouTubePage = () => {
     // For now, we'll just reload the first page
     // In a real implementation, you'd need to track pagination
     if (!trendingLoading) {
-      dispatch(fetchTrendingVideos('1'))
+      dispatch(fetchTrendingVideos()) // Don't pass pageToken for reload
     }
   }
 
@@ -65,7 +65,7 @@ const YouTubePage = () => {
           {trendingError}
         </p>
         <button
-          onClick={() => dispatch(fetchTrendingVideos('1'))}
+          onClick={() => dispatch(fetchTrendingVideos())}
           className="btn-primary"
         >
           Try again

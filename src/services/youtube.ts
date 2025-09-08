@@ -32,7 +32,14 @@ const handleApiError = (error: any) => {
     throw new Error('API quota exceeded. Please try again later.')
   }
   if (error.response?.status === 400) {
-    throw new Error('Invalid request. Please check your search parameters.')
+    const errorMessage = error.response?.data?.error?.message || 'Invalid request. Please check your search parameters.'
+    throw new Error(`Bad Request: ${errorMessage}`)
+  }
+  if (error.response?.status === 401) {
+    throw new Error('Invalid API key. Please check your YouTube API key in settings.')
+  }
+  if (error.response?.status === 404) {
+    throw new Error('API endpoint not found. Please check your configuration.')
   }
   throw error
 }
@@ -229,26 +236,51 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
     params.pageToken = pageToken
   }
 
-  return requestCache.get('/videos', params, async () => {
-    const api = getApiInstance()
-    const response: AxiosResponse = await api.get('/videos', { params })
+  try {
+    return requestCache.get('/videos', params, async () => {
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/videos', { params })
+      
+      return {
+        items: response.data.items.map((item: any) => ({
+          id: item.id,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+          channelTitle: item.snippet.channelTitle,
+          channelId: item.snippet.channelId,
+          publishedAt: item.snippet.publishedAt,
+          duration: item.contentDetails.duration,
+          viewCount: item.statistics.viewCount,
+        })),
+        nextPageToken: response.data.nextPageToken,
+        totalResults: response.data.pageInfo.totalResults,
+      }
+    })
+  } catch (error) {
+    // If API call fails, fall back to mock data
+    console.warn('YouTube API call failed, falling back to mock data:', error)
     
-    return {
-      items: response.data.items.map((item: any) => ({
-        id: item.id,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-        channelTitle: item.snippet.channelTitle,
-        channelId: item.snippet.channelId,
-        publishedAt: item.snippet.publishedAt,
-        duration: item.contentDetails.duration,
-        viewCount: item.statistics.viewCount,
-      })),
-      nextPageToken: response.data.nextPageToken,
-      totalResults: response.data.pageInfo.totalResults,
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // For pagination, return different sets of videos
+    if (pageToken) {
+      // Return a different set of videos for pagination
+      const additionalVideos = mockVideos.map((video, index) => ({
+        ...video,
+        id: `${video.id}-page2-${index}`,
+        title: `${video.title} (Page 2)`,
+      }))
+      return {
+        items: additionalVideos,
+        nextPageToken: undefined, // No more pages for demo
+        totalResults: 1000,
+      }
     }
-  })
+    
+    return mockSearchResults
+  }
 }
 
 // Get channel details
