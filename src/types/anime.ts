@@ -89,7 +89,7 @@ export interface AnimeEpisodesResponse {
 }
 
 // Generic media types for unified components
-export type MediaType = 'video' | 'anime'
+export type MediaType = 'video' | 'anime' | 'hianime'
 
 export interface BaseMedia {
   id: string
@@ -134,4 +134,32 @@ export interface AnimeMedia extends BaseMedia {
   releaseDate?: string
 }
 
-export type Media = VideoMedia | AnimeMedia
+export interface HiAnimeMedia extends BaseMedia {
+  type: 'hianime'
+  genres?: string[]
+  description?: string
+  status?: string
+  totalEpisodes?: number
+  subOrDub?: string
+  jname?: string
+  rank?: number
+  duration?: string
+  rating?: string
+  animeType?: string
+  episodes?: {
+    sub: number | null
+    dub: number | null
+  }
+  otherInfo?: string[]
+  // Additional fields from info API
+  anilistId?: number
+  malId?: number
+  malscore?: string
+  studios?: string
+  producers?: string[]
+  synonyms?: string
+  aired?: string
+  premiered?: string
+}
+
+export type Media = VideoMedia | AnimeMedia | HiAnimeMedia

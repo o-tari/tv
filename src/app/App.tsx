@@ -17,6 +17,8 @@ const HistoryPage = lazy(() => import('../pages/HistoryPage'))
 const WatchLaterPage = lazy(() => import('../pages/WatchLaterPage'))
 const ContinueWatchingPage = lazy(() => import('../pages/ContinueWatchingPage'))
 const AnimePage = lazy(() => import('../pages/AnimePage'))
+const HiAnimePage = lazy(() => import('../pages/HiAnimePage'))
+const HiAnimeWatchPage = lazy(() => import('../pages/HiAnimeWatchPage'))
 const MoviesTVPage = lazy(() => import('../pages/MoviesTVPage'))
 const TMDBWatchPage = lazy(() => import('../pages/TMDBWatchPage'))
 const TorrentSearchPage = lazy(() => import('../pages/TorrentSearchPage'))
@@ -39,6 +41,8 @@ function App() {
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/anime" element={<AnimePage />} />
                 <Route path="/anime/:animeId" element={<WatchPage />} />
+                <Route path="/hianime" element={<HiAnimePage />} />
+                <Route path="/hianime/:animeId" element={<HiAnimeWatchPage />} />
                 <Route path="/movies-tv" element={<MoviesTVPage />} />
                 <Route path="/tmdb-watch/:type/:id" element={<TMDBWatchPage />} />
                 <Route path="/torrents" element={<TorrentSearchPage />} />

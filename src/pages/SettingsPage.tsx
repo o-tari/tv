@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, resetSettings } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, selectHianimeApiKey, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, setHianimeApiKey, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 
@@ -13,6 +13,7 @@ const SettingsPage = () => {
   const language = useAppSelector(selectLanguage)
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
   const showUpcomingReleases = useAppSelector(selectShowUpcomingReleases)
+  const hianimeApiKey = useAppSelector(selectHianimeApiKey)
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
@@ -20,8 +21,10 @@ const SettingsPage = () => {
   const [localLanguage, setLocalLanguage] = useState(language)
   const [localTmdbApiKey, setLocalTmdbApiKey] = useState(tmdbApiKey)
   const [localShowUpcomingReleases, setLocalShowUpcomingReleases] = useState(showUpcomingReleases)
+  const [localHianimeApiKey, setLocalHianimeApiKey] = useState(hianimeApiKey)
   const [showApiKey, setShowApiKey] = useState(false)
   const [showTmdbApiKey, setShowTmdbApiKey] = useState(false)
+  const [showHianimeApiKey, setShowHianimeApiKey] = useState(false)
 
   const handleSave = () => {
     dispatch(setYoutubeApiKey(localApiKey))
@@ -30,6 +33,7 @@ const SettingsPage = () => {
     dispatch(setLanguage(localLanguage))
     dispatch(setTmdbApiKey(localTmdbApiKey))
     dispatch(setShowUpcomingReleases(localShowUpcomingReleases))
+    dispatch(setHianimeApiKey(localHianimeApiKey))
     // Clear all cached data so it will be refetched with new settings
     dispatch(clearAllData())
   }
@@ -43,6 +47,7 @@ const SettingsPage = () => {
       setLocalLanguage('en')
       setLocalTmdbApiKey('')
       setLocalShowUpcomingReleases(true)
+      setLocalHianimeApiKey('')
     }
   }
 
@@ -53,6 +58,7 @@ const SettingsPage = () => {
     setLocalLanguage(language)
     setLocalTmdbApiKey(tmdbApiKey)
     setLocalShowUpcomingReleases(showUpcomingReleases)
+    setLocalHianimeApiKey(hianimeApiKey)
   }
 
   return (
@@ -207,6 +213,41 @@ const SettingsPage = () => {
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                   Get your API key from the TMDB website
+                </p>
+              </div>
+
+              {/* HiAnime API Key */}
+              <div>
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  HiAnime API Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showHianimeApiKey ? 'text' : 'password'}
+                    value={localHianimeApiKey}
+                    onChange={(e) => setLocalHianimeApiKey(e.target.value)}
+                    placeholder="Enter your HiAnime API key"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-base"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowHianimeApiKey(!showHianimeApiKey)}
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1"
+                  >
+                    {showHianimeApiKey ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Get your API key from RapidAPI HiAnime
                 </p>
               </div>
 

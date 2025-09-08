@@ -8,6 +8,7 @@ interface SettingsState {
   language: string
   tmdbApiKey: string
   showUpcomingReleases: boolean
+  hianimeApiKey: string
 }
 
 const loadFromStorage = (key: string, defaultValue: any) => {
@@ -34,6 +35,7 @@ const initialState: SettingsState = {
   language: loadFromStorage('language', 'en'),
   tmdbApiKey: loadFromStorage('tmdbApiKey', ''),
   showUpcomingReleases: loadFromStorage('showUpcomingReleases', true),
+  hianimeApiKey: loadFromStorage('hianimeApiKey', ''),
 }
 
 const settingsSlice = createSlice({
@@ -64,6 +66,10 @@ const settingsSlice = createSlice({
       state.showUpcomingReleases = action.payload
       saveToStorage('showUpcomingReleases', action.payload)
     },
+    setHianimeApiKey: (state, action: PayloadAction<string>) => {
+      state.hianimeApiKey = action.payload
+      saveToStorage('hianimeApiKey', action.payload)
+    },
     resetSettings: (state) => {
       state.youtubeApiKey = ''
       state.useMockData = false
@@ -71,12 +77,14 @@ const settingsSlice = createSlice({
       state.language = 'en'
       state.tmdbApiKey = ''
       state.showUpcomingReleases = true
+      state.hianimeApiKey = ''
       saveToStorage('youtubeApiKey', '')
       saveToStorage('useMockData', false)
       saveToStorage('regionCode', 'US')
       saveToStorage('language', 'en')
       saveToStorage('tmdbApiKey', '')
       saveToStorage('showUpcomingReleases', true)
+      saveToStorage('hianimeApiKey', '')
     },
   },
 })
@@ -88,6 +96,7 @@ export const {
   setLanguage,
   setTmdbApiKey,
   setShowUpcomingReleases,
+  setHianimeApiKey,
   resetSettings,
 } = settingsSlice.actions
 
@@ -98,5 +107,6 @@ export const selectRegionCode = (state: { settings: SettingsState }) => state.se
 export const selectLanguage = (state: { settings: SettingsState }) => state.settings.language
 export const selectTmdbApiKey = (state: { settings: SettingsState }) => state.settings.tmdbApiKey
 export const selectShowUpcomingReleases = (state: { settings: SettingsState }) => state.settings.showUpcomingReleases
+export const selectHianimeApiKey = (state: { settings: SettingsState }) => state.settings.hianimeApiKey
 
 export default settingsSlice.reducer

@@ -13,6 +13,7 @@ const Sidebar = () => {
     { label: 'YouTube', href: '/youtube', icon: '📺' },
     { label: 'Movies & TV', href: '/movies-tv', icon: '🎬' },
     { label: 'Anime', href: '/anime', icon: '🎌' },
+    { label: 'HiAnime', href: '/hianime', icon: '🌸' },
     { label: 'Torrent Search', href: '/torrents', icon: '🔍' },
   ]
 

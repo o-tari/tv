@@ -1,5 +1,5 @@
 // Utility to handle CORS issues with anime images
-export const getImageUrl = (originalUrl: string, title: string, type: 'anime' | 'video' = 'anime', size: 'small' | 'medium' | 'large' = 'medium'): string => {
+export const getImageUrl = (originalUrl: string, title: string, type: 'anime' | 'video' | 'hianime' = 'anime', size: 'small' | 'medium' | 'large' = 'medium'): string => {
   if (!originalUrl || originalUrl.trim() === '') {
     return getFallbackImage(title, type, size)
   }
@@ -15,8 +15,8 @@ export const getImageUrl = (originalUrl: string, title: string, type: 'anime' | 
   return originalUrl
 }
 
-const getDimensions = (size: 'small' | 'medium' | 'large', type: 'anime' | 'video') => {
-  if (type === 'anime') {
+const getDimensions = (size: 'small' | 'medium' | 'large', type: 'anime' | 'video' | 'hianime') => {
+  if (type === 'anime' || type === 'hianime') {
     switch (size) {
       case 'small': return { width: 200, height: 280 }
       case 'medium': return { width: 300, height: 400 }
@@ -31,11 +31,11 @@ const getDimensions = (size: 'small' | 'medium' | 'large', type: 'anime' | 'vide
   }
 }
 
-export const getFallbackImage = (title: string, type: 'anime' | 'video' = 'anime', size: 'small' | 'medium' | 'large' = 'medium'): string => {
+export const getFallbackImage = (title: string, type: 'anime' | 'video' | 'hianime' = 'anime', size: 'small' | 'medium' | 'large' = 'medium'): string => {
   const encodedTitle = encodeURIComponent(title)
   const dimensions = getDimensions(size, type)
   
-  if (type === 'anime') {
+  if (type === 'anime' || type === 'hianime') {
     return `https://via.placeholder.com/${dimensions.width}x${dimensions.height}/6366f1/ffffff?text=${encodedTitle}`
   } else {
     return `https://via.placeholder.com/${dimensions.width}x${dimensions.height}/ef4444/ffffff?text=${encodedTitle}`

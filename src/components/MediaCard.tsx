@@ -154,7 +154,7 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
               src={imageSrc}
               alt={media.title}
               className="w-40 aspect-video object-cover rounded-lg"
-              placeholder={media.type === 'video' ? '📹' : '🎌'}
+              placeholder={media.type === 'video' ? '📹' : media.type === 'hianime' ? '🌸' : '🎌'}
             />
             {media.type === 'video' && 'duration' in media && (
               <span className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 py-0.5 rounded">
@@ -200,7 +200,7 @@ const MediaCard = ({ media, variant = 'default' }: MediaCardProps) => {
               src={imageSrc}
               alt={media.title}
               className="w-full aspect-video object-cover rounded-lg"
-              placeholder={media.type === 'video' ? '📹' : '🎌'}
+              placeholder={media.type === 'video' ? '📹' : media.type === 'hianime' ? '🌸' : '🎌'}
             />
             {media.type === 'video' && 'duration' in media && (
               <span className="absolute bottom-3 right-3 bg-black bg-opacity-80 text-white text-sm px-2 py-1 rounded">

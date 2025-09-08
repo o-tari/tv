@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, resetSettings } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectHianimeApiKey, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setHianimeApiKey, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 
@@ -16,18 +16,22 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
   const useMockData = useAppSelector(selectUseMockData)
   const regionCode = useAppSelector(selectRegionCode)
   const language = useAppSelector(selectLanguage)
+  const hianimeApiKey = useAppSelector(selectHianimeApiKey)
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
   const [localRegionCode, setLocalRegionCode] = useState(regionCode)
   const [localLanguage, setLocalLanguage] = useState(language)
+  const [localHianimeApiKey, setLocalHianimeApiKey] = useState(hianimeApiKey)
   const [showApiKey, setShowApiKey] = useState(false)
+  const [showHianimeApiKey, setShowHianimeApiKey] = useState(false)
 
   const handleSave = () => {
     dispatch(setYoutubeApiKey(localApiKey))
     dispatch(setUseMockData(localUseMockData))
     dispatch(setRegionCode(localRegionCode))
     dispatch(setLanguage(localLanguage))
+    dispatch(setHianimeApiKey(localHianimeApiKey))
     // Clear all cached data so it will be refetched with new settings
     dispatch(clearAllData())
     onClose()
@@ -40,6 +44,7 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
       setLocalUseMockData(false)
       setLocalRegionCode('US')
       setLocalLanguage('en')
+      setLocalHianimeApiKey('')
     }
   }
 
@@ -48,6 +53,7 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
     setLocalUseMockData(useMockData)
     setLocalRegionCode(regionCode)
     setLocalLanguage(language)
+    setLocalHianimeApiKey(hianimeApiKey)
     onClose()
   }
 
@@ -172,6 +178,41 @@ const Settings = ({ isOpen, onClose }: SettingsProps) => {
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Two-letter language code for YouTube API language (e.g., en, es, fr)
+            </p>
+          </div>
+
+          {/* HiAnime API Key */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              HiAnime API Key
+            </label>
+            <div className="relative">
+              <input
+                type={showHianimeApiKey ? 'text' : 'password'}
+                value={localHianimeApiKey}
+                onChange={(e) => setLocalHianimeApiKey(e.target.value)}
+                placeholder="Enter your HiAnime API key"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowHianimeApiKey(!showHianimeApiKey)}
+                className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                {showHianimeApiKey ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Get your API key from RapidAPI HiAnime
             </p>
           </div>
 
