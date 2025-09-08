@@ -214,6 +214,37 @@ const AnimeEpisodeBatches = ({
 
   return (
     <div className="space-y-4">
+      {/* Show episode details at the top if an episode is selected */}
+      {selectedEpisode && (
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Episode {selectedEpisode.episodeNumber}: {selectedEpisode.title}
+          </h3>
+          {selectedEpisode.title_japanese && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {selectedEpisode.title_japanese}
+            </p>
+          )}
+          {selectedEpisode.aired && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Aired: {new Date(selectedEpisode.aired).toLocaleDateString()}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {selectedEpisode.filler && (
+              <span className="inline-block px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
+                Filler
+              </span>
+            )}
+            {selectedEpisode.recap && (
+              <span className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                Recap
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Episodes ({episodeCount})
@@ -342,36 +373,6 @@ const AnimeEpisodeBatches = ({
             })}
           </div>
 
-          {/* Show episode details if an episode is selected */}
-          {selectedEpisode && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Episode {selectedEpisode.episodeNumber}: {selectedEpisode.title}
-              </h3>
-              {selectedEpisode.title_japanese && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  {selectedEpisode.title_japanese}
-                </p>
-              )}
-              {selectedEpisode.aired && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  Aired: {new Date(selectedEpisode.aired).toLocaleDateString()}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {selectedEpisode.filler && (
-                  <span className="inline-block px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
-                    Filler
-                  </span>
-                )}
-                {selectedEpisode.recap && (
-                  <span className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                    Recap
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
