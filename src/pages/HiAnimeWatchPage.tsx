@@ -4,7 +4,8 @@ import { useAppDispatch, useAppSelector } from '../store'
 import { selectHianimeApiKey } from '../store/slices/settingsSlice'
 import { 
   addToHiAnimeContinueWatching, 
-  saveHiAnimeEpisodeProgress
+  saveHiAnimeEpisodeProgress,
+  selectHiAnimeEpisodeProgress
 } from '../store/slices/hianimeContinueWatchingSlice'
 import { hianimeService } from '../services/hianime'
 import type { 
@@ -84,10 +85,30 @@ const HiAnimeWatchPage = () => {
       const data = await hianimeService.getAnimeEpisodes(animeId)
       setEpisodes(data)
       
-      // Set first episode as selected by default
+      // Check for saved episode progress
+      const savedProgress = selectHiAnimeEpisodeProgress(animeId)
+      
       if (data.episodes.length > 0) {
-        setSelectedEpisode(data.episodes[0])
-        loadEpisodeServers(data.episodes[0].episodeId)
+        let episodeToSelect: HiAnimeEpisode
+        
+        if (savedProgress) {
+          // Try to find the saved episode
+          const savedEpisode = data.episodes.find(ep => ep.episodeId === savedProgress.episodeId)
+          if (savedEpisode) {
+            episodeToSelect = savedEpisode
+            // Restore the saved language preference
+            setSelectedLanguage(savedProgress.language)
+          } else {
+            // If saved episode not found, fall back to latest episode
+            episodeToSelect = data.episodes[data.episodes.length - 1]
+          }
+        } else {
+          // No saved progress, use latest episode
+          episodeToSelect = data.episodes[data.episodes.length - 1]
+        }
+        
+        setSelectedEpisode(episodeToSelect)
+        loadEpisodeServers(episodeToSelect.episodeId)
       }
     } catch (err) {
       setEpisodesError(err instanceof Error ? err.message : 'Failed to load episodes')
@@ -103,12 +124,25 @@ const HiAnimeWatchPage = () => {
       const data = await hianimeService.getEpisodeServers(episodeId)
       setServers(data)
       
+      // Check for saved server preference
+      const savedProgress = animeId ? selectHiAnimeEpisodeProgress(animeId) : null
+      
       // Set first available server as selected
       const availableServers = data[selectedLanguage] || data.sub || data.dub
       if (availableServers.length > 0) {
-        setSelectedServer(availableServers[0])
-        // Load streaming URL for the first server
-        loadStreamingUrl(episodeId, availableServers[0].serverId)
+        let serverToSelect = availableServers[0]
+        
+        // Try to restore saved server if it exists
+        if (savedProgress && savedProgress.serverId) {
+          const savedServer = availableServers.find(server => server.serverId === savedProgress.serverId)
+          if (savedServer) {
+            serverToSelect = savedServer
+          }
+        }
+        
+        setSelectedServer(serverToSelect)
+        // Load streaming URL for the selected server
+        loadStreamingUrl(episodeId, serverToSelect.serverId)
       }
     } catch (err) {
       setServersError(err instanceof Error ? err.message : 'Failed to load episode servers')
@@ -172,6 +206,19 @@ const HiAnimeWatchPage = () => {
     setStreamingUrl(null)
     if (selectedEpisode) {
       loadStreamingUrl(selectedEpisode.episodeId, server.serverId)
+      
+      // Save server selection to episode progress
+      if (animeInfo?.anime?.info) {
+        dispatch(saveHiAnimeEpisodeProgress({
+          animeId: animeInfo.anime.info.id,
+          episodeId: selectedEpisode.episodeId,
+          episodeNumber: selectedEpisode.number,
+          episodeTitle: selectedEpisode.title,
+          serverId: server.serverId,
+          serverName: server.serverName,
+          language: selectedLanguage
+        }))
+      }
     }
   }
 
@@ -372,7 +419,7 @@ const HiAnimeWatchPage = () => {
 
             {/* External Link for Selected Episode */}
             {selectedEpisode && (
-              <div className="flex justify-center">
+              <div className="flex justify-end">
                 <a
                   href={`https://hianime.to/watch/${animeId}?ep=${selectedEpisode.episodeId.split('?ep=').pop() || selectedEpisode.episodeId}`}
                   target="_blank"
@@ -437,7 +484,7 @@ const HiAnimeWatchPage = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
-                    {episodes.episodes.map((episode) => (
+                    {episodes.episodes.slice().reverse().map((episode) => (
                       <button
                         key={episode.episodeId}
                         onClick={() => handleEpisodeSelect(episode)}
@@ -599,7 +646,7 @@ const HiAnimeWatchPage = () => {
                 className="w-full rounded-lg shadow-lg"
               />
               {/* External Link for Anime */}
-              <div className="mt-3 flex justify-center">
+              <div className="mt-3 flex justify-end">
                 <a
                   href={`https://hianime.to/watch/${animeId}`}
                   target="_blank"
