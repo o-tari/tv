@@ -8,6 +8,8 @@ export interface Video {
   publishedAt: string
   duration: string
   viewCount: string
+  tags?: string[]
+  categoryId?: string
 }
 
 export interface Channel {

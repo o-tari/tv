@@ -189,6 +189,8 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
       publishedAt: video.snippet.publishedAt,
       duration: video.contentDetails.duration,
       viewCount: video.statistics.viewCount,
+      tags: video.snippet.tags || [],
+      categoryId: video.snippet.categoryId,
     }
   } catch (error) {
     handleApiError(error)
@@ -382,7 +384,188 @@ export const getChannelVideos = async (
 }
 
 
-// Get related videos
+// Helper function to extract keywords from title and description
+const extractKeywords = (title: string, description: string): string => {
+  // Common words to filter out
+  const commonWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+    'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did',
+    'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that',
+    'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her',
+    'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours',
+    'hers', 'ours', 'theirs', 'how', 'what', 'when', 'where', 'why', 'who', 'which',
+    'whom', 'whose', 'if', 'then', 'else', 'because', 'so', 'than', 'as', 'like',
+    'about', 'above', 'after', 'before', 'below', 'between', 'during', 'through',
+    'under', 'up', 'down', 'out', 'off', 'over', 'around', 'near', 'far', 'here',
+    'there', 'everywhere', 'nowhere', 'somewhere', 'anywhere', 'always', 'never',
+    'sometimes', 'often', 'usually', 'rarely', 'seldom', 'frequently', 'occasionally'
+  ])
+
+  // Combine title and description
+  const text = `${title} ${description}`.toLowerCase()
+  
+  // Extract words (alphanumeric characters only)
+  const words = text.split(/\W+/)
+    .filter(word => 
+      word.length > 2 && 
+      !commonWords.has(word) &&
+      !/^\d+$/.test(word) && // Not just numbers
+      !/^[a-z]$/.test(word)  // Not single letters
+    )
+  
+  // Get unique words and limit to 5 most relevant
+  const uniqueWords = [...new Set(words)].slice(0, 5)
+  return uniqueWords.join(' ')
+}
+
+// Helper function to search with parameters and filter results
+const searchWithParams = async (params: any, excludeVideoId: string, excludeChannelId?: string) => {
+  const api = getApiInstance()
+  const response = await api.get('/search', { params })
+  
+  // Filter out the current video and optionally videos from the same channel
+  const filteredItems = response.data.items.filter((item: any) => {
+    const isCurrentVideo = item.id.videoId === excludeVideoId
+    const isSameChannel = excludeChannelId && item.snippet.channelId === excludeChannelId
+    return !isCurrentVideo && !isSameChannel
+  })
+  
+  return {
+    items: filteredItems.map((item: any) => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+      channelTitle: item.snippet.channelTitle,
+      channelId: item.snippet.channelId,
+      publishedAt: item.snippet.publishedAt,
+      duration: '',
+      viewCount: '',
+    })),
+    nextPageToken: response.data.nextPageToken,
+    totalResults: response.data.pageInfo.totalResults,
+  }
+}
+
+// Helper function to combine and deduplicate results
+const combineAndDeduplicateResults = (results: Video[], excludeVideoId: string): Video[] => {
+  const seen = new Set<string>()
+  const deduplicated = results.filter(video => {
+    if (seen.has(video.id) || video.id === excludeVideoId) {
+      return false
+    }
+    seen.add(video.id)
+    return true
+  })
+  
+  // Sort by relevance (simple scoring based on title similarity)
+  return deduplicated.sort((a, b) => {
+    // You can implement more sophisticated scoring here
+    return a.title.localeCompare(b.title)
+  })
+}
+
+// Strategy 1: Search by keywords (40% of results)
+const searchByKeywords = async (videoDetails: Video, totalResults: number): Promise<Video[]> => {
+  const keywords = extractKeywords(videoDetails.title, videoDetails.description)
+  if (!keywords.trim()) return []
+
+  const maxResults = Math.ceil(totalResults * 0.4)
+  const params = {
+    part: 'snippet',
+    q: keywords,
+    type: 'video',
+    maxResults: Math.min(maxResults, 25), // Increased from 15 to 25
+    order: 'relevance',
+    videoEmbeddable: true,
+    publishedAfter: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // Last year
+  }
+
+  try {
+    const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
+    return result.items
+  } catch (error) {
+    console.warn('Keyword search failed:', error)
+    return []
+  }
+}
+
+// Strategy 2: Search by category (30% of results)
+const searchByCategory = async (videoDetails: Video, totalResults: number): Promise<Video[]> => {
+  if (!videoDetails.categoryId) return []
+
+  const maxResults = Math.ceil(totalResults * 0.3)
+  const params = {
+    part: 'snippet',
+    type: 'video',
+    maxResults: Math.min(maxResults, 20), // Increased from 12 to 20
+    order: 'relevance',
+    videoCategoryId: videoDetails.categoryId,
+    videoEmbeddable: true,
+    publishedAfter: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(), // Last 6 months
+  }
+
+  try {
+    const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
+    return result.items
+  } catch (error) {
+    console.warn('Category search failed:', error)
+    return []
+  }
+}
+
+// Strategy 3: Search by tags (20% of results)
+const searchByTags = async (videoDetails: Video, totalResults: number): Promise<Video[]> => {
+  if (!videoDetails.tags || videoDetails.tags.length === 0) return []
+
+  const maxResults = Math.ceil(totalResults * 0.2)
+  const tagQuery = videoDetails.tags.slice(0, 3).join(' ') // Use first 3 tags
+  const params = {
+    part: 'snippet',
+    q: tagQuery,
+    type: 'video',
+    maxResults: Math.min(maxResults, 15), // Increased from 10 to 15
+    order: 'relevance',
+    videoEmbeddable: true,
+    publishedAfter: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(), // Last 3 months
+  }
+
+  try {
+    const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
+    return result.items
+  } catch (error) {
+    console.warn('Tag search failed:', error)
+    return []
+  }
+}
+
+// Strategy 4: Search by trending in same category (10% of results)
+const searchByTrending = async (videoDetails: Video, totalResults: number): Promise<Video[]> => {
+  const maxResults = Math.ceil(totalResults * 0.1)
+  const params: any = {
+    part: 'snippet',
+    type: 'video',
+    maxResults: Math.min(maxResults, 12), // Increased from 8 to 12
+    order: 'viewCount', // Trending by view count
+    videoEmbeddable: true,
+    publishedAfter: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // Last 30 days
+  }
+
+  // Add category filter if available
+  if (videoDetails.categoryId) {
+    params.videoCategoryId = videoDetails.categoryId
+  }
+
+  try {
+    const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
+    return result.items
+  } catch (error) {
+    console.warn('Trending search failed:', error)
+    return []
+  }
+}
+
+// Get related videos using hybrid approach
 export const getRelatedVideos = async (
   videoId: string,
   pageToken?: string
@@ -399,108 +582,98 @@ export const getRelatedVideos = async (
   }
 
   try {
-    // First, get the video details to extract channel ID for better related videos
+    // Get video details to extract information for better search
     const videoDetails = await getVideoDetails(videoId)
-    const channelId = videoDetails.channelId
+    const totalResults = 50 // Increased from 25 to 50
 
-    // Create search parameters - search for videos from the same channel
-    const params: any = {
-      part: 'snippet',
-      channelId: channelId,
-      type: 'video',
-      maxResults: 25,
-      order: 'relevance',
+    // Execute all search strategies in parallel
+    const [keywordResults, categoryResults, tagResults, trendingResults] = await Promise.all([
+      searchByKeywords(videoDetails, totalResults),
+      searchByCategory(videoDetails, totalResults),
+      searchByTags(videoDetails, totalResults),
+      searchByTrending(videoDetails, totalResults)
+    ])
+
+    // Combine all results
+    const allResults = [
+      ...keywordResults,
+      ...categoryResults,
+      ...tagResults,
+      ...trendingResults
+    ]
+
+    // Deduplicate and sort results
+    const finalResults = combineAndDeduplicateResults(allResults, videoId)
+
+    return {
+      items: finalResults.slice(0, totalResults),
+      nextPageToken: undefined, // For now, we don't support pagination with hybrid approach
+      totalResults: finalResults.length,
     }
 
-    if (pageToken) {
-      params.pageToken = pageToken
-    }
-
-    // Include videoId in params for proper cache key generation
-    const cacheParams = { ...params, videoId }
-    return requestCache.get('/search', cacheParams, async () => {
-      const api = getApiInstance()
-      const response: AxiosResponse = await api.get('/search', { params })
-      
-      // Filter out the current video from results
-      const filteredItems = response.data.items.filter((item: any) => item.id.videoId !== videoId)
-      
-      return {
-        items: filteredItems.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-          channelTitle: item.snippet.channelTitle,
-          channelId: item.snippet.channelId,
-          publishedAt: item.snippet.publishedAt,
-          duration: '', // Will be filled by getVideoDetails
-          viewCount: '', // Will be filled by getVideoDetails
-        })),
-        nextPageToken: response.data.nextPageToken,
-        totalResults: response.data.pageInfo.totalResults,
-      }
-    })
   } catch (error) {
-    // If getting video details fails, try a generic search approach
-    console.warn('Failed to get video details for related videos, trying alternative approach:', error)
+    console.warn('Hybrid related videos approach failed, trying fallback:', error)
     
+    // Fallback to basic search approach
     try {
-      // Alternative approach: search for trending videos as related content
-      const params: any = {
+      const videoDetails = await getVideoDetails(videoId)
+      const keywords = extractKeywords(videoDetails.title, videoDetails.description)
+      
+      const params = {
         part: 'snippet',
+        q: keywords || 'trending',
         type: 'video',
-        maxResults: 25,
+        maxResults: 50, // Increased from 25 to 50
         order: 'relevance',
-        q: 'trending', // Generic search term
-        publishedAfter: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // Last 30 days
+        videoEmbeddable: true,
+        publishedAfter: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       }
 
       if (pageToken) {
         params.pageToken = pageToken
       }
 
-      return requestCache.get('/search', params, async () => {
-        const api = getApiInstance()
-        const response: AxiosResponse = await api.get('/search', { params })
-        
-        return {
-          items: response.data.items.map((item: any) => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-            channelTitle: item.snippet.channelTitle,
-            channelId: item.snippet.channelId,
-            publishedAt: item.snippet.publishedAt,
-            duration: '', // Will be filled by getVideoDetails
-            viewCount: '', // Will be filled by getVideoDetails
-          })),
-          nextPageToken: response.data.nextPageToken,
-          totalResults: response.data.pageInfo.totalResults,
-        }
-      })
+      const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
+      return {
+        items: result.items,
+        nextPageToken: result.nextPageToken,
+        totalResults: result.totalResults,
+      }
     } catch (fallbackError) {
-      console.warn('Alternative related videos approach also failed, falling back to mock data:', fallbackError)
+      console.warn('Fallback approach also failed, using mock data:', fallbackError)
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 400))
       
       // For pagination, return different sets of videos
       if (pageToken) {
-        const additionalVideos = mockVideos.slice(1, 4).map((video, index) => ({
+        const additionalVideos = mockVideos.slice(1, 51).map((video, index) => ({
           ...video,
           id: `${video.id}-related-page2-${index}`,
           title: `${video.title} (Related Page 2)`,
         }))
         return {
           items: additionalVideos,
-          nextPageToken: undefined, // No more pages for demo
+          nextPageToken: undefined,
           totalResults: 500,
         }
       }
       
-      return mockRelatedVideos
+      // Return 50+ mock videos for better testing
+      const extendedMockVideos = [
+        ...mockRelatedVideos.items,
+        ...mockVideos.slice(0, 30).map((video, index) => ({
+          ...video,
+          id: `${video.id}-mock-${index}`,
+          title: `${video.title} (Mock Related)`,
+        }))
+      ]
+      
+      return {
+        items: extendedMockVideos.slice(0, 50),
+        nextPageToken: undefined,
+        totalResults: extendedMockVideos.length,
+      }
     }
   }
 }
