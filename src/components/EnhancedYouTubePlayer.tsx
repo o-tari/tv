@@ -6,6 +6,7 @@ interface EnhancedYouTubePlayerProps {
   videoId: string
   onReady?: () => void
   onStateChange?: (state: number) => void
+  onVideoEnd?: () => void
   showControls?: boolean
 }
 
@@ -77,7 +78,7 @@ const logYouTubeEvent = (eventName: string, data?: any) => {
   }
 }
 
-const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, showControls = true }: EnhancedYouTubePlayerProps) => {
+const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, showControls = true }: EnhancedYouTubePlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<any>(null)
   const dispatch = useAppDispatch()
@@ -188,6 +189,12 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, showControls =
             
             setIsPlaying(state === YT_PLAYER_STATE.PLAYING)
             setIsBuffering(state === YT_PLAYER_STATE.BUFFERING)
+            
+            // Check if video has ended
+            if (state === YT_PLAYER_STATE.ENDED) {
+              logYouTubeEvent('VIDEO_ENDED')
+              onVideoEnd?.()
+            }
             
             onStateChange?.(state)
             

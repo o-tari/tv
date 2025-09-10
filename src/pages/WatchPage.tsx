@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
 import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
@@ -20,6 +20,7 @@ import { type AnimeMedia } from '../types/anime'
 const WatchPage = () => {
   const { videoId, animeId } = useParams<{ videoId?: string; animeId?: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   
   // Determine if this is an anime or video
@@ -91,6 +92,30 @@ const WatchPage = () => {
       dispatch(addToAnimeContinueWatching(animeMedia))
     }
   }, [dispatch, currentAnime])
+
+  // Handle video end - navigate to random related video
+  const handleVideoEnd = () => {
+    if (!isAnime && relatedVideos && relatedVideos.length > 0) {
+      // Get a random related video
+      const randomIndex = Math.floor(Math.random() * relatedVideos.length)
+      const randomVideo = relatedVideos[randomIndex]
+      
+      if (randomVideo && randomVideo.id) {
+        console.log('🎬 Video ended, navigating to random related video:', randomVideo.title)
+        
+        // Show a brief message before navigating
+        const message = `Auto-playing: ${randomVideo.title}`
+        console.log(message)
+        
+        // Navigate to the random related video
+        navigate(`/watch/${randomVideo.id}`, { replace: true })
+      } else {
+        console.log('🎬 Video ended, but no related videos available')
+      }
+    } else {
+      console.log('🎬 Video ended, but no related videos available or this is an anime page')
+    }
+  }
 
   const isLoading = isAnime ? currentAnimeLoading : loading
   const currentError = isAnime ? currentAnimeError : error
@@ -215,6 +240,7 @@ const WatchPage = () => {
                 <EnhancedYouTubePlayer 
                   videoId={video!.id} 
                   showControls={true}
+                  onVideoEnd={handleVideoEnd}
                 />
 
                 {/* Video info */}
