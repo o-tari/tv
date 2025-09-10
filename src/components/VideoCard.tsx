@@ -8,9 +8,11 @@ interface VideoCardProps {
   variant?: 'default' | 'compact' | 'large'
   progress?: number // Progress percentage (0-100)
   showProgress?: boolean // Whether to show progress indicator
+  onRemove?: (videoId: string, event: React.MouseEvent) => void // Remove button handler
+  showRemoveButton?: boolean // Whether to show remove button
 }
 
-const VideoCard = memo(({ video, variant = 'default', progress, showProgress = false }: VideoCardProps) => {
+const VideoCard = memo(({ video, variant = 'default', progress, showProgress = false, onRemove, showRemoveButton = false }: VideoCardProps) => {
   // Convert Video to VideoMedia format for MediaCard
   const videoMedia: VideoMedia = {
     id: video.id,
@@ -26,7 +28,7 @@ const VideoCard = memo(({ video, variant = 'default', progress, showProgress = f
     viewCount: video.viewCount,
   }
 
-  return <MediaCard media={videoMedia} variant={variant} progress={progress} showProgress={showProgress} />
+  return <MediaCard media={videoMedia} variant={variant} progress={progress} showProgress={showProgress} onRemove={onRemove} showRemoveButton={showRemoveButton} />
 })
 
 VideoCard.displayName = 'VideoCard'

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchTrendingVideos } from '../store/slices/videosSlice'
 import { selectWatchHistory, selectWatchLater, selectSubscriptions } from '../store/slices/historySlice'
-import { selectContinueWatching, selectVideoProgress } from '../store/slices/continueWatchingSlice'
+import { selectContinueWatching, selectVideoProgress, removeFromContinueWatching } from '../store/slices/continueWatchingSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import SearchBar from '../components/SearchBar'
@@ -49,6 +49,13 @@ const YouTubePage = () => {
 
   const handleSearch = (query: string) => {
     navigate(`/search?q=${encodeURIComponent(query)}`)
+  }
+
+  const handleRemoveFromContinueWatching = (videoId: string, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    console.log('Removing video from continue watching:', videoId)
+    dispatch(removeFromContinueWatching(videoId))
   }
 
   if (trendingError) {
@@ -111,6 +118,8 @@ const YouTubePage = () => {
               loading={false}
               videoProgress={videoProgress}
               showProgress={true}
+              onRemove={handleRemoveFromContinueWatching}
+              showRemoveButton={true}
             />
           </div>
         )}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectContinueWatching, removeFromContinueWatching, selectVideoProgress } from '../store/slices/continueWatchingSlice'
-import VideoCard from './VideoCard'
+import VideoGrid from './VideoGrid'
 import type { Video } from '../types/youtube'
 
 interface ContinueWatchingProps {
@@ -55,32 +55,15 @@ const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: Contin
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-        {displayedVideos.map((video: Video) => (
-          <div key={video.id} className="relative group">
-            <Link to={`/watch/${video.id}`}>
-              <VideoCard 
-                video={video} 
-                variant="default" 
-                progress={videoProgress[video.id]}
-                showProgress={true}
-              />
-            </Link>
-            
-            {/* Remove button */}
-            <button
-              onClick={(e) => handleRemove(video.id, e)}
-              className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
-              aria-label="Remove from Continue Watching"
-              title="Remove from Continue Watching"
-            >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        ))}
-      </div>
+      <VideoGrid
+        videos={displayedVideos}
+        loading={false}
+        variant="default"
+        videoProgress={videoProgress}
+        showProgress={true}
+        onRemove={handleRemove}
+        showRemoveButton={true}
+      />
     </div>
   )
 }

@@ -9,6 +9,8 @@ interface VideoGridProps {
   searchType?: 'video' | 'channel' | 'playlist'
   videoProgress?: Record<string, number> // videoId -> progress percentage
   showProgress?: boolean
+  onRemove?: (videoId: string, event: React.MouseEvent) => void // Remove button handler
+  showRemoveButton?: boolean // Whether to show remove button
 }
 
 const VideoGrid = ({
@@ -17,7 +19,9 @@ const VideoGrid = ({
   variant = 'default',
   searchType,
   videoProgress,
-  showProgress = false
+  showProgress = false,
+  onRemove,
+  showRemoveButton = false
 }: VideoGridProps) => {
   // Convert videos to media format for MediaGrid
   const videoMedia: VideoMedia[] = videos.map((video) => ({
@@ -34,7 +38,7 @@ const VideoGrid = ({
     viewCount: video.viewCount,
   }))
 
-  return <MediaGrid media={videoMedia} loading={loading} variant={variant} searchType={searchType} videoProgress={videoProgress} showProgress={showProgress} />
+  return <MediaGrid media={videoMedia} loading={loading} variant={variant} searchType={searchType} videoProgress={videoProgress} showProgress={showProgress} onRemove={onRemove} showRemoveButton={showRemoveButton} />
 }
 
 export default VideoGrid

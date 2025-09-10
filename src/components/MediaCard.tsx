@@ -15,9 +15,11 @@ interface MediaCardProps {
   searchType?: 'video' | 'channel' | 'playlist'
   progress?: number // Progress percentage (0-100)
   showProgress?: boolean // Whether to show progress indicator
+  onRemove?: (mediaId: string, event: React.MouseEvent) => void // Remove button handler
+  showRemoveButton?: boolean // Whether to show remove button
 }
 
-const MediaCard = ({ media, variant = 'default', searchType, progress, showProgress = false }: MediaCardProps) => {
+const MediaCard = ({ media, variant = 'default', searchType, progress, showProgress = false, onRemove, showRemoveButton = false }: MediaCardProps) => {
   const dispatch = useAppDispatch()
   const isChannelSaved = useAppSelector(selectIsChannelSaved(media.type === 'video' ? media.channelId : ''))
   const getTimeAgo = (publishedAt: string) => {
@@ -114,6 +116,18 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               )}
+            </button>
+          )}
+          {showRemoveButton && onRemove && (
+            <button
+              onClick={(e) => onRemove(video.id, e)}
+              className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+              aria-label="Remove from Continue Watching"
+              title="Remove from Continue Watching"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           )}
         </div>
@@ -239,6 +253,18 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
                 />
               </div>
             )}
+            {showRemoveButton && onRemove && (
+              <button
+                onClick={(e) => onRemove(media.id, e)}
+                className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+                aria-label="Remove from Continue Watching"
+                title="Remove from Continue Watching"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
           <div className="flex-1 min-w-0 space-y-1">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -292,6 +318,18 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
               </div>
+            )}
+            {showRemoveButton && onRemove && (
+              <button
+                onClick={(e) => onRemove(media.id, e)}
+                className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+                aria-label="Remove from Continue Watching"
+                title="Remove from Continue Watching"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             )}
           </div>
           <div className="space-y-3">

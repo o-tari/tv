@@ -9,6 +9,8 @@ interface MediaGridProps {
   searchType?: 'video' | 'channel' | 'playlist'
   videoProgress?: Record<string, number> // videoId -> progress percentage
   showProgress?: boolean
+  onRemove?: (mediaId: string, event: React.MouseEvent) => void // Remove button handler
+  showRemoveButton?: boolean // Whether to show remove button
 }
 
 const MediaGrid = ({
@@ -17,7 +19,9 @@ const MediaGrid = ({
   variant = 'default',
   searchType,
   videoProgress,
-  showProgress = false
+  showProgress = false,
+  onRemove,
+  showRemoveButton = false
 }: MediaGridProps) => {
   const getGridCols = () => {
     // Use responsive grid classes that adapt to screen size
@@ -77,6 +81,8 @@ const MediaGrid = ({
           searchType={searchType}
           progress={item.type === 'video' && videoProgress ? videoProgress[item.id] : undefined}
           showProgress={showProgress && item.type === 'video'}
+          onRemove={onRemove}
+          showRemoveButton={showRemoveButton}
         />
       ))}
     </div>
