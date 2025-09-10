@@ -2,7 +2,6 @@ import axios, { type AxiosResponse } from 'axios'
 import { 
   mockVideos, 
   mockChannel, 
-  mockSearchResults, 
   mockRelatedVideos
 } from './mockData'
 import { type Video, type Channel, type SearchFilters, type SearchResponse } from '../types/youtube'
@@ -304,7 +303,7 @@ export const getTrendingVideos = async (pageToken?: string, excludeShorts: boole
 
       // Filter out shorts if requested
       if (excludeShorts) {
-        items = items.filter(item => {
+        items = items.filter((item: any) => {
           const durationSeconds = parseDurationToSeconds(item.duration)
           return durationSeconds >= 60 // Videos must be at least 60 seconds to not be considered shorts
         })
@@ -832,7 +831,7 @@ export const getVideosByCategory = async (
     await new Promise(resolve => setTimeout(resolve, 400))
     
     // Filter mock videos by category (simulate different categories)
-    const categoryKeywords = {
+    const categoryKeywords: Record<string, string[]> = {
       '10': ['music', 'song', 'album', 'artist', 'concert'],
       '20': ['gaming', 'game', 'play', 'stream', 'twitch'],
       '25': ['news', 'news', 'breaking', 'update', 'report'],
@@ -847,7 +846,7 @@ export const getVideosByCategory = async (
     
     const keywords = categoryKeywords[categoryId] || ['video', 'content']
     let filteredVideos = mockVideos.filter(video => 
-      keywords.some(keyword => 
+      keywords.some((keyword: string) => 
         video.title.toLowerCase().includes(keyword) ||
         video.description.toLowerCase().includes(keyword)
       )
@@ -1024,7 +1023,7 @@ export const getRandomVideosFromChannel = async (channelId: string, count: numbe
     // Apply rate limiting
     await youtubeRateLimiter.waitIfNeeded()
     
-    const response = await getChannelVideos(channelId, undefined, count * 2) // Get more to have better random selection
+    const response = await getChannelVideos(channelId, undefined) // Get more to have better random selection
     
     // Shuffle and return random selection
     const shuffled = response.items.sort(() => 0.5 - Math.random())
