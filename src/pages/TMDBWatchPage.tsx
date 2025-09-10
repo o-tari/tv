@@ -157,21 +157,53 @@ const TMDBWatchPage = () => {
       console.log('🔍 Searching for episode torrents:', {
         show: show.name,
         season: episode.season_number,
-        episode: episode.episode_number
+        episode: episode.episode_number,
+        totalEpisodes: show.number_of_episodes,
+        genres: show.genres.map(g => g.name)
       })
 
-      const seasonStr = episode.season_number.toString().padStart(2, '0')
-      const episodeStr = episode.episode_number.toString().padStart(2, '0')
-      const searchQuery = `${show.name} s${seasonStr}e${episodeStr}`
-      
-      console.log('🔍 Search query:', searchQuery)
-      
-      const results = await torrentSearchService.searchTVTorrents(
-        show.name,
-        episode.season_number,
-        episode.episode_number,
-        'piratebay'
+      // Check if this is a long-running animation (100+ episodes with Animation genre)
+      const isAnimation = show.genres.some(genre => 
+        genre.name.toLowerCase().includes('animation') || 
+        genre.name.toLowerCase().includes('anime')
       )
+      const isLongRunning = show.number_of_episodes > 100
+      
+      console.log('🔍 Show analysis:', {
+        isAnimation,
+        isLongRunning,
+        totalEpisodes: show.number_of_episodes,
+        genres: show.genres.map(g => g.name)
+      })
+
+      let results: ApiTorrentSearchResponse
+
+      if (isAnimation && isLongRunning) {
+        // For long-running animations like One Piece, use just episode number
+        const searchQuery = `${show.name} ${episode.episode_number}`
+        console.log('🔍 Long-running animation search query:', searchQuery)
+        console.log('🔍 Using format: "Show Name EpisodeNumber" (no season)')
+        
+        // Use the general search method instead of TV-specific search
+        results = await torrentSearchService.searchTorrents({
+          site: 'piratebay',
+          query: searchQuery
+        })
+      } else {
+        // For regular TV shows, use season/episode format
+        const seasonStr = episode.season_number.toString().padStart(2, '0')
+        const episodeStr = episode.episode_number.toString().padStart(2, '0')
+        const searchQuery = `${show.name} s${seasonStr}e${episodeStr}`
+        console.log('🔍 Regular TV show search query:', searchQuery)
+        console.log('🔍 Using format: "Show Name S##E##" (with season)')
+        
+        results = await torrentSearchService.searchTVTorrents(
+          show.name,
+          episode.season_number,
+          episode.episode_number,
+          'piratebay'
+        )
+      }
       
       console.log('🔍 Torrent search results:', results)
       setTorrentResults(results)
