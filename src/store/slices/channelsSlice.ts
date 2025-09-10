@@ -216,3 +216,19 @@ export const selectLatestChannelVideos = (state: { channels: ChannelsState }) =>
     new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   )
 }
+
+// Get all videos from saved channels sorted by date
+export const selectAllChannelVideosSortedByDate = (state: { channels: ChannelsState }) => {
+  const allVideos: Video[] = []
+  const savedChannels = state.channels.savedChannels
+  
+  savedChannels.forEach(channel => {
+    const channelVideos = state.channels.channelVideos[channel.id] || []
+    allVideos.push(...channelVideos)
+  })
+  
+  // Sort by published date (newest first)
+  return allVideos.sort((a, b) => 
+    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  )
+}

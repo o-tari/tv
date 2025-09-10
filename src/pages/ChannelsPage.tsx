@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { 
   selectSavedChannels, 
-  selectChannelVideos,
-  selectChannelVideosLoading,
-  selectChannelVideosError,
-  fetchChannelVideos,
+  selectAllChannelVideosSortedByDate,
+  selectChannelsLoading,
+  selectChannelsError,
+  fetchAllChannelVideos,
 } from '../store/slices/channelsSlice'
 import VideoGrid from '../components/VideoGrid'
 import ChannelsManagementModal from '../components/ChannelsManagementModal'
@@ -13,20 +13,18 @@ import ChannelsManagementModal from '../components/ChannelsManagementModal'
 const ChannelsPage = () => {
   const dispatch = useAppDispatch()
   const [showModal, setShowModal] = useState(false)
-  const [selectedChannel, setSelectedChannel] = useState<string | null>(null)
   
   const savedChannels = useAppSelector(selectSavedChannels)
+  const allVideos = useAppSelector(selectAllChannelVideosSortedByDate)
+  const loading = useAppSelector(selectChannelsLoading)
+  const error = useAppSelector(selectChannelsError)
 
   useEffect(() => {
     // Fetch videos for all saved channels
-    savedChannels.forEach(channel => {
-      dispatch(fetchChannelVideos({ channelId: channel.id }))
-    })
-  }, [dispatch, savedChannels])
-
-  const handleChannelClick = (channelId: string) => {
-    setSelectedChannel(selectedChannel === channelId ? null : channelId)
-  }
+    if (savedChannels.length > 0) {
+      dispatch(fetchAllChannelVideos())
+    }
+  }, [dispatch, savedChannels.length])
 
   if (savedChannels.length === 0) {
     return (
@@ -61,7 +59,7 @@ const ChannelsPage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Saved Channels
+            Saved Channels Videos
           </h1>
           <button
             onClick={() => setShowModal(true)}
@@ -75,103 +73,43 @@ const ChannelsPage = () => {
           </button>
         </div>
 
-        <div className="space-y-8">
-          {savedChannels.map((channel) => (
-            <ChannelSection
-              key={channel.id}
-              channel={channel}
-              isExpanded={selectedChannel === channel.id}
-              onToggle={() => handleChannelClick(channel.id)}
-            />
-          ))}
+        <div className="mb-4">
+          <p className="text-gray-600 dark:text-gray-400">
+            Videos from {savedChannels.length} saved channel{savedChannels.length !== 1 ? 's' : ''}, sorted by date
+          </p>
         </div>
+
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Loading videos...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={() => dispatch(fetchAllChannelVideos())}
+              className="btn-primary"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : allVideos.length > 0 ? (
+          <VideoGrid
+            videos={allVideos}
+            loading={false}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-400">No videos found from your saved channels</p>
+          </div>
+        )}
       </div>
 
       <ChannelsManagementModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
       />
-    </div>
-  )
-}
-
-interface ChannelSectionProps {
-  channel: any
-  isExpanded: boolean
-  onToggle: () => void
-}
-
-const ChannelSection = ({ channel, isExpanded, onToggle }: ChannelSectionProps) => {
-  const dispatch = useAppDispatch()
-  const channelVideos = useAppSelector(selectChannelVideos(channel.id))
-  const loading = useAppSelector(selectChannelVideosLoading(channel.id))
-  const error = useAppSelector(selectChannelVideosError(channel.id))
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      <div 
-        className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        onClick={onToggle}
-      >
-        <div className="flex items-center space-x-4">
-          <img
-            src={channel.thumbnail}
-            alt={channel.title}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-              {channel.title}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {channel.subscriberCount} subscribers • {channel.videoCount} videos
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500 dark:text-gray-500">
-              {channelVideos.length} videos
-            </span>
-            <svg 
-              className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="px-4 pb-4">
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading videos...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-8">
-              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-              <button
-                onClick={() => dispatch(fetchChannelVideos({ channelId: channel.id }))}
-                className="btn-primary"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : channelVideos.length > 0 ? (
-            <VideoGrid
-              videos={channelVideos}
-              loading={false}
-            />
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">No videos found for this channel</p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }

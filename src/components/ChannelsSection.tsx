@@ -63,7 +63,7 @@ const ChannelsSection = () => {
           </div>
         ) : latestVideos.length > 0 ? (
           <VideoGrid
-            videos={latestVideos.slice(0, 8)}
+            videos={latestVideos.slice(0, 16)}
             loading={false}
           />
         ) : (
