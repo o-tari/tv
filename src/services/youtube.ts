@@ -399,10 +399,9 @@ export const getRelatedVideos = async (
   }
 
   try {
-    // First, get the video details to extract channel ID and title for better related videos
+    // First, get the video details to extract channel ID for better related videos
     const videoDetails = await getVideoDetails(videoId)
     const channelId = videoDetails.channelId
-    const videoTitle = videoDetails.title
 
     // Create search parameters - search for videos from the same channel
     const params: any = {
@@ -417,7 +416,9 @@ export const getRelatedVideos = async (
       params.pageToken = pageToken
     }
 
-    return requestCache.get('/search', params, async () => {
+    // Include videoId in params for proper cache key generation
+    const cacheParams = { ...params, videoId }
+    return requestCache.get('/search', cacheParams, async () => {
       const api = getApiInstance()
       const response: AxiosResponse = await api.get('/search', { params })
       

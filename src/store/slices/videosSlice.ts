@@ -3,6 +3,13 @@ import { type Video, type Channel } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { requestCache } from '../../utils/requestCache'
 
+interface RelatedVideosState {
+  videos: Video[]
+  loading: boolean
+  error: string | null
+  nextPageToken: string | null
+}
+
 interface VideosState {
   // Home page
   trendingVideos: Video[]
@@ -22,12 +29,8 @@ interface VideosState {
   currentVideoLoading: boolean
   currentVideoError: string | null
 
-  // Related videos
-  relatedVideos: Video[]
-  relatedLoading: boolean
-  relatedError: string | null
-  relatedNextPageToken: string | null
-
+  // Related videos - now stored per video ID
+  relatedVideos: Record<string, RelatedVideosState>
 
   // Channel
   currentChannel: Channel | null
@@ -55,10 +58,7 @@ const initialState: VideosState = {
   currentVideoLoading: false,
   currentVideoError: null,
 
-  relatedVideos: [],
-  relatedLoading: false,
-  relatedError: null,
-  relatedNextPageToken: null,
+  relatedVideos: {},
 
 
   currentChannel: null,
@@ -133,10 +133,7 @@ const videosSlice = createSlice({
     clearCurrentVideo: (state) => {
       state.currentVideo = null
       state.currentVideoError = null
-      state.relatedVideos = []
-      state.relatedError = null
-      state.relatedLoading = false
-      state.relatedNextPageToken = null
+      // Don't clear relatedVideos as they are now stored per video ID
     },
     clearChannel: (state) => {
       state.currentChannel = null
@@ -161,10 +158,7 @@ const videosSlice = createSlice({
       state.currentVideoLoading = false
       state.currentVideoError = null
       
-      state.relatedVideos = []
-      state.relatedLoading = false
-      state.relatedError = null
-      state.relatedNextPageToken = null
+      state.relatedVideos = {}
       
       
       state.currentChannel = null
@@ -243,24 +237,51 @@ const videosSlice = createSlice({
 
     // Related videos
     builder
-      .addCase(fetchRelatedVideos.pending, (state) => {
-        state.relatedLoading = true
-        state.relatedError = null
+      .addCase(fetchRelatedVideos.pending, (state, action) => {
+        const videoId = action.meta.arg.videoId
+        if (!state.relatedVideos[videoId]) {
+          state.relatedVideos[videoId] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.relatedVideos[videoId].loading = true
+        state.relatedVideos[videoId].error = null
       })
       .addCase(fetchRelatedVideos.fulfilled, (state, action) => {
-        state.relatedLoading = false
+        const videoId = action.meta.arg.videoId
+        if (!state.relatedVideos[videoId]) {
+          state.relatedVideos[videoId] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.relatedVideos[videoId].loading = false
         if (action.meta.arg?.pageToken) {
           // Load more
-          state.relatedVideos = [...state.relatedVideos, ...action.payload.items]
+          state.relatedVideos[videoId].videos = [...state.relatedVideos[videoId].videos, ...action.payload.items]
         } else {
           // Initial load
-          state.relatedVideos = action.payload.items
+          state.relatedVideos[videoId].videos = action.payload.items
         }
-        state.relatedNextPageToken = action.payload.nextPageToken || null
+        state.relatedVideos[videoId].nextPageToken = action.payload.nextPageToken || null
       })
       .addCase(fetchRelatedVideos.rejected, (state, action) => {
-        state.relatedLoading = false
-        state.relatedError = action.error.message || 'Failed to fetch related videos'
+        const videoId = action.meta.arg.videoId
+        if (!state.relatedVideos[videoId]) {
+          state.relatedVideos[videoId] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.relatedVideos[videoId].loading = false
+        state.relatedVideos[videoId].error = action.error.message || 'Failed to fetch related videos'
       })
 
 

@@ -9,9 +9,15 @@ export const useVideo = (videoId: string) => {
     currentVideoLoading,
     currentVideoError,
     relatedVideos,
-    relatedLoading,
-    relatedError,
   } = useAppSelector((state) => state.videos)
+
+  // Get related videos for the current video ID
+  const currentRelatedVideos = relatedVideos[videoId] || {
+    videos: [],
+    loading: false,
+    error: null,
+    nextPageToken: null
+  }
 
   useEffect(() => {
     if (videoId) {
@@ -21,8 +27,8 @@ export const useVideo = (videoId: string) => {
   }, [dispatch, videoId])
 
   const loadMoreRelated = () => {
-    if (videoId && !relatedLoading) {
-      dispatch(fetchRelatedVideos({ videoId }))
+    if (videoId && !currentRelatedVideos.loading) {
+      dispatch(fetchRelatedVideos({ videoId, pageToken: currentRelatedVideos.nextPageToken || undefined }))
     }
   }
 
@@ -32,14 +38,13 @@ export const useVideo = (videoId: string) => {
     }
   }
 
-
   return {
     video: currentVideo,
     loading: currentVideoLoading,
     error: currentVideoError,
-    relatedVideos,
-    relatedLoading,
-    relatedError,
+    relatedVideos: currentRelatedVideos.videos,
+    relatedLoading: currentRelatedVideos.loading,
+    relatedError: currentRelatedVideos.error,
     loadMoreRelated,
     retryRelatedVideos,
   }

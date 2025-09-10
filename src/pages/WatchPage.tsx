@@ -4,7 +4,6 @@ import { useAppDispatch, useAppSelector } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
 import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { addToAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
-import { fetchRelatedVideos } from '../store/slices/videosSlice'
 import { useVideo } from '../hooks/useVideo'
 import { 
   fetchAnimeInfo, 
@@ -14,7 +13,6 @@ import {
 } from '../store/slices/animeSlice'
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
-import VideoGrid from '../components/VideoGrid'
 import RelatedVideosList from '../components/RelatedVideosList'
 import AnimeEpisodeBatches from '../components/AnimeEpisodeBatches'
 import { type AnimeMedia } from '../types/anime'
@@ -154,9 +152,9 @@ const WatchPage = () => {
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6">
             {isAnime ? (
               <>
                 {/* Anime Episodes */}
@@ -224,9 +222,9 @@ const WatchPage = () => {
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {/* Related Videos - Full width below main content */}
+          <div className="w-full">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {isAnime ? 'Recommendations' : 'Related videos'}
             </h3>
             
@@ -252,13 +250,13 @@ const WatchPage = () => {
                     </button>
                   </div>
                 ) : recommendations.length > 0 ? (
-                  <div className="space-y-3">
-                    {recommendations.slice(0, 6).map((anime) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {recommendations.slice(0, 8).map((anime) => (
                       <div
                         key={anime.id}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className="flex flex-col space-y-2 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                       >
-                        <div className="flex-shrink-0 w-12 h-16 bg-gray-200 dark:bg-gray-600 rounded overflow-hidden">
+                        <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-600 rounded overflow-hidden">
                           <img
                             src={anime.image}
                             alt={anime.title}
@@ -269,8 +267,8 @@ const WatchPage = () => {
                             }}
                           />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
                             {anime.title}
                           </h4>
                           {anime.score && (

@@ -13,11 +13,11 @@ interface RelatedVideosListProps {
 const RelatedVideosList = ({ videos, loading, error, onRetry }: RelatedVideosListProps) => {
   if (loading) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="flex space-x-3 animate-pulse">
-            <div className="flex-shrink-0 w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div className="flex-1 space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="flex flex-col space-y-2 animate-pulse">
+            <div className="w-full aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            <div className="space-y-2">
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
               <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
               <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
@@ -65,17 +65,17 @@ const RelatedVideosList = ({ videos, loading, error, onRetry }: RelatedVideosLis
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {videos.map((video) => (
         <Link
           key={video.id}
           to={`/watch/${video.id}`}
           className="block group"
         >
-          <div className="flex space-x-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors">
+          <div className="flex flex-col space-y-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors">
             {/* Thumbnail */}
-            <div className="relative flex-shrink-0">
-              <div className="relative w-40 aspect-video rounded-lg overflow-hidden">
+            <div className="relative">
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                 <img
                   src={video.thumbnail}
                   alt={video.title}
@@ -95,7 +95,7 @@ const RelatedVideosList = ({ videos, loading, error, onRetry }: RelatedVideosLis
             </div>
 
             {/* Video info */}
-            <div className="flex-1 min-w-0 space-y-1">
+            <div className="space-y-1">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
                 {video.title}
               </h3>
