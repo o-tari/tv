@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, selectHianimeApiKey, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, setHianimeApiKey, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
+import { localStorageCache } from '../utils/localStorageCache'
 
 const SettingsPage = () => {
   const dispatch = useAppDispatch()
@@ -25,6 +26,49 @@ const SettingsPage = () => {
   const [showApiKey, setShowApiKey] = useState(false)
   const [showTmdbApiKey, setShowTmdbApiKey] = useState(false)
   const [showHianimeApiKey, setShowHianimeApiKey] = useState(false)
+  
+  // Cache management state
+  const [cacheStats, setCacheStats] = useState({
+    totalEntries: 0,
+    expiredEntries: 0,
+    videoEntries: 0,
+    totalSize: '0 MB'
+  })
+  const [isClearingCache, setIsClearingCache] = useState(false)
+
+  // Load cache stats on component mount
+  useEffect(() => {
+    updateCacheStats()
+  }, [])
+
+  const updateCacheStats = () => {
+    const stats = localStorageCache.getStats()
+    setCacheStats(stats)
+  }
+
+  const handleClearCache = async () => {
+    if (window.confirm('Are you sure you want to clear all cached data? This will require re-fetching all data from the API.')) {
+      setIsClearingCache(true)
+      try {
+        localStorageCache.clear()
+        updateCacheStats()
+        // Also clear Redux cache
+        dispatch(clearAllData())
+        alert('Cache cleared successfully!')
+      } catch (error) {
+        console.error('Failed to clear cache:', error)
+        alert('Failed to clear cache. Please try again.')
+      } finally {
+        setIsClearingCache(false)
+      }
+    }
+  }
+
+  const handleClearExpiredCache = () => {
+    localStorageCache.clearExpired()
+    updateCacheStats()
+    alert('Expired cache entries cleared!')
+  }
 
   const handleSave = () => {
     dispatch(setYoutubeApiKey(localApiKey))
@@ -291,6 +335,91 @@ const SettingsPage = () => {
                     </p>
                   </div>
                 </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Cache Management Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Cache Management
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Manage local storage cache for improved performance and offline access.
+              </p>
+            </div>
+            
+            <div className="px-6 py-4">
+              {/* Cache Statistics */}
+              <div className="mb-6">
+                <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">
+                  Cache Statistics
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {cacheStats.totalEntries}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Total Entries
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {cacheStats.videoEntries}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Video Entries
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {cacheStats.expiredEntries}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Expired Entries
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {cacheStats.totalSize}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Cache Size
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cache Actions */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleClearExpiredCache}
+                    className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Clear Expired Cache
+                  </button>
+                  <button
+                    onClick={updateCacheStats}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Refresh Stats
+                  </button>
+                </div>
+                
+                <button
+                  onClick={handleClearCache}
+                  disabled={isClearingCache}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  {isClearingCache ? 'Clearing Cache...' : 'Clear All Cache'}
+                </button>
+                
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Cache expires after 24 hours. Clearing cache will require re-fetching all data from the API.
+                </p>
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import {
 import { type Video, type Channel, type SearchFilters, type SearchResponse } from '../types/youtube'
 import { createApiInstance } from '../utils/apiConfig'
 import { requestCache } from '../utils/requestCache'
+import { localStorageCache } from '../utils/localStorageCache'
 
 
 // Create API instance with current settings
@@ -129,7 +130,7 @@ export const searchVideos = async (
     params.publishedAfter = publishedAfter
   }
 
-  return requestCache.get('/search', params, async () => {
+  return localStorageCache.getSearchResults(query, params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
@@ -165,37 +166,39 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
-  try {
-    const api = getApiInstance()
-    const response: AxiosResponse = await api.get('/videos', {
-      params: {
-        id: videoId,
-        part: 'snippet,statistics,contentDetails',
-      },
-    })
+  return localStorageCache.getVideoDetails(videoId, async () => {
+    try {
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/videos', {
+        params: {
+          id: videoId,
+          part: 'snippet,statistics,contentDetails',
+        },
+      })
 
-    const video = response.data.items[0]
-    if (!video) {
-      throw new Error('Video not found')
-    }
+      const video = response.data.items[0]
+      if (!video) {
+        throw new Error('Video not found')
+      }
 
-    return {
-      id: video.id,
-      title: video.snippet.title,
-      description: video.snippet.description,
-      thumbnail: video.snippet.thumbnails.maxres?.url || video.snippet.thumbnails.high?.url,
-      channelTitle: video.snippet.channelTitle,
-      channelId: video.snippet.channelId,
-      publishedAt: video.snippet.publishedAt,
-      duration: video.contentDetails.duration,
-      viewCount: video.statistics.viewCount,
-      tags: video.snippet.tags || [],
-      categoryId: video.snippet.categoryId,
+      return {
+        id: video.id,
+        title: video.snippet.title,
+        description: video.snippet.description,
+        thumbnail: video.snippet.thumbnails.maxres?.url || video.snippet.thumbnails.high?.url,
+        channelTitle: video.snippet.channelTitle,
+        channelId: video.snippet.channelId,
+        publishedAt: video.snippet.publishedAt,
+        duration: video.contentDetails.duration,
+        viewCount: video.statistics.viewCount,
+        tags: video.snippet.tags || [],
+        categoryId: video.snippet.categoryId,
+      }
+    } catch (error) {
+      handleApiError(error)
+      throw error // This will never be reached, but satisfies TypeScript
     }
-  } catch (error) {
-    handleApiError(error)
-    throw error // This will never be reached, but satisfies TypeScript
-  }
+  })
 }
 
 // Get trending videos
@@ -239,7 +242,7 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
   }
 
   try {
-    return requestCache.get('/videos', params, async () => {
+    return localStorageCache.getTrendingVideos(params, async () => {
       const api = getApiInstance()
       const response: AxiosResponse = await api.get('/videos', { params })
       
@@ -361,7 +364,7 @@ export const getChannelVideos = async (
     params.pageToken = pageToken
   }
 
-  return requestCache.get('/search', params, async () => {
+  return localStorageCache.getChannelVideos(channelId, params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
@@ -581,101 +584,103 @@ export const getRelatedVideos = async (
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
-  try {
-    // Get video details to extract information for better search
-    const videoDetails = await getVideoDetails(videoId)
-    const totalResults = 50 // Increased from 25 to 50
-
-    // Execute all search strategies in parallel
-    const [keywordResults, categoryResults, tagResults, trendingResults] = await Promise.all([
-      searchByKeywords(videoDetails, totalResults),
-      searchByCategory(videoDetails, totalResults),
-      searchByTags(videoDetails, totalResults),
-      searchByTrending(videoDetails, totalResults)
-    ])
-
-    // Combine all results
-    const allResults = [
-      ...keywordResults,
-      ...categoryResults,
-      ...tagResults,
-      ...trendingResults
-    ]
-
-    // Deduplicate and sort results
-    const finalResults = combineAndDeduplicateResults(allResults, videoId)
-
-    return {
-      items: finalResults.slice(0, totalResults),
-      nextPageToken: undefined, // For now, we don't support pagination with hybrid approach
-      totalResults: finalResults.length,
-    }
-
-  } catch (error) {
-    console.warn('Hybrid related videos approach failed, trying fallback:', error)
-    
-    // Fallback to basic search approach
+  return localStorageCache.getRelatedVideos(videoId, async () => {
     try {
+      // Get video details to extract information for better search
       const videoDetails = await getVideoDetails(videoId)
-      const keywords = extractKeywords(videoDetails.title, videoDetails.description)
-      
-      const params = {
-        part: 'snippet',
-        q: keywords || 'trending',
-        type: 'video',
-        maxResults: 50, // Increased from 25 to 50
-        order: 'relevance',
-        videoEmbeddable: true,
-        publishedAfter: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      }
+      const totalResults = 50 // Increased from 25 to 50
 
-      if (pageToken) {
-        params.pageToken = pageToken
-      }
+      // Execute all search strategies in parallel
+      const [keywordResults, categoryResults, tagResults, trendingResults] = await Promise.all([
+        searchByKeywords(videoDetails, totalResults),
+        searchByCategory(videoDetails, totalResults),
+        searchByTags(videoDetails, totalResults),
+        searchByTrending(videoDetails, totalResults)
+      ])
 
-      const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
+      // Combine all results
+      const allResults = [
+        ...keywordResults,
+        ...categoryResults,
+        ...tagResults,
+        ...trendingResults
+      ]
+
+      // Deduplicate and sort results
+      const finalResults = combineAndDeduplicateResults(allResults, videoId)
+
       return {
-        items: result.items,
-        nextPageToken: result.nextPageToken,
-        totalResults: result.totalResults,
+        items: finalResults.slice(0, totalResults),
+        nextPageToken: undefined, // For now, we don't support pagination with hybrid approach
+        totalResults: finalResults.length,
       }
-    } catch (fallbackError) {
-      console.warn('Fallback approach also failed, using mock data:', fallbackError)
+
+    } catch (error) {
+      console.warn('Hybrid related videos approach failed, trying fallback:', error)
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 400))
-      
-      // For pagination, return different sets of videos
-      if (pageToken) {
-        const additionalVideos = mockVideos.slice(1, 51).map((video, index) => ({
-          ...video,
-          id: `${video.id}-related-page2-${index}`,
-          title: `${video.title} (Related Page 2)`,
-        }))
+      // Fallback to basic search approach
+      try {
+        const videoDetails = await getVideoDetails(videoId)
+        const keywords = extractKeywords(videoDetails.title, videoDetails.description)
+        
+        const params = {
+          part: 'snippet',
+          q: keywords || 'trending',
+          type: 'video',
+          maxResults: 50, // Increased from 25 to 50
+          order: 'relevance',
+          videoEmbeddable: true,
+          publishedAfter: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        }
+
+        if (pageToken) {
+          params.pageToken = pageToken
+        }
+
+        const result = await searchWithParams(params, videoDetails.id, videoDetails.channelId)
         return {
-          items: additionalVideos,
+          items: result.items,
+          nextPageToken: result.nextPageToken,
+          totalResults: result.totalResults,
+        }
+      } catch (fallbackError) {
+        console.warn('Fallback approach also failed, using mock data:', fallbackError)
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 400))
+        
+        // For pagination, return different sets of videos
+        if (pageToken) {
+          const additionalVideos = mockVideos.slice(1, 51).map((video, index) => ({
+            ...video,
+            id: `${video.id}-related-page2-${index}`,
+            title: `${video.title} (Related Page 2)`,
+          }))
+          return {
+            items: additionalVideos,
+            nextPageToken: undefined,
+            totalResults: 500,
+          }
+        }
+        
+        // Return 50+ mock videos for better testing
+        const extendedMockVideos = [
+          ...mockRelatedVideos.items,
+          ...mockVideos.slice(0, 30).map((video, index) => ({
+            ...video,
+            id: `${video.id}-mock-${index}`,
+            title: `${video.title} (Mock Related)`,
+          }))
+        ]
+        
+        return {
+          items: extendedMockVideos.slice(0, 50),
           nextPageToken: undefined,
-          totalResults: 500,
+          totalResults: extendedMockVideos.length,
         }
       }
-      
-      // Return 50+ mock videos for better testing
-      const extendedMockVideos = [
-        ...mockRelatedVideos.items,
-        ...mockVideos.slice(0, 30).map((video, index) => ({
-          ...video,
-          id: `${video.id}-mock-${index}`,
-          title: `${video.title} (Mock Related)`,
-        }))
-      ]
-      
-      return {
-        items: extendedMockVideos.slice(0, 50),
-        nextPageToken: undefined,
-        totalResults: extendedMockVideos.length,
-      }
     }
-  }
+  })
 }
 
 // Get video categories
