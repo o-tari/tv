@@ -11,7 +11,7 @@ import {
   fetchAnimeRecommendations,
   clearAnimeEpisodes 
 } from '../store/slices/animeSlice'
-import YouTubePlayer from '../components/YouTubePlayer'
+import EnhancedYouTubePlayer from '../components/EnhancedYouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import RelatedVideosList from '../components/RelatedVideosList'
 import AnimeEpisodeBatches from '../components/AnimeEpisodeBatches'
@@ -212,9 +212,10 @@ const WatchPage = () => {
             ) : (
               <>
                 {/* Video player */}
-                <div className="aspect-video">
-                  <YouTubePlayer videoId={video!.id} />
-                </div>
+                <EnhancedYouTubePlayer 
+                  videoId={video!.id} 
+                  showControls={true}
+                />
 
                 {/* Video info */}
                 <VideoInfo video={video!} />
