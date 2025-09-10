@@ -26,13 +26,10 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+    'process.env': {},
   },
   resolve: {
     alias: {
-      events: 'events',
-      path: 'path-browserify',
-      crypto: 'crypto-browserify',
-      stream: 'stream-browserify',
       buffer: 'buffer',
       process: 'process/browser',
     },

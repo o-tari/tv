@@ -52,6 +52,7 @@ const TMDBWatchPage = () => {
   const loadContent = async () => {
     if (!id || !type || !tmdbApiKey) return
 
+    console.log('🎬 TMDBWatchPage: Loading content...', { id, type })
     setLoading(true)
     setError(null)
     
@@ -59,10 +60,14 @@ const TMDBWatchPage = () => {
       const tmdbService = getTMDBService(tmdbApiKey)
       
       if (type === 'movie') {
+        console.log('🎬 Loading movie details for ID:', id)
         const movieDetails = await tmdbService.getMovieDetails(parseInt(id))
+        console.log('🎬 Movie loaded:', { title: movieDetails.title, year: movieDetails.release_date })
         setContent(movieDetails)
       } else {
+        console.log('📺 Loading TV details for ID:', id)
         const tvDetails = await tmdbService.getTVDetails(parseInt(id))
+        console.log('📺 TV show loaded:', { name: tvDetails.name, seasons: tvDetails.seasons?.length })
         setContent(tvDetails)
         // Set first season as default
         if (tvDetails.seasons && tvDetails.seasons.length > 0) {
@@ -72,8 +77,8 @@ const TMDBWatchPage = () => {
         }
       }
     } catch (err) {
+      console.error('❌ Error loading content:', err)
       setError('Failed to load content details')
-      console.error('Error loading content:', err)
     } finally {
       setLoading(false)
     }
@@ -82,10 +87,12 @@ const TMDBWatchPage = () => {
   const loadEpisodes = async (seasonNumber: number) => {
     if (!id || !tmdbApiKey || type !== 'tv') return
 
+    console.log('📺 Loading episodes for season:', seasonNumber)
     setEpisodesLoading(true)
     try {
       const tmdbService = getTMDBService(tmdbApiKey)
       const seasonDetails = await tmdbService.getSeasonDetails(parseInt(id), seasonNumber)
+      console.log('📺 Episodes loaded:', seasonDetails.episodes?.length || 0)
       setEpisodes(seasonDetails.episodes || [])
       
       // If we have a saved episode and it's in this season, select it
@@ -94,11 +101,12 @@ const TMDBWatchPage = () => {
           ep => ep.episode_number === selectedEpisode.episode_number
         )
         if (savedEpisode) {
+          console.log('📺 Restored saved episode:', savedEpisode.name)
           setSelectedEpisode(savedEpisode)
         }
       }
     } catch (err) {
-      console.error('Error loading episodes:', err)
+      console.error('❌ Error loading episodes:', err)
       setEpisodes([])
     } finally {
       setEpisodesLoading(false)
@@ -111,10 +119,16 @@ const TMDBWatchPage = () => {
   }
 
   const handleEpisodeSelect = (episode: TMDBEpisode) => {
+    console.log('📺 Episode selected:', { 
+      name: episode.name, 
+      season: episode.season_number, 
+      episode: episode.episode_number 
+    })
     setSelectedEpisode(episode)
     // Save to localStorage
     if (id && type === 'tv') {
       localStorage.setItem(`tmdb-tv-${id}-selected-episode`, JSON.stringify(episode))
+      console.log('📺 Episode saved to localStorage')
     }
     
     // Add to continue watching
@@ -123,6 +137,7 @@ const TMDBWatchPage = () => {
         content,
         type: 'tv'
       }))
+      console.log('📺 Added to continue watching')
     }
   }
 
@@ -279,32 +294,50 @@ const TMDBWatchPage = () => {
           <div className="lg:col-span-2">
             {/* Video Player */}
             <div className="mb-6">
-              {isTV && selectedEpisode ? (
-                <TorrentPlayer
-                  showTitle={(content as TMDBTVDetails).name}
-                  season={selectedEpisode.season_number}
-                  episode={selectedEpisode.episode_number}
-                  youtubeVideoId={trailer?.key}
-                />
-              ) : !isTV ? (
-                <TorrentPlayer
-                  movieTitle={(content as TMDBMovieDetails).title}
-                  youtubeVideoId={trailer?.key}
-                />
-              ) : (
-                <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
-                      Select an episode to watch
-                    </p>
-                    <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+              {(() => {
+                if (isTV && selectedEpisode) {
+                  console.log('🎬 TMDBWatchPage: Rendering TorrentPlayer for TV show', {
+                    showTitle: (content as TMDBTVDetails).name,
+                    season: selectedEpisode.season_number,
+                    episode: selectedEpisode.episode_number,
+                    youtubeVideoId: trailer?.key
+                  })
+                  return (
+                    <TorrentPlayer
+                      showTitle={(content as TMDBTVDetails).name}
+                      season={selectedEpisode.season_number}
+                      episode={selectedEpisode.episode_number}
+                      youtubeVideoId={trailer?.key}
+                    />
+                  )
+                } else if (!isTV) {
+                  console.log('🎬 TMDBWatchPage: Rendering TorrentPlayer for movie', {
+                    movieTitle: (content as TMDBMovieDetails).title,
+                    youtubeVideoId: trailer?.key
+                  })
+                  return (
+                    <TorrentPlayer
+                      movieTitle={(content as TMDBMovieDetails).title}
+                      youtubeVideoId={trailer?.key}
+                    />
+                  )
+                } else {
+                  return (
+                    <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+                          Select an episode to watch
+                        </p>
+                        <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )
+                }
+              })()}
             </div>
 
             {/* Content Details */}
