@@ -702,3 +702,42 @@ export const getVideoCategories = async () => {
   }
 }
 
+// Get random videos from saved channels
+export const getRandomVideosFromSavedChannels = async (count: number = 200): Promise<Video[]> => {
+  if (shouldUseMockData()) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    // Return random videos from mock data
+    const shuffled = [...mockVideos].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, count)
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.params.key) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
+  // Get saved channels from localStorage
+  const savedChannels = JSON.parse(localStorage.getItem('savedChannels') || '[]')
+  
+  if (savedChannels.length === 0) {
+    return []
+  }
+
+  const allVideos: Video[] = []
+  
+  // Fetch videos from each saved channel
+  for (const channel of savedChannels) {
+    try {
+      const response = await getChannelVideos(channel.id)
+      allVideos.push(...response.items)
+    } catch (error) {
+      console.warn(`Failed to fetch videos for channel ${channel.title}:`, error)
+    }
+  }
+
+  // Shuffle and return random selection
+  const shuffled = allVideos.sort(() => 0.5 - Math.random())
+  return shuffled.slice(0, count)
+}
+

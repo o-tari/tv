@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
 import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { addToAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
+import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'
 import { useVideo } from '../hooks/useVideo'
 import { 
   fetchAnimeInfo, 
@@ -14,6 +15,7 @@ import {
 import EnhancedYouTubePlayer from '../components/EnhancedYouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import RelatedVideosList from '../components/RelatedVideosList'
+import UpNextSection from '../components/UpNextSection'
 import AnimeEpisodeBatches from '../components/AnimeEpisodeBatches'
 import { type AnimeMedia } from '../types/anime'
 
@@ -36,6 +38,9 @@ const WatchPage = () => {
     retryRelatedVideos,
   } = useVideo(videoId || '')
   
+  // Get random videos from saved channels
+  const { randomVideos } = useAppSelector((state) => state.videos)
+  
   // Anime state
   const { 
     currentAnime, 
@@ -48,6 +53,13 @@ const WatchPage = () => {
     recommendationsLoading,
     recommendationsError
   } = useAppSelector((state) => state.anime)
+
+  // Fetch random videos from saved channels for Up Next
+  useEffect(() => {
+    if (!isAnime) {
+      dispatch(fetchRandomVideosFromSavedChannels(200))
+    }
+  }, [dispatch, isAnime])
 
   // Fetch anime info, episodes, and recommendations if this is an anime page
   useEffect(() => {
@@ -93,27 +105,53 @@ const WatchPage = () => {
     }
   }, [dispatch, currentAnime])
 
-  // Handle video end - navigate to random related video
-  const handleVideoEnd = () => {
-    if (!isAnime && relatedVideos && relatedVideos.length > 0) {
-      // Get a random related video
-      const randomIndex = Math.floor(Math.random() * relatedVideos.length)
-      const randomVideo = relatedVideos[randomIndex]
-      
-      if (randomVideo && randomVideo.id) {
-        console.log('🎬 Video ended, navigating to random related video:', randomVideo.title)
+  // Handle video end - navigate to random video from saved channels
+  const handleVideoEnd = useCallback(() => {
+    console.log('🎬 Video ended! Checking for auto-play...')
+    console.log('isAnime:', isAnime)
+    console.log('randomVideos length:', randomVideos?.length || 0)
+    console.log('current videoId:', videoId)
+    
+    if (!isAnime) {
+      if (randomVideos && randomVideos.length > 0) {
+        // Filter out current video
+        const availableVideos = randomVideos.filter(video => video.id !== videoId)
+        console.log('Available videos after filtering:', availableVideos.length)
         
-        // Show a brief message before navigating
-        const message = `Auto-playing: ${randomVideo.title}`
-        console.log(message)
-        
-        // Navigate to the random related video
-        navigate(`/watch/${randomVideo.id}`, { replace: true })
+        if (availableVideos.length > 0) {
+          // Get a random video from saved channels
+          const randomIndex = Math.floor(Math.random() * availableVideos.length)
+          const randomVideo = availableVideos[randomIndex]
+          
+          if (randomVideo && randomVideo.id) {
+            console.log('🎬 Video ended, navigating to random video from saved channels:', randomVideo.title)
+            
+            // Show a brief message before navigating
+            const message = `Auto-playing: ${randomVideo.title}`
+            console.log(message)
+            
+            // Navigate to the random video
+            navigate(`/watch/${randomVideo.id}`, { replace: true })
+          } else {
+            console.log('🎬 Video ended, but no random videos available')
+          }
+        } else {
+          console.log('🎬 Video ended, but no other videos available from saved channels')
+        }
       } else {
-        console.log('🎬 Video ended, but no related videos available')
+        console.log('🎬 Video ended, but no videos available from saved channels - trying to fetch them')
+        // Try to fetch random videos if they're not available
+        dispatch(fetchRandomVideosFromSavedChannels(200))
       }
     } else {
-      console.log('🎬 Video ended, but no related videos available or this is an anime page')
+      console.log('🎬 Video ended, but this is an anime page')
+    }
+  }, [isAnime, randomVideos, videoId, navigate, dispatch])
+
+  // Handle video selection from Up Next
+  const handleVideoSelect = (video: any) => {
+    if (video && video.id) {
+      navigate(`/watch/${video.id}`, { replace: true })
     }
   }
 
@@ -241,6 +279,12 @@ const WatchPage = () => {
                   videoId={video!.id} 
                   showControls={true}
                   onVideoEnd={handleVideoEnd}
+                />
+
+                {/* Up Next section */}
+                <UpNextSection 
+                  currentVideoId={video!.id}
+                  onVideoSelect={handleVideoSelect}
                 />
 
                 {/* Video info */}

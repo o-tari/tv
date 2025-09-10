@@ -224,6 +224,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
             // Check if video has ended
             if (state === YT_PLAYER_STATE.ENDED) {
               logYouTubeEvent('VIDEO_ENDED')
+              console.log('🎬 EnhancedYouTubePlayer: Video ended, calling onVideoEnd')
               onVideoEnd?.()
             }
             
@@ -282,7 +283,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
     // Small delay to ensure DOM is ready
     const timer = setTimeout(initializePlayer, 100)
     return () => clearTimeout(timer)
-  }, [isAPIReady, videoId, dispatch, onReady, onStateChange])
+  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd])
 
   // Update current time periodically
   useEffect(() => {

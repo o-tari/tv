@@ -32,6 +32,11 @@ interface VideosState {
   // Related videos - now stored per video ID
   relatedVideos: Record<string, RelatedVideosState>
 
+  // Random videos from saved channels for Up Next
+  randomVideos: Video[]
+  randomVideosLoading: boolean
+  randomVideosError: string | null
+
   // Channel
   currentChannel: Channel | null
   channelLoading: boolean
@@ -60,6 +65,9 @@ const initialState: VideosState = {
 
   relatedVideos: {},
 
+  randomVideos: [],
+  randomVideosLoading: false,
+  randomVideosError: null,
 
   currentChannel: null,
   channelLoading: false,
@@ -117,6 +125,14 @@ export const fetchChannelVideos = createAsyncThunk(
   async ({ channelId, pageToken }: { channelId: string; pageToken?: string }) => {
     const response = await youtubeService.getChannelVideos(channelId, pageToken)
     return response
+  }
+)
+
+export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
+  'videos/fetchRandomVideosFromSavedChannels',
+  async (count: number = 200) => {
+    const videos = await youtubeService.getRandomVideosFromSavedChannels(count)
+    return videos
   }
 )
 
@@ -320,6 +336,21 @@ const videosSlice = createSlice({
       .addCase(fetchChannelVideos.rejected, (state, action) => {
         state.channelVideosLoading = false
         state.channelVideosError = action.error.message || 'Failed to fetch channel videos'
+      })
+
+    // Random videos from saved channels
+    builder
+      .addCase(fetchRandomVideosFromSavedChannels.pending, (state) => {
+        state.randomVideosLoading = true
+        state.randomVideosError = null
+      })
+      .addCase(fetchRandomVideosFromSavedChannels.fulfilled, (state, action) => {
+        state.randomVideosLoading = false
+        state.randomVideos = action.payload
+      })
+      .addCase(fetchRandomVideosFromSavedChannels.rejected, (state, action) => {
+        state.randomVideosLoading = false
+        state.randomVideosError = action.error.message || 'Failed to fetch random videos from saved channels'
       })
   },
 })
