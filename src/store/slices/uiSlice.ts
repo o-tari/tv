@@ -29,7 +29,7 @@ interface UIState {
 
 const initialState: UIState = {
   theme: (localStorage.getItem('theme') as 'light' | 'dark') || 'dark',
-  sidebarOpen: true,
+  sidebarOpen: localStorage.getItem('sidebarOpen') === 'true' || false,
   searchQuery: '',
   searchFilters: {
     type: 'video',
@@ -63,9 +63,11 @@ const uiSlice = createSlice({
     },
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen
+      localStorage.setItem('sidebarOpen', state.sidebarOpen.toString())
     },
     setSidebarOpen: (state, action: PayloadAction<boolean>) => {
       state.sidebarOpen = action.payload
+      localStorage.setItem('sidebarOpen', state.sidebarOpen.toString())
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload

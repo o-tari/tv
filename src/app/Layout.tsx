@@ -1,5 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import FloatingSidebarButton from '../components/FloatingSidebarButton'
 import MockDataNotification from '../components/MockDataNotification'
 import Settings from '../components/Settings'
 import { useAppSelector } from '../store'
@@ -9,22 +10,21 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const { sidebarOpen } = useAppSelector((state) => state.ui)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-white dark:bg-youtube-dark text-gray-900 dark:text-white">
-      <div className="flex">
-        <Sidebar />
-        <main
-          className={`flex-1 transition-all duration-300 ${
-            sidebarOpen ? 'ml-64' : 'ml-16'
-          }`}
-        >
-          <MockDataNotification onOpenSettings={() => setSettingsOpen(true)} />
-          {children}
-        </main>
-      </div>
+      {/* Floating Sidebar Modal */}
+      <Sidebar />
+      
+      {/* Main Content - Full Width */}
+      <main className="w-full">
+        <MockDataNotification onOpenSettings={() => setSettingsOpen(true)} />
+        {children}
+      </main>
+
+      {/* Floating Sidebar Button */}
+      <FloatingSidebarButton />
 
       {/* Settings Modal */}
       <Settings 
