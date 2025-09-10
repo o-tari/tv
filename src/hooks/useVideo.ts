@@ -26,6 +26,12 @@ export const useVideo = (videoId: string) => {
     }
   }
 
+  const retryRelatedVideos = () => {
+    if (videoId) {
+      dispatch(fetchRelatedVideos({ videoId }))
+    }
+  }
+
 
   return {
     video: currentVideo,
@@ -35,5 +41,6 @@ export const useVideo = (videoId: string) => {
     relatedLoading,
     relatedError,
     loadMoreRelated,
+    retryRelatedVideos,
   }
 }

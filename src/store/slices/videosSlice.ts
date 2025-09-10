@@ -134,6 +134,9 @@ const videosSlice = createSlice({
       state.currentVideo = null
       state.currentVideoError = null
       state.relatedVideos = []
+      state.relatedError = null
+      state.relatedLoading = false
+      state.relatedNextPageToken = null
     },
     clearChannel: (state) => {
       state.currentChannel = null
@@ -246,7 +249,7 @@ const videosSlice = createSlice({
       })
       .addCase(fetchRelatedVideos.fulfilled, (state, action) => {
         state.relatedLoading = false
-        if (action.meta.arg) {
+        if (action.meta.arg?.pageToken) {
           // Load more
           state.relatedVideos = [...state.relatedVideos, ...action.payload.items]
         } else {

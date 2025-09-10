@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
 import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { addToAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
+import { fetchRelatedVideos } from '../store/slices/videosSlice'
 import { useVideo } from '../hooks/useVideo'
 import { 
   fetchAnimeInfo, 
@@ -14,6 +15,7 @@ import {
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoInfo from '../components/VideoInfo'
 import VideoGrid from '../components/VideoGrid'
+import RelatedVideosList from '../components/RelatedVideosList'
 import AnimeEpisodeBatches from '../components/AnimeEpisodeBatches'
 import { type AnimeMedia } from '../types/anime'
 
@@ -32,6 +34,7 @@ const WatchPage = () => {
     relatedVideos,
     relatedLoading,
     relatedError,
+    retryRelatedVideos,
   } = useVideo(videoId || '')
   
   // Anime state
@@ -291,21 +294,12 @@ const WatchPage = () => {
                 )}
               </>
             ) : (
-              <>
-                {relatedError ? (
-                  <div className="text-center py-4">
-                    <p className="text-red-600 dark:text-red-400 text-sm">
-                      Failed to load related videos
-                    </p>
-                  </div>
-                ) : (
-                  <VideoGrid
-                    videos={relatedVideos}
-                    loading={relatedLoading}
-                    variant="compact"
-                  />
-                )}
-              </>
+              <RelatedVideosList
+                videos={relatedVideos}
+                loading={relatedLoading}
+                error={relatedError}
+                onRetry={retryRelatedVideos}
+              />
             )}
           </div>
         </div>
