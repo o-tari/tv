@@ -9,6 +9,7 @@ interface EnhancedYouTubePlayerProps {
   onVideoEnd?: () => void
   showControls?: boolean
   autoplay?: boolean
+  fullWindow?: boolean
 }
 
 declare global {
@@ -79,7 +80,7 @@ const logYouTubeEvent = (eventName: string, data?: any) => {
   }
 }
 
-const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, showControls = true, autoplay = false }: EnhancedYouTubePlayerProps) => {
+const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, showControls = true, autoplay = false, fullWindow = false }: EnhancedYouTubePlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<any>(null)
   const dispatch = useAppDispatch()
@@ -479,9 +480,9 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
 
 
   return (
-    <div className="space-y-4">
+    <div className={fullWindow ? "h-full" : "space-y-4"}>
       {/* Main Player */}
-      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+      <div className={`relative w-full bg-black overflow-hidden ${fullWindow ? "h-full" : "aspect-video rounded-lg"}`}>
         <div ref={playerRef} className="w-full h-full" />
         
         {!isAPIReady && (
@@ -495,7 +496,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
       </div>
 
       {/* Control Panel */}
-      {showControls && isAPIReady && (
+      {showControls && isAPIReady && !fullWindow && (
         <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-4">
           {/* Progress Bar */}
           <div className="space-y-2">

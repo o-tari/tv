@@ -54,4 +54,17 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  .full-window-player {
+    height: 100vh;
+    max-height: 56.25vw; /* 16:9 aspect ratio */
+    width: 100%;
+  }
+  
+  @media (max-aspect-ratio: 16/9) {
+    .full-window-player {
+      height: 100vh;
+      max-height: none;
+    }
+  }
 }

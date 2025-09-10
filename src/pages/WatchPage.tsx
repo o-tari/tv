@@ -220,13 +220,13 @@ const WatchPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="space-y-6">
-          {/* Main content */}
-          <div className="space-y-6">
-            {isAnime ? (
-              <>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {isAnime ? (
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="space-y-6">
+              {/* Main content */}
+              <div className="space-y-6">
                 {/* Anime Episodes */}
                 <AnimeEpisodeBatches
                   episodes={animeEpisodes}
@@ -278,59 +278,14 @@ const WatchPage = () => {
                     </div>
                   </div>
                 )}
-              </>
-            ) : (
-              <>
-                {/* Video player */}
-                <EnhancedYouTubePlayer 
-                  videoId={video!.id} 
-                  showControls={true}
-                  onVideoEnd={handleVideoEnd}
-                  autoplay={autoplay}
-                />
+              </div>
 
-                {/* Up Next section */}
-                <UpNextSection 
-                  currentVideoId={video!.id}
-                  onVideoSelect={handleVideoSelect}
-                />
-
-                {/* Autoplay control */}
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={autoplay}
-                          onChange={() => dispatch(toggleAutoplay())}
-                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          Autoplay videos
-                        </span>
-                      </label>
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {autoplay ? 'Videos will start playing automatically' : 'Videos will not autoplay'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Video info */}
-                <VideoInfo video={video!} />
-              </>
-            )}
-          </div>
-
-          {/* Related Videos - Full width below main content */}
-          <div className="w-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {isAnime ? 'Recommendations' : 'Related videos'}
-            </h3>
-            
-            {isAnime ? (
-              <>
+              {/* Related Videos - Full width below main content */}
+              <div className="w-full">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Recommendations
+                </h3>
+                
                 {recommendationsLoading ? (
                   <div className="text-center py-8">
                     <div className="w-8 h-8 mx-auto mb-4 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
@@ -391,18 +346,84 @@ const WatchPage = () => {
                     </p>
                   </div>
                 )}
-              </>
-            ) : (
-              <RelatedVideosList
-                videos={relatedVideos}
-                loading={relatedLoading}
-                error={relatedError}
-                onRetry={retryRelatedVideos}
-              />
-            )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Full-window video player section */}
+          <div className="relative full-window-player">
+            {/* Back button overlay */}
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute top-4 left-4 z-10 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full transition-all duration-200"
+              title="Go back"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <EnhancedYouTubePlayer 
+              videoId={video!.id} 
+              showControls={true}
+              onVideoEnd={handleVideoEnd}
+              autoplay={autoplay}
+              fullWindow={true}
+            />
+          </div>
+
+          {/* Scrollable content below the player */}
+          <div className="p-6">
+            <div className="max-w-6xl mx-auto space-y-6">
+              {/* Up Next section */}
+              <UpNextSection 
+                currentVideoId={video!.id}
+                onVideoSelect={handleVideoSelect}
+              />
+
+              {/* Autoplay control */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoplay}
+                        onChange={() => dispatch(toggleAutoplay())}
+                        className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        Autoplay videos
+                      </span>
+                    </label>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {autoplay ? 'Videos will start playing automatically' : 'Videos will not autoplay'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Video info */}
+              <VideoInfo video={video!} />
+
+              {/* Related Videos */}
+              <div className="w-full">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Related videos
+                </h3>
+                <RelatedVideosList
+                  videos={relatedVideos}
+                  loading={relatedLoading}
+                  error={relatedError}
+                  onRetry={retryRelatedVideos}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
