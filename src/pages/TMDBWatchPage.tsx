@@ -4,8 +4,11 @@ import { useAppSelector, useAppDispatch } from '../store'
 import { selectTmdbApiKey } from '../store/slices/settingsSlice'
 import { addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
+import { torrentSearchService } from '../services/torrentSearch'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
+import type { ApiTorrentSearchResponse } from '../types/torrent'
 import TorrentPlayer from '../components/TorrentPlayer'
+import TorrentsTable from '../components/TorrentsTable'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const TMDBWatchPage = () => {
@@ -21,6 +24,8 @@ const TMDBWatchPage = () => {
   const [episodes, setEpisodes] = useState<TMDBEpisode[]>([])
   const [episodesLoading, setEpisodesLoading] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<TMDBEpisode | null>(null)
+  const [torrentResults, setTorrentResults] = useState<ApiTorrentSearchResponse | null>(null)
+  const [torrentLoading, setTorrentLoading] = useState(false)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
@@ -138,6 +143,43 @@ const TMDBWatchPage = () => {
         type: 'tv'
       }))
       console.log('📺 Added to continue watching')
+    }
+
+    // Search for torrents for this episode
+    if (content && type === 'tv') {
+      searchForEpisodeTorrents(content as TMDBTVDetails, episode)
+    }
+  }
+
+  const searchForEpisodeTorrents = async (show: TMDBTVDetails, episode: TMDBEpisode) => {
+    try {
+      setTorrentLoading(true)
+      console.log('🔍 Searching for episode torrents:', {
+        show: show.name,
+        season: episode.season_number,
+        episode: episode.episode_number
+      })
+
+      const seasonStr = episode.season_number.toString().padStart(2, '0')
+      const episodeStr = episode.episode_number.toString().padStart(2, '0')
+      const searchQuery = `${show.name} s${seasonStr}e${episodeStr}`
+      
+      console.log('🔍 Search query:', searchQuery)
+      
+      const results = await torrentSearchService.searchTVTorrents(
+        show.name,
+        episode.season_number,
+        episode.episode_number,
+        'piratebay'
+      )
+      
+      console.log('🔍 Torrent search results:', results)
+      setTorrentResults(results)
+    } catch (error) {
+      console.error('❌ Error searching for episode torrents:', error)
+      setTorrentResults(null)
+    } finally {
+      setTorrentLoading(false)
     }
   }
 
@@ -453,6 +495,26 @@ const TMDBWatchPage = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Torrents Table for Selected Episode */}
+                {torrentLoading ? (
+                  <div className="mt-6 flex items-center justify-center py-8">
+                    <LoadingSpinner />
+                    <span className="ml-3 text-gray-600 dark:text-gray-400">
+                      Searching for torrents...
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-6">
+                    <TorrentsTable 
+                      searchResults={torrentResults}
+                      selectedTorrent={null}
+                      onTorrentSelect={(torrent) => {
+                        console.log('🎬 Torrent selected:', torrent.name)
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

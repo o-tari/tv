@@ -361,8 +361,8 @@ const TorrentPlayer = ({
                 ⚠️ Torrent playback unavailable: {torrentError}. Playing YouTube trailer instead.
               </div>
             )}
-            {/* Show torrent results table */}
-            {searchResults && searchResults.data && searchResults.data.length > 0 && (
+            {/* Show torrent results table - only for movies */}
+            {searchResults && searchResults.data && searchResults.data.length > 0 && movieTitle && (
               <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Found {searchResults.data.length} torrents
@@ -566,8 +566,8 @@ const TorrentPlayer = ({
           </div>
         </div>
         
-        {/* Show search results if available */}
-        {searchResults && searchResults.data && searchResults.data.length > 0 && (
+        {/* Show search results if available - only for movies */}
+        {searchResults && searchResults.data && searchResults.data.length > 0 && movieTitle && (
           <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
               Found {searchResults.data.length} torrents
@@ -617,49 +617,49 @@ const TorrentPlayer = ({
                           {torrent.category}
                         </span>
                       </td>
-                        <td className="py-2 px-3 text-center">
-                          <div className="flex gap-2 justify-center">
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(torrent.magnet)
-                                  alert('Magnet link copied to clipboard!')
-                                } catch (err) {
-                                  console.error('Failed to copy magnet:', err)
-                                  alert('Failed to copy magnet link')
-                                }
-                              }}
-                              className="px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              📋 Copy
-                            </button>
-                            <button
-                              onClick={() => {
-                                console.log('🎬 Opening WebTorrent app with magnet:', torrent.name)
-                                console.log('🎬 Magnet URL:', torrent.magnet)
-                                
-                                // Create a temporary link element to trigger the magnet protocol
-                                const link = document.createElement('a')
-                                link.href = torrent.magnet
-                                link.style.display = 'none'
-                                document.body.appendChild(link)
-                                link.click()
-                                document.body.removeChild(link)
-                                
-                                // Also try to open with webtorrent:// protocol
-                                try {
-                                  window.open(`webtorrent://${torrent.magnet}`, '_blank')
-                                } catch {
-                                  console.log('⚠️ Could not open webtorrent:// protocol, using magnet://')
-                                  window.open(torrent.magnet, '_blank')
-                                }
-                              }}
-                              className="px-3 py-1 rounded text-xs font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              ▶️ Play
-                            </button>
-                          </div>
-                        </td>
+                      <td className="py-2 px-3 text-center">
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(torrent.magnet)
+                                alert('Magnet link copied to clipboard!')
+                              } catch (err) {
+                                console.error('Failed to copy magnet:', err)
+                                alert('Failed to copy magnet link')
+                              }
+                            }}
+                            className="px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            📋 Copy
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log('🎬 Opening WebTorrent app with magnet:', torrent.name)
+                              console.log('🎬 Magnet URL:', torrent.magnet)
+                              
+                              // Create a temporary link element to trigger the magnet protocol
+                              const link = document.createElement('a')
+                              link.href = torrent.magnet
+                              link.style.display = 'none'
+                              document.body.appendChild(link)
+                              link.click()
+                              document.body.removeChild(link)
+                              
+                              // Also try to open with webtorrent:// protocol
+                              try {
+                                window.open(`webtorrent://${torrent.magnet}`, '_blank')
+                              } catch {
+                                console.log('⚠️ Could not open webtorrent:// protocol, using magnet://')
+                                window.open(torrent.magnet, '_blank')
+                              }
+                            }}
+                            className="px-3 py-1 rounded text-xs font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            ▶️ Play
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
