@@ -6,7 +6,6 @@ import {
   selectChannelVideosLoading,
   selectChannelVideosError,
   fetchChannelVideos,
-  removeChannel
 } from '../store/slices/channelsSlice'
 import VideoGrid from '../components/VideoGrid'
 import ChannelsManagementModal from '../components/ChannelsManagementModal'

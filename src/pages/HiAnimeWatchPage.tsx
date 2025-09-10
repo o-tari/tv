@@ -714,7 +714,7 @@ const HiAnimeWatchPage = () => {
                   Seasons
                 </h3>
                 <div className="space-y-3">
-                  {seasonsData.map((season, index) => (
+                  {seasonsData.map((season) => (
                     <div
                       key={season.id}
                       className={`flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer ${

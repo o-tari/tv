@@ -7,7 +7,6 @@ import {
 } from './mockData'
 import { type Video, type Channel, type SearchFilters, type SearchResponse } from '../types/youtube'
 import { createApiInstance } from '../utils/apiConfig'
-import { requestCache } from '../utils/requestCache'
 import { localStorageCache } from '../utils/localStorageCache'
 
 
@@ -623,7 +622,7 @@ export const getRelatedVideos = async (
         const videoDetails = await getVideoDetails(videoId)
         const keywords = extractKeywords(videoDetails.title, videoDetails.description)
         
-        const params = {
+        const params: any = {
           part: 'snippet',
           q: keywords || 'trending',
           type: 'video',

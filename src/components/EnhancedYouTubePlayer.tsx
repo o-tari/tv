@@ -82,7 +82,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<any>(null)
   const dispatch = useAppDispatch()
-  const { playerState } = useAppSelector((state) => state.ui)
+  const { } = useAppSelector((state) => state.ui)
   const [isAPIReady, setIsAPIReady] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
