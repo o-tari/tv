@@ -3,7 +3,7 @@ interface LocalStorageCacheEntry {
   data: any
   timestamp: number
   videoId?: string
-  type: 'videoDetails' | 'relatedVideos' | 'search' | 'trending' | 'channel'
+  type: 'videoDetails' | 'relatedVideos' | 'search' | 'trending' | 'channel' | 'category' | 'query'
 }
 
 interface CacheStats {
@@ -182,6 +182,14 @@ class LocalStorageCache {
 
   async getChannelVideos(channelId: string, params: any, fetcher: () => Promise<any>): Promise<any> {
     return this.get('channel', channelId, params, fetcher)
+  }
+
+  async getCategoryVideos(categoryId: string, params: any, fetcher: () => Promise<any>): Promise<any> {
+    return this.get('category', categoryId, params, fetcher)
+  }
+
+  async getQueryVideos(query: string, params: any, fetcher: () => Promise<any>): Promise<any> {
+    return this.get('query', query, params, fetcher)
   }
 
   // Cache management

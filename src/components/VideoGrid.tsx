@@ -2,6 +2,28 @@ import { type Video } from '../types/youtube'
 import { type VideoMedia } from '../types/anime'
 import MediaGrid from './MediaGrid'
 
+// Parse YouTube duration format (PT1M30S) to seconds
+const parseDurationToSeconds = (duration: string): number => {
+  if (!duration) return 0
+  
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+  if (!match) return 0
+  
+  const hours = parseInt(match[1] || '0', 10)
+  const minutes = parseInt(match[2] || '0', 10)
+  const seconds = parseInt(match[3] || '0', 10)
+  
+  return hours * 3600 + minutes * 60 + seconds
+}
+
+// Filter out YouTube Shorts (videos under 60 seconds)
+const filterOutShorts = (videos: Video[]): Video[] => {
+  return videos.filter(video => {
+    const durationSeconds = parseDurationToSeconds(video.duration)
+    return durationSeconds >= 60 // Videos must be at least 60 seconds to not be considered shorts
+  })
+}
+
 interface VideoGridProps {
   videos: Video[]
   loading?: boolean
@@ -11,6 +33,7 @@ interface VideoGridProps {
   showProgress?: boolean
   onRemove?: (videoId: string, event: React.MouseEvent) => void // Remove button handler
   showRemoveButton?: boolean // Whether to show remove button
+  excludeShorts?: boolean // Whether to filter out YouTube Shorts
 }
 
 const VideoGrid = ({
@@ -21,10 +44,14 @@ const VideoGrid = ({
   videoProgress,
   showProgress = false,
   onRemove,
-  showRemoveButton = false
+  showRemoveButton = false,
+  excludeShorts = true
 }: VideoGridProps) => {
+  // Filter out shorts if requested
+  const filteredVideos = excludeShorts ? filterOutShorts(videos) : videos
+
   // Convert videos to media format for MediaGrid
-  const videoMedia: VideoMedia[] = videos.map((video) => ({
+  const videoMedia: VideoMedia[] = filteredVideos.map((video) => ({
     id: video.id,
     title: video.title,
     image: video.thumbnail,

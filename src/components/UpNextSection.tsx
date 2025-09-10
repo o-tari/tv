@@ -1,30 +1,47 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
-import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'
+import { fetchRandomVideosFromSavedChannels, fetchRandomVideosFromChannel } from '../store/slices/videosSlice'
 import { type Video } from '../types/youtube'
 import { formatNumber } from '../utils/formatNumber'
 import { formatDuration } from '../utils/formatTime'
 
 interface UpNextSectionProps {
   currentVideoId?: string
+  currentChannelId?: string
   onVideoSelect?: (video: Video) => void
 }
 
-const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) => {
+const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNextSectionProps) => {
   const dispatch = useAppDispatch()
-  const { randomVideos, randomVideosLoading, randomVideosError } = useAppSelector((state) => state.videos)
+  const { 
+    randomVideos, 
+    randomVideosLoading, 
+    randomVideosError,
+    channelRandomVideos,
+    channelRandomVideosLoading,
+    channelRandomVideosError
+  } = useAppSelector((state) => state.videos)
 
-  // Remove duplicate fetch - videos are fetched by parent component
-  // useEffect(() => {
-  //   dispatch(fetchRandomVideosFromSavedChannels(200))
-  // }, [dispatch])
+  // Fetch current channel videos if channelId is provided
+  useEffect(() => {
+    if (currentChannelId && channelRandomVideos.length === 0 && !channelRandomVideosLoading) {
+      console.log('🎲 UpNextSection: Fetching random videos from current channel...')
+      dispatch(fetchRandomVideosFromChannel({ channelId: currentChannelId, count: 20 }))
+    }
+  }, [dispatch, currentChannelId, channelRandomVideos.length, channelRandomVideosLoading])
 
   const handleVideoClick = (video: Video) => {
     console.log('🎬 Up Next video clicked:', video.title, video.id)
     onVideoSelect?.(video)
   }
 
-  if (randomVideosLoading) {
+  // Combine videos from saved channels and current channel
+  const allVideos = [...channelRandomVideos, ...randomVideos]
+  const isLoading = randomVideosLoading || channelRandomVideosLoading
+  const hasError = randomVideosError || channelRandomVideosError
+
+  if (isLoading) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
@@ -43,7 +60,7 @@ const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) =>
     )
   }
 
-  if (randomVideosError) {
+  if (hasError) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
@@ -54,7 +71,12 @@ const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) =>
             Failed to load recommendations
           </p>
           <button
-            onClick={() => dispatch(fetchRandomVideosFromSavedChannels(200))}
+            onClick={() => {
+              dispatch(fetchRandomVideosFromSavedChannels(200))
+              if (currentChannelId) {
+                dispatch(fetchRandomVideosFromChannel({ channelId: currentChannelId, count: 20 }))
+              }
+            }}
             className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
           >
             Try again
@@ -64,7 +86,7 @@ const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) =>
     )
   }
 
-  if (randomVideos.length === 0) {
+  if (allVideos.length === 0) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
@@ -81,15 +103,18 @@ const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) =>
 
   // Filter out current video if provided
   const filteredVideos = currentVideoId 
-    ? randomVideos.filter(video => video.id !== currentVideoId)
-    : randomVideos
+    ? allVideos.filter(video => video.id !== currentVideoId)
+    : allVideos
 
   // Show first 5 videos
   const displayVideos = filteredVideos.slice(0, 5)
 
   // Debug logging
   console.log('🎬 Up Next - currentVideoId:', currentVideoId)
+  console.log('🎬 Up Next - currentChannelId:', currentChannelId)
+  console.log('🎬 Up Next - channelRandomVideos length:', channelRandomVideos.length)
   console.log('🎬 Up Next - randomVideos length:', randomVideos.length)
+  console.log('🎬 Up Next - allVideos length:', allVideos.length)
   console.log('🎬 Up Next - filteredVideos length:', filteredVideos.length)
   console.log('🎬 Up Next - displayVideos length:', displayVideos.length)
   console.log('🎬 Up Next - first video:', displayVideos[0]?.title)

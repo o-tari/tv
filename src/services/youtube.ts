@@ -45,21 +45,45 @@ const handleApiError = (error: any) => {
   throw error
 }
 
+// Parse YouTube duration format (PT1M30S) to seconds
+const parseDurationToSeconds = (duration: string): number => {
+  if (!duration) return 0
+  
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+  if (!match) return 0
+  
+  const hours = parseInt(match[1] || '0', 10)
+  const minutes = parseInt(match[2] || '0', 10)
+  const seconds = parseInt(match[3] || '0', 10)
+  
+  return hours * 3600 + minutes * 60 + seconds
+}
+
 
 // Search videos
 export const searchVideos = async (
   query: string,
   filters: SearchFilters = {},
-  pageToken?: string
+  pageToken?: string,
+  excludeShorts: boolean = true
 ): Promise<SearchResponse> => {
   if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 600))
     // Filter mock videos based on query
-    const filteredVideos = mockVideos.filter(video => 
+    let filteredVideos = mockVideos.filter(video => 
       video.title.toLowerCase().includes(query.toLowerCase()) ||
       video.description.toLowerCase().includes(query.toLowerCase()) ||
       video.channelTitle.toLowerCase().includes(query.toLowerCase())
     )
+    
+    // Filter out shorts if requested
+    if (excludeShorts) {
+      filteredVideos = filteredVideos.filter(video => {
+        const duration = video.duration || 'PT1M30S' // Default to 1.5 minutes for mock data
+        const durationSeconds = parseDurationToSeconds(duration)
+        return durationSeconds >= 60
+      })
+    }
     
     // For pagination, return different sets of videos
     if (pageToken) {
@@ -134,18 +158,23 @@ export const searchVideos = async (
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
     
+    let items = response.data.items.map((item: any) => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+      channelTitle: item.snippet.channelTitle,
+      channelId: item.snippet.channelId,
+      publishedAt: item.snippet.publishedAt,
+      duration: '', // Will be filled by getVideoDetails
+      viewCount: '', // Will be filled by getVideoDetails
+    }))
+
+    // Note: We can't filter by duration here since we don't have duration data from search results
+    // The filtering will be done after getting video details if needed
+    
     return {
-      items: response.data.items.map((item: any) => ({
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-        channelTitle: item.snippet.channelTitle,
-        channelId: item.snippet.channelId,
-        publishedAt: item.snippet.publishedAt,
-        duration: '', // Will be filled by getVideoDetails
-        viewCount: '', // Will be filled by getVideoDetails
-      })),
+      items,
       nextPageToken: response.data.nextPageToken,
       totalResults: response.data.pageInfo.totalResults,
     }
@@ -202,15 +231,26 @@ export const getVideoDetails = async (videoId: string): Promise<Video> => {
 }
 
 // Get trending videos
-export const getTrendingVideos = async (pageToken?: string): Promise<SearchResponse> => {
+export const getTrendingVideos = async (pageToken?: string, excludeShorts: boolean = true): Promise<SearchResponse> => {
   if (shouldUseMockData()) {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500))
     
+    // Filter out shorts from mock data if requested
+    let filteredVideos = mockVideos
+    if (excludeShorts) {
+      filteredVideos = mockVideos.filter(video => {
+        // Mock videos with duration under 60 seconds are considered shorts
+        const duration = video.duration || 'PT1M30S' // Default to 1.5 minutes for mock data
+        const durationSeconds = parseDurationToSeconds(duration)
+        return durationSeconds >= 60
+      })
+    }
+    
     // For pagination, return different sets of videos
     if (pageToken) {
       // Return a different set of videos for pagination
-      const additionalVideos = mockVideos.map((video, index) => ({
+      const additionalVideos = filteredVideos.map((video, index) => ({
         ...video,
         id: `${video.id}-page2-${index}`,
         title: `${video.title} (Page 2)`,
@@ -222,7 +262,11 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
       }
     }
     
-    return mockSearchResults
+    return {
+      items: filteredVideos,
+      nextPageToken: 'mock-trending-next',
+      totalResults: filteredVideos.length * 10,
+    }
   }
 
   // Check if API key is available when not using mock data
@@ -246,18 +290,28 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
       const api = getApiInstance()
       const response: AxiosResponse = await api.get('/videos', { params })
       
+      let items = response.data.items.map((item: any) => ({
+        id: item.id,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+        channelTitle: item.snippet.channelTitle,
+        channelId: item.snippet.channelId,
+        publishedAt: item.snippet.publishedAt,
+        duration: item.contentDetails.duration,
+        viewCount: item.statistics.viewCount,
+      }))
+
+      // Filter out shorts if requested
+      if (excludeShorts) {
+        items = items.filter(item => {
+          const durationSeconds = parseDurationToSeconds(item.duration)
+          return durationSeconds >= 60 // Videos must be at least 60 seconds to not be considered shorts
+        })
+      }
+      
       return {
-        items: response.data.items.map((item: any) => ({
-          id: item.id,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-          channelTitle: item.snippet.channelTitle,
-          channelId: item.snippet.channelId,
-          publishedAt: item.snippet.publishedAt,
-          duration: item.contentDetails.duration,
-          viewCount: item.statistics.viewCount,
-        })),
+        items,
         nextPageToken: response.data.nextPageToken,
         totalResults: response.data.pageInfo.totalResults,
       }
@@ -269,10 +323,20 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500))
     
+    // Filter out shorts from mock data if requested
+    let filteredVideos = mockVideos
+    if (excludeShorts) {
+      filteredVideos = mockVideos.filter(video => {
+        const duration = video.duration || 'PT1M30S' // Default to 1.5 minutes for mock data
+        const durationSeconds = parseDurationToSeconds(duration)
+        return durationSeconds >= 60
+      })
+    }
+    
     // For pagination, return different sets of videos
     if (pageToken) {
       // Return a different set of videos for pagination
-      const additionalVideos = mockVideos.map((video, index) => ({
+      const additionalVideos = filteredVideos.map((video, index) => ({
         ...video,
         id: `${video.id}-page2-${index}`,
         title: `${video.title} (Page 2)`,
@@ -284,7 +348,11 @@ export const getTrendingVideos = async (pageToken?: string): Promise<SearchRespo
       }
     }
     
-    return mockSearchResults
+    return {
+      items: filteredVideos,
+      nextPageToken: 'mock-trending-next',
+      totalResults: filteredVideos.length * 10,
+    }
   }
 }
 
@@ -617,7 +685,7 @@ const searchByTrending = async (videoDetails: Video, totalResults: number): Prom
   }
 }
 
-// Get related videos using hybrid approach
+// Get related videos using hybrid approach with channel priority
 export const getRelatedVideos = async (
   videoId: string,
   pageToken?: string
@@ -639,16 +707,18 @@ export const getRelatedVideos = async (
       const videoDetails = await getVideoDetails(videoId)
       const totalResults = 50 // Increased from 25 to 50
 
-      // Execute all search strategies in parallel
-      const [keywordResults, categoryResults, tagResults, trendingResults] = await Promise.all([
-        searchByKeywords(videoDetails, totalResults),
-        searchByCategory(videoDetails, totalResults),
-        searchByTags(videoDetails, totalResults),
-        searchByTrending(videoDetails, totalResults)
+      // Execute all search strategies in parallel, including channel videos
+      const [channelResults, keywordResults, categoryResults, tagResults, trendingResults] = await Promise.all([
+        getRandomVideosFromChannel(videoDetails.channelId, Math.ceil(totalResults * 0.4)), // 40% from same channel
+        searchByKeywords(videoDetails, Math.ceil(totalResults * 0.3)), // 30% from keywords
+        searchByCategory(videoDetails, Math.ceil(totalResults * 0.2)), // 20% from category
+        searchByTags(videoDetails, Math.ceil(totalResults * 0.1)), // 10% from tags
+        searchByTrending(videoDetails, Math.ceil(totalResults * 0.1)) // 10% from trending
       ])
 
-      // Combine all results
+      // Combine all results with channel videos first
       const allResults = [
+        ...channelResults,
         ...keywordResults,
         ...categoryResults,
         ...tagResults,
@@ -749,6 +819,219 @@ export const getVideoCategories = async () => {
   } catch (error) {
     handleApiError(error)
     throw error // This will never be reached, but satisfies TypeScript
+  }
+}
+
+// Get videos by category
+export const getVideosByCategory = async (
+  categoryId: string,
+  pageToken?: string,
+  maxResults: number = 25
+): Promise<SearchResponse> => {
+  if (shouldUseMockData()) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    
+    // Filter mock videos by category (simulate different categories)
+    const categoryKeywords = {
+      '10': ['music', 'song', 'album', 'artist', 'concert'],
+      '20': ['gaming', 'game', 'play', 'stream', 'twitch'],
+      '25': ['news', 'news', 'breaking', 'update', 'report'],
+      '26': ['education', 'tutorial', 'learn', 'course', 'lesson'],
+      '27': ['science', 'tech', 'technology', 'innovation', 'research'],
+      '28': ['auto', 'vehicle', 'car', 'motorcycle', 'racing'],
+      '29': ['travel', 'trip', 'vacation', 'destination', 'adventure'],
+      '30': ['comedy', 'funny', 'joke', 'humor', 'laugh'],
+      '31': ['entertainment', 'show', 'movie', 'celebrity', 'hollywood'],
+      '32': ['lifestyle', 'fashion', 'beauty', 'health', 'fitness'],
+    }
+    
+    const keywords = categoryKeywords[categoryId] || ['video', 'content']
+    let filteredVideos = mockVideos.filter(video => 
+      keywords.some(keyword => 
+        video.title.toLowerCase().includes(keyword) ||
+        video.description.toLowerCase().includes(keyword)
+      )
+    )
+    
+    if (pageToken) {
+      const additionalVideos = filteredVideos.map((video, index) => ({
+        ...video,
+        id: `${video.id}-category-${categoryId}-${index}`,
+        title: `${video.title} (Category Page 2)`,
+      }))
+      return {
+        items: additionalVideos,
+        nextPageToken: undefined,
+        totalResults: 1000,
+      }
+    }
+    
+    return {
+      items: filteredVideos,
+      nextPageToken: 'mock-category-next',
+      totalResults: filteredVideos.length * 10,
+    }
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.params.key) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
+  const params: any = {
+    part: 'snippet,statistics,contentDetails',
+    chart: 'mostPopular',
+    videoCategoryId: categoryId,
+    maxResults,
+  }
+
+  if (pageToken) {
+    params.pageToken = pageToken
+  }
+
+  try {
+    return localStorageCache.getCategoryVideos(categoryId, params, async () => {
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/videos', { params })
+      
+      const items = response.data.items.map((item: any) => ({
+        id: item.id,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+        channelTitle: item.snippet.channelTitle,
+        channelId: item.snippet.channelId,
+        publishedAt: item.snippet.publishedAt,
+        duration: item.contentDetails.duration,
+        viewCount: item.statistics.viewCount,
+        categoryId: item.snippet.categoryId,
+      }))
+      
+      return {
+        items,
+        nextPageToken: response.data.nextPageToken,
+        totalResults: response.data.pageInfo.totalResults,
+      }
+    })
+  } catch (error) {
+    handleApiError(error)
+    throw error
+  }
+}
+
+// Get videos by search query (for specific categories)
+export const getVideosByQuery = async (
+  query: string,
+  pageToken?: string,
+  maxResults: number = 25,
+  order: string = 'relevance'
+): Promise<SearchResponse> => {
+  if (shouldUseMockData()) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    
+    let filteredVideos = mockVideos.filter(video => 
+      video.title.toLowerCase().includes(query.toLowerCase()) ||
+      video.description.toLowerCase().includes(query.toLowerCase()) ||
+      video.channelTitle.toLowerCase().includes(query.toLowerCase())
+    )
+    
+    if (pageToken) {
+      const additionalVideos = filteredVideos.map((video, index) => ({
+        ...video,
+        id: `${video.id}-query-${query}-${index}`,
+        title: `${video.title} (Query Page 2)`,
+      }))
+      return {
+        items: additionalVideos,
+        nextPageToken: undefined,
+        totalResults: 1000,
+      }
+    }
+    
+    return {
+      items: filteredVideos,
+      nextPageToken: 'mock-query-next',
+      totalResults: filteredVideos.length * 10,
+    }
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.params.key) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
+  const params: any = {
+    part: 'snippet',
+    q: query,
+    type: 'video',
+    maxResults,
+    order,
+    videoEmbeddable: true,
+  }
+
+  if (pageToken) {
+    params.pageToken = pageToken
+  }
+
+  try {
+    return localStorageCache.getQueryVideos(query, params, async () => {
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/search', { params })
+      
+      const items = response.data.items.map((item: any) => ({
+        id: item.id.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+        channelTitle: item.snippet.channelTitle,
+        channelId: item.snippet.channelId,
+        publishedAt: item.snippet.publishedAt,
+        duration: '', // Will be filled by getVideoDetails if needed
+        viewCount: '', // Will be filled by getVideoDetails if needed
+      }))
+      
+      return {
+        items,
+        nextPageToken: response.data.nextPageToken,
+        totalResults: response.data.pageInfo.totalResults,
+      }
+    })
+  } catch (error) {
+    handleApiError(error)
+    throw error
+  }
+}
+
+// Get random videos from a specific channel
+export const getRandomVideosFromChannel = async (channelId: string, count: number = 50): Promise<Video[]> => {
+  if (shouldUseMockData()) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    // Return random videos from mock data that match the channel
+    const channelVideos = mockVideos.filter(video => video.channelId === channelId)
+    const shuffled = [...channelVideos].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, count)
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.params.key) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
+  try {
+    // Apply rate limiting
+    await youtubeRateLimiter.waitIfNeeded()
+    
+    const response = await getChannelVideos(channelId, undefined, count * 2) // Get more to have better random selection
+    
+    // Shuffle and return random selection
+    const shuffled = response.items.sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, count)
+  } catch (error) {
+    console.warn(`Failed to fetch random videos from channel ${channelId}:`, error)
+    return []
   }
 }
 

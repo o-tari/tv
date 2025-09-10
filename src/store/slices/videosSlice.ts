@@ -38,6 +38,11 @@ interface VideosState {
   randomVideosLoading: boolean
   randomVideosError: string | null
 
+  // Random videos from current channel for Up Next
+  channelRandomVideos: Video[]
+  channelRandomVideosLoading: boolean
+  channelRandomVideosError: string | null
+
   // Channel
   currentChannel: Channel | null
   channelLoading: boolean
@@ -46,6 +51,22 @@ interface VideosState {
   channelVideosLoading: boolean
   channelVideosError: string | null
   channelVideosNextPageToken: string | null
+
+  // Category videos - stored per category
+  categoryVideos: Record<string, {
+    videos: Video[]
+    loading: boolean
+    error: string | null
+    nextPageToken: string | null
+  }>
+
+  // Query videos - stored per query
+  queryVideos: Record<string, {
+    videos: Video[]
+    loading: boolean
+    error: string | null
+    nextPageToken: string | null
+  }>
 }
 
 const initialState: VideosState = {
@@ -70,6 +91,10 @@ const initialState: VideosState = {
   randomVideosLoading: false,
   randomVideosError: null,
 
+  channelRandomVideos: [],
+  channelRandomVideosLoading: false,
+  channelRandomVideosError: null,
+
   currentChannel: null,
   channelLoading: false,
   channelError: null,
@@ -77,6 +102,9 @@ const initialState: VideosState = {
   channelVideosLoading: false,
   channelVideosError: null,
   channelVideosNextPageToken: null,
+
+  categoryVideos: {},
+  queryVideos: {},
 }
 
 // Async thunks
@@ -94,9 +122,9 @@ export const fetchTrendingVideos = createAsyncThunk<SearchResponse, string | und
       }
     }
     
-    // Fetch from API
-    console.log('🌐 Fetching trending videos from API')
-    const response = await youtubeService.getTrendingVideos(pageToken)
+    // Fetch from API (exclude shorts by default)
+    console.log('🌐 Fetching trending videos from API (excluding shorts)')
+    const response = await youtubeService.getTrendingVideos(pageToken, true)
     
     // Cache the response (only cache initial load, not pagination)
     if (!pageToken) {
@@ -110,7 +138,8 @@ export const fetchTrendingVideos = createAsyncThunk<SearchResponse, string | und
 export const searchVideos = createAsyncThunk(
   'videos/searchVideos',
   async ({ query, filters, pageToken }: { query: string; filters?: any; pageToken?: string }) => {
-    const response = await youtubeService.searchVideos(query, filters, pageToken)
+    const excludeShorts = filters?.excludeShorts !== false // Default to true unless explicitly set to false
+    const response = await youtubeService.searchVideos(query, filters, pageToken, excludeShorts)
     return response
   }
 )
@@ -151,6 +180,31 @@ export const fetchChannelVideos = createAsyncThunk(
 // Global flag to prevent multiple simultaneous calls
 let isFetchingRandomVideos = false
 
+export const fetchRandomVideosFromChannel = createAsyncThunk(
+  'videos/fetchRandomVideosFromChannel',
+  async ({ channelId, count = 50 }: { channelId: string; count?: number }) => {
+    const cacheKey = `${YOUTUBE_CACHE_KEYS.RANDOM_VIDEOS}:channel:${channelId}:${count}`
+    
+    // Check cache first
+    if (isCached(cacheKey)) {
+      const cachedData = getCachedData<Video[]>(cacheKey)
+      if (cachedData) {
+        console.log(`📦 Using cached random videos from channel ${channelId}`)
+        return cachedData
+      }
+    }
+    
+    console.log(`🌐 Fetching random videos from channel ${channelId}`)
+    
+    const videos = await youtubeService.getRandomVideosFromChannel(channelId, count)
+    
+    // Cache the response
+    setCachedData(cacheKey, videos)
+    
+    return videos
+  }
+)
+
 export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
   'videos/fetchRandomVideosFromSavedChannels',
   async (count: number = 200) => {
@@ -184,6 +238,58 @@ export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
     } finally {
       isFetchingRandomVideos = false
     }
+  }
+)
+
+export const fetchVideosByCategory = createAsyncThunk<SearchResponse, { categoryId: string; pageToken?: string }>(
+  'videos/fetchVideosByCategory',
+  async ({ categoryId, pageToken }) => {
+    const cacheKey = pageToken ? `${YOUTUBE_CACHE_KEYS.CATEGORY}:${categoryId}:${pageToken}` : `${YOUTUBE_CACHE_KEYS.CATEGORY}:${categoryId}`
+    
+    // Check cache first
+    if (!pageToken && isCached(cacheKey)) {
+      const cachedData = getCachedData(cacheKey) as SearchResponse
+      if (cachedData) {
+        console.log(`📦 Using cached videos for category ${categoryId}`)
+        return cachedData
+      }
+    }
+    
+    console.log(`🌐 Fetching videos for category ${categoryId} from API`)
+    const response = await youtubeService.getVideosByCategory(categoryId, pageToken)
+    
+    // Cache the response (only cache initial load, not pagination)
+    if (!pageToken) {
+      setCachedData(cacheKey, response)
+    }
+    
+    return response
+  }
+)
+
+export const fetchVideosByQuery = createAsyncThunk<SearchResponse, { query: string; pageToken?: string; order?: string }>(
+  'videos/fetchVideosByQuery',
+  async ({ query, pageToken, order = 'relevance' }) => {
+    const cacheKey = pageToken ? `${YOUTUBE_CACHE_KEYS.QUERY}:${query}:${pageToken}` : `${YOUTUBE_CACHE_KEYS.QUERY}:${query}`
+    
+    // Check cache first
+    if (!pageToken && isCached(cacheKey)) {
+      const cachedData = getCachedData(cacheKey) as SearchResponse
+      if (cachedData) {
+        console.log(`📦 Using cached videos for query "${query}"`)
+        return cachedData
+      }
+    }
+    
+    console.log(`🌐 Fetching videos for query "${query}" from API`)
+    const response = await youtubeService.getVideosByQuery(query, pageToken, 25, order)
+    
+    // Cache the response (only cache initial load, not pagination)
+    if (!pageToken) {
+      setCachedData(cacheKey, response)
+    }
+    
+    return response
   }
 )
 
@@ -402,6 +508,119 @@ const videosSlice = createSlice({
       .addCase(fetchRandomVideosFromSavedChannels.rejected, (state, action) => {
         state.randomVideosLoading = false
         state.randomVideosError = action.error.message || 'Failed to fetch random videos from saved channels'
+      })
+
+    // Random videos from specific channel
+    builder
+      .addCase(fetchRandomVideosFromChannel.pending, (state) => {
+        state.channelRandomVideosLoading = true
+        state.channelRandomVideosError = null
+      })
+      .addCase(fetchRandomVideosFromChannel.fulfilled, (state, action) => {
+        state.channelRandomVideosLoading = false
+        state.channelRandomVideos = action.payload
+      })
+      .addCase(fetchRandomVideosFromChannel.rejected, (state, action) => {
+        state.channelRandomVideosLoading = false
+        state.channelRandomVideosError = action.error.message || 'Failed to fetch random videos from channel'
+      })
+
+    // Category videos
+    builder
+      .addCase(fetchVideosByCategory.pending, (state, action) => {
+        const categoryId = action.meta.arg.categoryId
+        if (!state.categoryVideos[categoryId]) {
+          state.categoryVideos[categoryId] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.categoryVideos[categoryId].loading = true
+        state.categoryVideos[categoryId].error = null
+      })
+      .addCase(fetchVideosByCategory.fulfilled, (state, action) => {
+        const categoryId = action.meta.arg.categoryId
+        if (!state.categoryVideos[categoryId]) {
+          state.categoryVideos[categoryId] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.categoryVideos[categoryId].loading = false
+        if (action.meta.arg.pageToken) {
+          // Load more
+          state.categoryVideos[categoryId].videos = [...state.categoryVideos[categoryId].videos, ...action.payload.items]
+        } else {
+          // Initial load
+          state.categoryVideos[categoryId].videos = action.payload.items
+        }
+        state.categoryVideos[categoryId].nextPageToken = action.payload.nextPageToken || null
+      })
+      .addCase(fetchVideosByCategory.rejected, (state, action) => {
+        const categoryId = action.meta.arg.categoryId
+        if (!state.categoryVideos[categoryId]) {
+          state.categoryVideos[categoryId] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.categoryVideos[categoryId].loading = false
+        state.categoryVideos[categoryId].error = action.error.message || 'Failed to fetch category videos'
+      })
+
+    // Query videos
+    builder
+      .addCase(fetchVideosByQuery.pending, (state, action) => {
+        const query = action.meta.arg.query
+        if (!state.queryVideos[query]) {
+          state.queryVideos[query] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.queryVideos[query].loading = true
+        state.queryVideos[query].error = null
+      })
+      .addCase(fetchVideosByQuery.fulfilled, (state, action) => {
+        const query = action.meta.arg.query
+        if (!state.queryVideos[query]) {
+          state.queryVideos[query] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.queryVideos[query].loading = false
+        if (action.meta.arg.pageToken) {
+          // Load more
+          state.queryVideos[query].videos = [...state.queryVideos[query].videos, ...action.payload.items]
+        } else {
+          // Initial load
+          state.queryVideos[query].videos = action.payload.items
+        }
+        state.queryVideos[query].nextPageToken = action.payload.nextPageToken || null
+      })
+      .addCase(fetchVideosByQuery.rejected, (state, action) => {
+        const query = action.meta.arg.query
+        if (!state.queryVideos[query]) {
+          state.queryVideos[query] = {
+            videos: [],
+            loading: false,
+            error: null,
+            nextPageToken: null
+          }
+        }
+        state.queryVideos[query].loading = false
+        state.queryVideos[query].error = action.error.message || 'Failed to fetch query videos'
       })
   },
 })

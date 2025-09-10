@@ -6,6 +6,7 @@ interface SearchFiltersProps {
     duration: 'short' | 'medium' | 'long' | ''
     uploadDate: 'hour' | 'today' | 'week' | 'month' | 'year' | ''
     sortBy: 'relevance' | 'date' | 'rating' | 'title' | 'viewCount'
+    excludeShorts: boolean
   }
   onFilterChange: (filters: Partial<SearchFiltersProps['filters']>) => void
 }
@@ -47,6 +48,7 @@ const SearchFilters = ({ filters, onFilterChange }: SearchFiltersProps) => {
     filters.duration,
     filters.uploadDate,
     filters.sortBy !== 'relevance',
+    !filters.excludeShorts,
   ].filter(Boolean).length
 
   return (
@@ -143,6 +145,20 @@ const SearchFilters = ({ filters, onFilterChange }: SearchFiltersProps) => {
                 ))}
               </select>
             </div>
+          </div>
+          
+          {/* Shorts filter */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="excludeShorts"
+              checked={filters.excludeShorts}
+              onChange={(e) => onFilterChange({ excludeShorts: e.target.checked })}
+              className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+            />
+            <label htmlFor="excludeShorts" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Exclude YouTube Shorts
+            </label>
           </div>
         </div>
       )}

@@ -118,4 +118,6 @@ export const YOUTUBE_CACHE_KEYS = {
   RANDOM_VIDEOS: 'youtube:random_videos',
   SEARCH: (query: string) => `youtube:search:${query}`,
   CHANNEL_VIDEOS: (channelId: string) => `youtube:channel_videos:${channelId}`,
+  CATEGORY: 'youtube:category',
+  QUERY: 'youtube:query',
 } as const

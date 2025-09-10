@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectContinueWatching, removeFromContinueWatching, selectVideoProgress } from '../store/slices/continueWatchingSlice'
 import VideoGrid from './VideoGrid'
-import type { Video } from '../types/youtube'
 
 interface ContinueWatchingProps {
   limit?: number

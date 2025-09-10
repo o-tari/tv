@@ -6,6 +6,7 @@ import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import ContinueWatching from '../components/ContinueWatching'
 import WatchLater from '../components/WatchLater'
+import CategorySection from '../components/CategorySection'
 
 const HomePage = () => {
   const navigate = useNavigate()
@@ -76,6 +77,105 @@ const HomePage = () => {
         limit={4} 
         showMoreButton={true} 
         onMoreClick={() => navigate('/watch-later')} 
+      />
+
+      {/* Music Section */}
+      <CategorySection
+        title="Music"
+        description="Latest music videos and songs"
+        type="category"
+        identifier="10"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=music')}
+      />
+
+      {/* Gaming Section */}
+      <CategorySection
+        title="Gaming"
+        description="Gaming content and live streams"
+        type="category"
+        identifier="20"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=gaming')}
+      />
+
+      {/* News Section */}
+      <CategorySection
+        title="News"
+        description="Latest news and current events"
+        type="category"
+        identifier="25"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=news')}
+      />
+
+      {/* Education Section */}
+      <CategorySection
+        title="Education"
+        description="Learn something new today"
+        type="category"
+        identifier="26"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=education')}
+      />
+
+      {/* Science & Technology Section */}
+      <CategorySection
+        title="Science & Technology"
+        description="Discover the latest in tech and science"
+        type="category"
+        identifier="27"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=science')}
+      />
+
+      {/* Comedy Section */}
+      <CategorySection
+        title="Comedy"
+        description="Laugh out loud with the best comedy"
+        type="category"
+        identifier="30"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=comedy')}
+      />
+
+      {/* Entertainment Section */}
+      <CategorySection
+        title="Entertainment"
+        description="Movies, shows, and celebrity content"
+        type="category"
+        identifier="31"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=entertainment')}
+      />
+
+      {/* Lifestyle Section */}
+      <CategorySection
+        title="Lifestyle"
+        description="Fashion, beauty, health, and fitness"
+        type="category"
+        identifier="32"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=lifestyle')}
+      />
+
+      {/* Travel Section */}
+      <CategorySection
+        title="Travel"
+        description="Explore the world through travel content"
+        type="category"
+        identifier="29"
+        limit={8}
+        showMoreButton={true}
+        onMoreClick={() => navigate('/search?q=travel')}
       />
 
       {/* Trending Section */}

@@ -94,6 +94,7 @@ const SearchPage = () => {
           videos={searchResults}
           loading={searchLoading && searchResults.length === 0}
           searchType={localFilters.type}
+          excludeShorts={localFilters.excludeShorts}
         />
       </InfiniteScroll>
     </div>

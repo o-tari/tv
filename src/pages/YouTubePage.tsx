@@ -7,6 +7,7 @@ import { selectContinueWatching, selectVideoProgress, removeFromContinueWatching
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import SearchBar from '../components/SearchBar'
+import ChannelsSection from '../components/ChannelsSection'
 
 const YouTubePage = () => {
   const navigate = useNavigate()
@@ -120,11 +121,12 @@ const YouTubePage = () => {
               showProgress={true}
               onRemove={handleRemoveFromContinueWatching}
               showRemoveButton={true}
+              excludeShorts={true}
             />
           </div>
         )}
 
-        {/* Channels Section - Temporarily commented out */}
+        {/* Channels Section */}
         {/* <ChannelsSection /> */}
 
         {/* Subscriptions Section */}
@@ -172,6 +174,7 @@ const YouTubePage = () => {
             <VideoGrid
               videos={watchHistory.slice(0, 8)}
               loading={false}
+              excludeShorts={true}
             />
           </div>
         )}
@@ -193,6 +196,7 @@ const YouTubePage = () => {
             <VideoGrid
               videos={watchLater.slice(0, 8)}
               loading={false}
+              excludeShorts={true}
             />
           </div>
         )}
@@ -210,6 +214,7 @@ const YouTubePage = () => {
             <VideoGrid
               videos={trendingVideos}
               loading={trendingLoading && trendingVideos.length === 0}
+              excludeShorts={true}
             />
           </InfiniteScroll>
         </div>

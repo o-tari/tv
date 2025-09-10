@@ -9,6 +9,7 @@ interface UIState {
     duration: 'short' | 'medium' | 'long' | ''
     uploadDate: 'hour' | 'today' | 'week' | 'month' | 'year' | ''
     sortBy: 'relevance' | 'date' | 'rating' | 'title' | 'viewCount'
+    excludeShorts: boolean
   }
   playerState: {
     isPlaying: boolean
@@ -36,6 +37,7 @@ const initialState: UIState = {
     duration: '',
     uploadDate: '',
     sortBy: 'relevance',
+    excludeShorts: true,
   },
   playerState: {
     isPlaying: false,

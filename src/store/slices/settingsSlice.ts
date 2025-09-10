@@ -30,7 +30,7 @@ const saveToStorage = (key: string, value: any) => {
 
 const initialState: SettingsState = {
   youtubeApiKey: loadFromStorage('youtubeApiKey', ''),
-  useMockData: loadFromStorage('useMockData', false), // Default to false - user must explicitly enable mock data
+  useMockData: loadFromStorage('useMockData', true), // Default to true - use mock data by default
   regionCode: loadFromStorage('regionCode', 'US'),
   language: loadFromStorage('language', 'en'),
   tmdbApiKey: loadFromStorage('tmdbApiKey', ''),
@@ -72,14 +72,14 @@ const settingsSlice = createSlice({
     },
     resetSettings: (state) => {
       state.youtubeApiKey = ''
-      state.useMockData = false
+      state.useMockData = true
       state.regionCode = 'US'
       state.language = 'en'
       state.tmdbApiKey = ''
       state.showUpcomingReleases = true
       state.hianimeApiKey = ''
       saveToStorage('youtubeApiKey', '')
-      saveToStorage('useMockData', false)
+      saveToStorage('useMockData', true)
       saveToStorage('regionCode', 'US')
       saveToStorage('language', 'en')
       saveToStorage('tmdbApiKey', '')

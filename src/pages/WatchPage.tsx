@@ -384,6 +384,7 @@ const WatchPage = () => {
               {/* Up Next section */}
               <UpNextSection 
                 currentVideoId={video!.id}
+                currentChannelId={video!.channelId}
                 onVideoSelect={handleVideoSelect}
               />
 
