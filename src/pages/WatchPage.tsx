@@ -58,12 +58,13 @@ const WatchPage = () => {
     recommendationsError
   } = useAppSelector((state) => state.anime)
 
-  // Fetch random videos from saved channels for Up Next
+  // Fetch random videos from saved channels for Up Next (only if not already available)
   useEffect(() => {
-    if (!isAnime) {
+    if (!isAnime && (!randomVideos || randomVideos.length === 0)) {
+      console.log('🎲 WatchPage: Fetching random videos for Up Next...')
       dispatch(fetchRandomVideosFromSavedChannels(200))
     }
-  }, [dispatch, isAnime, videoId]) // Add videoId to refresh when video changes
+  }, [dispatch, isAnime, randomVideos?.length]) // Only fetch if we don't have random videos
 
   // Fetch anime info, episodes, and recommendations if this is an anime page
   useEffect(() => {

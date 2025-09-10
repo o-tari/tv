@@ -148,6 +148,9 @@ export const fetchChannelVideos = createAsyncThunk(
   }
 )
 
+// Global flag to prevent multiple simultaneous calls
+let isFetchingRandomVideos = false
+
 export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
   'videos/fetchRandomVideosFromSavedChannels',
   async (count: number = 200) => {
@@ -162,14 +165,25 @@ export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
       }
     }
     
-    // Fetch from API
+    // Prevent multiple simultaneous calls
+    if (isFetchingRandomVideos) {
+      console.log('⏳ Random videos already being fetched, skipping...')
+      throw new Error('Already fetching random videos')
+    }
+    
+    isFetchingRandomVideos = true
     console.log('🌐 Fetching random videos from API')
-    const videos = await youtubeService.getRandomVideosFromSavedChannels(count)
     
-    // Cache the response
-    setCachedData(cacheKey, videos)
-    
-    return videos
+    try {
+      const videos = await youtubeService.getRandomVideosFromSavedChannels(count)
+      
+      // Cache the response
+      setCachedData(cacheKey, videos)
+      
+      return videos
+    } finally {
+      isFetchingRandomVideos = false
+    }
   }
 )
 

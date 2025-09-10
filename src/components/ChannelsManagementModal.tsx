@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { 
   selectSavedChannels, 
@@ -15,12 +15,39 @@ const ChannelsManagementModal = ({ isOpen, onClose }: ChannelsManagementModalPro
   const dispatch = useAppDispatch()
   const savedChannels = useAppSelector(selectSavedChannels)
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [channelsPerPage] = useState(10) // Show 10 channels per page
+
+  // Reset pagination when modal opens or search changes
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentPage(1)
+    }
+  }, [isOpen, searchTerm])
+
+  const filteredChannels = useMemo(() => 
+    savedChannels.filter(channel =>
+      channel.title.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [savedChannels, searchTerm]
+  )
 
   if (!isOpen) return null
 
-  const filteredChannels = savedChannels.filter(channel =>
-    channel.title.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredChannels.length / channelsPerPage)
+  const startIndex = (currentPage - 1) * channelsPerPage
+  const endIndex = startIndex + channelsPerPage
+  const currentChannels = filteredChannels.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleLoadMore = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1)
+    }
+  }
 
   const handleRemoveChannel = (channelId: string) => {
     dispatch(removeChannel(channelId))
@@ -77,23 +104,89 @@ const ChannelsManagementModal = ({ isOpen, onClose }: ChannelsManagementModalPro
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredChannels.map((channel) => (
-                <ChannelItem
-                  key={channel.id}
-                  channel={channel}
-                  onRemove={() => handleRemoveChannel(channel.id)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="space-y-3">
+                {currentChannels.map((channel) => (
+                  <ChannelItem
+                    key={channel.id}
+                    channel={channel}
+                    onRemove={() => handleRemoveChannel(channel.id)}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {startIndex + 1}-{Math.min(endIndex, filteredChannels.length)} of {filteredChannels.length} channels
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {/* Previous Button */}
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Previous
+                    </button>
+                    
+                    {/* Page Numbers */}
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`px-3 py-1 text-sm rounded transition-colors ${
+                              currentPage === pageNum
+                                ? 'bg-red-600 text-white'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Next Button */}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {savedChannels.length} channel{savedChannels.length !== 1 ? 's' : ''} saved
-          </p>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <p>{savedChannels.length} channel{savedChannels.length !== 1 ? 's' : ''} saved</p>
+            {filteredChannels.length > 0 && (
+              <p className="text-xs mt-1">
+                Page {currentPage} of {totalPages}
+              </p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

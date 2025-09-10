@@ -8,6 +8,7 @@ import {
 import { type Video, type Channel, type SearchFilters, type SearchResponse } from '../types/youtube'
 import { createApiInstance } from '../utils/apiConfig'
 import { localStorageCache } from '../utils/localStorageCache'
+import { youtubeRateLimiter } from '../utils/rateLimiter'
 
 
 // Create API instance with current settings
@@ -331,7 +332,7 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
   }
 }
 
-// Get channel videos
+// Get channel videos using activities endpoint (more efficient than search)
 export const getChannelVideos = async (
   channelId: string,
   pageToken?: string
@@ -351,12 +352,11 @@ export const getChannelVideos = async (
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
+  // Use activities endpoint for better quota efficiency
   const params: any = {
-    part: 'snippet',
+    part: 'snippet,contentDetails',
     channelId,
-    type: 'video',
     maxResults: 25,
-    order: 'date',
   }
 
   if (pageToken) {
@@ -364,23 +364,73 @@ export const getChannelVideos = async (
   }
 
   return localStorageCache.getChannelVideos(channelId, params, async () => {
-    const api = getApiInstance()
-    const response: AxiosResponse = await api.get('/search', { params })
+    // Apply rate limiting
+    await youtubeRateLimiter.waitIfNeeded()
     
-    return {
-      items: response.data.items.map((item: any) => ({
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-        channelTitle: item.snippet.channelTitle,
-        channelId: item.snippet.channelId,
-        publishedAt: item.snippet.publishedAt,
-        duration: '', // Will be filled by getVideoDetails
-        viewCount: '', // Will be filled by getVideoDetails
-      })),
-      nextPageToken: response.data.nextPageToken,
-      totalResults: response.data.pageInfo.totalResults,
+    try {
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/activities', { params })
+      
+      // Filter only video uploads and convert to our format
+      const videoItems = response.data.items
+        .filter((item: any) => 
+          item.snippet.type === 'upload' && 
+          item.contentDetails?.upload?.videoId
+        )
+        .map((item: any) => ({
+          id: item.contentDetails.upload.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description || '',
+          thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+          channelTitle: item.snippet.channelTitle,
+          channelId: item.snippet.channelId,
+          publishedAt: item.snippet.publishedAt,
+          duration: '', // Will be filled by getVideoDetails if needed
+          viewCount: '', // Will be filled by getVideoDetails if needed
+        }))
+
+      return {
+        items: videoItems,
+        nextPageToken: response.data.nextPageToken,
+        totalResults: response.data.pageInfo?.totalResults || videoItems.length,
+      }
+    } catch (error) {
+      // Fallback to search endpoint if activities fails
+      console.warn('Activities endpoint failed, falling back to search:', error)
+      
+      const searchParams: any = {
+        part: 'snippet',
+        channelId,
+        type: 'video',
+        maxResults: 25,
+        order: 'date',
+      }
+
+      if (pageToken) {
+        searchParams.pageToken = pageToken
+      }
+
+      // Apply rate limiting for fallback search
+      await youtubeRateLimiter.waitIfNeeded()
+      
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/search', { params: searchParams })
+      
+      return {
+        items: response.data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+          channelTitle: item.snippet.channelTitle,
+          channelId: item.snippet.channelId,
+          publishedAt: item.snippet.publishedAt,
+          duration: '', // Will be filled by getVideoDetails
+          viewCount: '', // Will be filled by getVideoDetails
+        })),
+        nextPageToken: response.data.nextPageToken,
+        totalResults: response.data.pageInfo.totalResults,
+      }
     }
   })
 }
@@ -702,7 +752,7 @@ export const getVideoCategories = async () => {
   }
 }
 
-// Get random videos from saved channels
+// Get random videos from saved channels (optimized to use cached data)
 export const getRandomVideosFromSavedChannels = async (count: number = 200): Promise<Video[]> => {
   if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 400))
@@ -726,11 +776,31 @@ export const getRandomVideosFromSavedChannels = async (count: number = 200): Pro
 
   const allVideos: Video[] = []
   
-  // Fetch videos from each saved channel
+  // Try to get videos from cache first, only fetch if not cached
   for (const channel of savedChannels) {
     try {
-      const response = await getChannelVideos(channel.id)
-      allVideos.push(...response.items)
+      const cacheKey = `youtube_channel_videos_${channel.id}`
+      const cachedData = localStorage.getItem(cacheKey)
+      
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData)
+        if (parsedData && parsedData.items) {
+          console.log(`📦 Using cached videos for random selection from channel: ${channel.title}`)
+          allVideos.push(...parsedData.items)
+          continue
+        }
+      }
+      
+      // Only fetch if not cached and we don't have enough videos yet
+      if (allVideos.length < count) {
+        console.log(`🌐 Fetching videos for random selection from channel: ${channel.title}`)
+        
+        // Apply rate limiting
+        await youtubeRateLimiter.waitIfNeeded()
+        
+        const response = await getChannelVideos(channel.id)
+        allVideos.push(...response.items)
+      }
     } catch (error) {
       console.warn(`Failed to fetch videos for channel ${channel.title}:`, error)
     }

@@ -1,33 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { 
   selectSavedChannels, 
   selectLatestChannelVideos, 
   selectChannelsLoading,
-  fetchAllChannelVideos 
+  selectPaginatedChannelVideos,
+  fetchAllChannelVideos,
+  resetPagination
 } from '../store/slices/channelsSlice'
 import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'
 import VideoGrid from './VideoGrid'
 import ChannelsManagementModal from './ChannelsManagementModal'
+import PaginationControls from './PaginationControls'
 
 const ChannelsSection = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [showModal, setShowModal] = useState(false)
+  const hasInitialized = useRef(false)
   
   const savedChannels = useAppSelector(selectSavedChannels)
   const latestVideos = useAppSelector(selectLatestChannelVideos)
   const loading = useAppSelector(selectChannelsLoading)
+  const paginatedData = useAppSelector(selectPaginatedChannelVideos)
   const { randomVideos } = useAppSelector((state) => state.videos)
 
   useEffect(() => {
-    if (savedChannels.length > 0) {
-      dispatch(fetchAllChannelVideos())
-      // Also fetch random videos for the random button
-      dispatch(fetchRandomVideosFromSavedChannels(200))
+    if (savedChannels.length > 0 && !hasInitialized.current) {
+      hasInitialized.current = true
+      console.log('🚀 ChannelsSection: Initializing with', savedChannels.length, 'channels')
+      
+      // Reset pagination when channels change
+      dispatch(resetPagination())
+      
+      // Only fetch channel videos if we don't already have them
+      if (latestVideos.length === 0) {
+        console.log('📺 Fetching channel videos...')
+        dispatch(fetchAllChannelVideos())
+      }
+      
+      // Only fetch random videos if we don't have any and we have channel videos
+      if ((!randomVideos || randomVideos.length === 0) && latestVideos.length > 0) {
+        console.log('🎲 Fetching random videos from existing channel videos...')
+        dispatch(fetchRandomVideosFromSavedChannels(200))
+      }
     }
-  }, [dispatch, savedChannels.length])
+  }, [dispatch, savedChannels.length, latestVideos.length, randomVideos?.length])
 
   const handleRandomVideo = () => {
     if (randomVideos && randomVideos.length > 0) {
@@ -52,9 +71,16 @@ const ChannelsSection = () => {
     <>
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            📺 Channels
-          </h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              📺 Channels
+            </h2>
+            {paginatedData.totalVideos > 0 && (
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                ({paginatedData.totalVideos} videos)
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={handleRandomVideo}
@@ -90,11 +116,18 @@ const ChannelsSection = () => {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
             <p className="mt-2 text-gray-600 dark:text-gray-400">Loading channel videos...</p>
           </div>
-        ) : latestVideos.length > 0 ? (
-          <VideoGrid
-            videos={latestVideos.slice(0, 16)}
-            loading={false}
-          />
+        ) : paginatedData.videos.length > 0 ? (
+          <>
+            <VideoGrid
+              videos={paginatedData.videos}
+              loading={false}
+            />
+            
+            {/* Pagination Controls */}
+            <div className="mt-6">
+              <PaginationControls />
+            </div>
+          </>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-600 dark:text-gray-400">

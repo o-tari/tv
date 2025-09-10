@@ -113,8 +113,8 @@ const YouTubePage = () => {
           </div>
         )}
 
-        {/* Channels Section */}
-        <ChannelsSection />
+        {/* Channels Section - Temporarily commented out */}
+        {/* <ChannelsSection /> */}
 
         {/* Subscriptions Section */}
         {subscriptions.length > 0 && (

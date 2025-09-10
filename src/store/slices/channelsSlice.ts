@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, createSelector, type PayloadAction } from '@reduxjs/toolkit'
 import { type Channel, type Video } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { getCachedData, setCachedData, isCached, YOUTUBE_CACHE_KEYS } from '../../utils/cache'
@@ -11,6 +11,12 @@ interface ChannelsState {
   channelVideosNextPageToken: { [channelId: string]: string | null }
   isLoading: boolean
   error: string | null
+  // Pagination state
+  videosPerPage: number
+  currentPage: number
+  totalVideos: number
+  hasMoreVideos: boolean
+  loadingMore: boolean
 }
 
 const loadFromStorage = (key: string, defaultValue: any) => {
@@ -38,6 +44,12 @@ const initialState: ChannelsState = {
   channelVideosNextPageToken: {},
   isLoading: false,
   error: null,
+  // Pagination state
+  videosPerPage: 10,
+  currentPage: 1,
+  totalVideos: 0,
+  hasMoreVideos: false,
+  loadingMore: false,
 }
 
 // Async thunks
@@ -49,39 +61,102 @@ export const fetchChannelVideos = createAsyncThunk(
   }
 )
 
+// Global flag to prevent multiple simultaneous calls
+let isFetchingAllChannelVideos = false
+
 export const fetchAllChannelVideos = createAsyncThunk(
   'channels/fetchAllChannelVideos',
   async (_, { getState }) => {
     const state = getState() as { channels: ChannelsState }
     const savedChannels = state.channels.savedChannels
     
-    const promises = savedChannels.map(async (channel) => {
-      const cacheKey = YOUTUBE_CACHE_KEYS.CHANNEL_VIDEOS(channel.id)
-      
-      // Check cache first
-      if (isCached(cacheKey)) {
-        const cachedData = getCachedData(cacheKey)
-        if (cachedData) {
-          console.log(`📦 Using cached videos for channel: ${channel.title}`)
-          return cachedData
+    // Prevent multiple simultaneous calls
+    if (isFetchingAllChannelVideos) {
+      console.log('⏳ Channel videos already being fetched, skipping...')
+      throw new Error('Already fetching channel videos')
+    }
+    
+    isFetchingAllChannelVideos = true
+    console.log('🌐 Fetching videos for all channels...')
+    
+    try {
+      // Process channels sequentially with delays to avoid rate limiting
+      const responses = []
+      for (let i = 0; i < savedChannels.length; i++) {
+        const channel = savedChannels[i]
+        const cacheKey = YOUTUBE_CACHE_KEYS.CHANNEL_VIDEOS(channel.id)
+        
+        // Check cache first
+        if (isCached(cacheKey)) {
+          const cachedData = getCachedData(cacheKey)
+          if (cachedData) {
+            console.log(`📦 Using cached videos for channel: ${channel.title}`)
+            responses.push(cachedData)
+            continue
+          }
+        }
+        
+        // Fetch from API with delay between calls
+        console.log(`🌐 Fetching videos for channel: ${channel.title} (${i + 1}/${savedChannels.length})`)
+        const response = await youtubeService.getChannelVideos(channel.id)
+        
+        // Cache the response
+        setCachedData(cacheKey, response)
+        responses.push(response)
+        
+        // Add delay between API calls to prevent rate limiting (except for last channel)
+        if (i < savedChannels.length - 1) {
+          console.log('⏳ Waiting 1 second before next API call...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }
       
-      // Fetch from API
-      console.log(`🌐 Fetching videos for channel: ${channel.title}`)
-      const response = await youtubeService.getChannelVideos(channel.id)
-      
-      // Cache the response
-      setCachedData(cacheKey, response)
-      
-      return response
-    })
+      return responses.map((response, index) => ({
+        channelId: savedChannels[index].id,
+        ...response
+      }))
+    } finally {
+      isFetchingAllChannelVideos = false
+    }
+  }
+)
+
+// Load more videos from all channels
+export const loadMoreChannelVideos = createAsyncThunk(
+  'channels/loadMoreChannelVideos',
+  async (_, { getState }) => {
+    const state = getState() as { channels: ChannelsState }
+    const savedChannels = state.channels.savedChannels
     
-    const responses = await Promise.all(promises)
-    return responses.map((response, index) => ({
-      channelId: savedChannels[index].id,
-      ...response
-    }))
+    if (savedChannels.length === 0) {
+      return []
+    }
+
+    const responses = []
+    for (let i = 0; i < savedChannels.length; i++) {
+      const channel = savedChannels[i]
+      const nextPageToken = state.channels.channelVideosNextPageToken[channel.id]
+      
+      if (!nextPageToken) {
+        // No more pages for this channel
+        continue
+      }
+      
+      try {
+        console.log(`🌐 Loading more videos for channel: ${channel.title}`)
+        const response = await youtubeService.getChannelVideos(channel.id, nextPageToken)
+        responses.push({ channelId: channel.id, ...response })
+        
+        // Add delay between API calls
+        if (i < savedChannels.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      } catch (error) {
+        console.warn(`Failed to load more videos for channel ${channel.title}:`, error)
+      }
+    }
+    
+    return responses
   }
 )
 
@@ -139,6 +214,20 @@ const channelsSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
     },
+    // Pagination actions
+    setVideosPerPage: (state, action: PayloadAction<number>) => {
+      state.videosPerPage = action.payload
+      state.currentPage = 1 // Reset to first page when changing page size
+    },
+    setCurrentPage: (state, action: PayloadAction<number>) => {
+      state.currentPage = action.payload
+    },
+    resetPagination: (state) => {
+      state.currentPage = 1
+      state.totalVideos = 0
+      state.hasMoreVideos = false
+      state.loadingMore = false
+    },
   },
   extraReducers: (builder) => {
     // Fetch channel videos
@@ -184,10 +273,42 @@ const channelsSlice = createSlice({
           state.channelVideosLoading[channelId] = false
           state.channelVideosError[channelId] = null
         })
+        
+        // Update pagination state
+        const allVideos = Object.values(state.channelVideos).flat()
+        state.totalVideos = allVideos.length
+        state.hasMoreVideos = action.payload.some(response => response.nextPageToken)
       })
       .addCase(fetchAllChannelVideos.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.error.message || 'Failed to fetch channel videos'
+      })
+
+    // Load more channel videos
+    builder
+      .addCase(loadMoreChannelVideos.pending, (state) => {
+        state.loadingMore = true
+        state.error = null
+      })
+      .addCase(loadMoreChannelVideos.fulfilled, (state, action) => {
+        state.loadingMore = false
+        action.payload.forEach(({ channelId, items, nextPageToken }) => {
+          // Append new videos to existing ones
+          state.channelVideos[channelId] = [
+            ...(state.channelVideos[channelId] || []),
+            ...items
+          ]
+          state.channelVideosNextPageToken[channelId] = nextPageToken || null
+        })
+        
+        // Update pagination state
+        const allVideos = Object.values(state.channelVideos).flat()
+        state.totalVideos = allVideos.length
+        state.hasMoreVideos = action.payload.some(response => response.nextPageToken)
+      })
+      .addCase(loadMoreChannelVideos.rejected, (state, action) => {
+        state.loadingMore = false
+        state.error = action.error.message || 'Failed to load more videos'
       })
   },
 })
@@ -199,6 +320,9 @@ export const {
   clearChannels,
   setLoading,
   setError,
+  setVideosPerPage,
+  setCurrentPage,
+  resetPagination,
 } = channelsSlice.actions
 
 export default channelsSlice.reducer
@@ -218,36 +342,66 @@ export const selectIsChannelSaved = (channelId: string) => (state: { channels: C
 export const selectChannelsLoading = (state: { channels: ChannelsState }) => state.channels.isLoading
 export const selectChannelsError = (state: { channels: ChannelsState }) => state.channels.error
 
-// Get all latest videos from saved channels
-export const selectLatestChannelVideos = (state: { channels: ChannelsState }) => {
-  const allVideos: Video[] = []
-  const savedChannels = state.channels.savedChannels
-  
-  savedChannels.forEach(channel => {
-    const channelVideos = state.channels.channelVideos[channel.id] || []
-    // Take the latest 3 videos from each channel
-    const latestVideos = channelVideos.slice(0, 3)
-    allVideos.push(...latestVideos)
-  })
-  
-  // Sort by published date (newest first)
-  return allVideos.sort((a, b) => 
-    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  )
-}
+// Pagination selectors
+export const selectVideosPerPage = (state: { channels: ChannelsState }) => state.channels.videosPerPage
+export const selectCurrentPage = (state: { channels: ChannelsState }) => state.channels.currentPage
+export const selectTotalVideos = (state: { channels: ChannelsState }) => state.channels.totalVideos
+export const selectHasMoreVideos = (state: { channels: ChannelsState }) => state.channels.hasMoreVideos
+export const selectLoadingMore = (state: { channels: ChannelsState }) => state.channels.loadingMore
 
-// Get all videos from saved channels sorted by date
-export const selectAllChannelVideosSortedByDate = (state: { channels: ChannelsState }) => {
-  const allVideos: Video[] = []
-  const savedChannels = state.channels.savedChannels
-  
-  savedChannels.forEach(channel => {
-    const channelVideos = state.channels.channelVideos[channel.id] || []
-    allVideos.push(...channelVideos)
-  })
-  
-  // Sort by published date (newest first)
-  return allVideos.sort((a, b) => 
-    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  )
-}
+// Get all latest videos from saved channels (memoized)
+export const selectLatestChannelVideos = createSelector(
+  [(state: { channels: ChannelsState }) => state.channels.savedChannels, (state: { channels: ChannelsState }) => state.channels.channelVideos],
+  (savedChannels, channelVideos) => {
+    const allVideos: Video[] = []
+    
+    savedChannels.forEach(channel => {
+      const videos = channelVideos[channel.id] || []
+      // Take the latest 3 videos from each channel
+      const latestVideos = videos.slice(0, 3)
+      allVideos.push(...latestVideos)
+    })
+    
+    // Sort by published date (newest first)
+    return allVideos.sort((a, b) => 
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
+  }
+)
+
+// Get all videos from saved channels sorted by date (memoized)
+export const selectAllChannelVideosSortedByDate = createSelector(
+  [(state: { channels: ChannelsState }) => state.channels.savedChannels, (state: { channels: ChannelsState }) => state.channels.channelVideos],
+  (savedChannels, channelVideos) => {
+    const allVideos: Video[] = []
+    
+    savedChannels.forEach(channel => {
+      const videos = channelVideos[channel.id] || []
+      allVideos.push(...videos)
+    })
+    
+    // Sort by published date (newest first)
+    return allVideos.sort((a, b) => 
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
+  }
+)
+
+// Get paginated videos from saved channels (memoized)
+export const selectPaginatedChannelVideos = createSelector(
+  [selectAllChannelVideosSortedByDate, (state: { channels: ChannelsState }) => state.channels.videosPerPage, (state: { channels: ChannelsState }) => state.channels.currentPage],
+  (allVideos, videosPerPage, currentPage) => {
+    const startIndex = (currentPage - 1) * videosPerPage
+    const endIndex = startIndex + videosPerPage
+    
+    return {
+      videos: allVideos.slice(startIndex, endIndex),
+      totalVideos: allVideos.length,
+      totalPages: Math.ceil(allVideos.length / videosPerPage),
+      currentPage,
+      videosPerPage,
+      hasNextPage: endIndex < allVideos.length,
+      hasPreviousPage: currentPage > 1,
+    }
+  }
+)
