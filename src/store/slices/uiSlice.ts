@@ -18,6 +18,7 @@ interface UIState {
     isMuted: boolean
     isFullscreen: boolean
   }
+  autoplay: boolean
   notifications: Array<{
     id: string
     type: 'success' | 'error' | 'warning' | 'info'
@@ -44,6 +45,7 @@ const initialState: UIState = {
     isMuted: false,
     isFullscreen: false,
   },
+  autoplay: localStorage.getItem('autoplay') === 'true' || true, // Default to true
   notifications: [],
 }
 
@@ -91,6 +93,14 @@ const uiSlice = createSlice({
     clearNotifications: (state) => {
       state.notifications = []
     },
+    toggleAutoplay: (state) => {
+      state.autoplay = !state.autoplay
+      localStorage.setItem('autoplay', state.autoplay.toString())
+    },
+    setAutoplay: (state, action: PayloadAction<boolean>) => {
+      state.autoplay = action.payload
+      localStorage.setItem('autoplay', state.autoplay.toString())
+    },
   },
 })
 
@@ -106,6 +116,8 @@ export const {
   addNotification,
   removeNotification,
   clearNotifications,
+  toggleAutoplay,
+  setAutoplay,
 } = uiSlice.actions
 
 export default uiSlice.reducer

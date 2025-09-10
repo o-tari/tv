@@ -15,12 +15,13 @@ const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) =>
   const dispatch = useAppDispatch()
   const { randomVideos, randomVideosLoading, randomVideosError } = useAppSelector((state) => state.videos)
 
-  useEffect(() => {
-    // Fetch random videos when component mounts
-    dispatch(fetchRandomVideosFromSavedChannels(200))
-  }, [dispatch])
+  // Remove duplicate fetch - videos are fetched by parent component
+  // useEffect(() => {
+  //   dispatch(fetchRandomVideosFromSavedChannels(200))
+  // }, [dispatch])
 
   const handleVideoClick = (video: Video) => {
+    console.log('🎬 Up Next video clicked:', video.title, video.id)
     onVideoSelect?.(video)
   }
 
@@ -86,6 +87,13 @@ const UpNextSection = ({ currentVideoId, onVideoSelect }: UpNextSectionProps) =>
 
   // Show first 5 videos
   const displayVideos = filteredVideos.slice(0, 5)
+
+  // Debug logging
+  console.log('🎬 Up Next - currentVideoId:', currentVideoId)
+  console.log('🎬 Up Next - randomVideos length:', randomVideos.length)
+  console.log('🎬 Up Next - filteredVideos length:', filteredVideos.length)
+  console.log('🎬 Up Next - displayVideos length:', displayVideos.length)
+  console.log('🎬 Up Next - first video:', displayVideos[0]?.title)
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">

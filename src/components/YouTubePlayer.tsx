@@ -6,6 +6,7 @@ interface YouTubePlayerProps {
   videoId: string
   onReady?: () => void
   onStateChange?: (state: number) => void
+  autoplay?: boolean
 }
 
 declare global {
@@ -15,7 +16,7 @@ declare global {
   }
 }
 
-const YouTubePlayer = ({ videoId, onReady, onStateChange }: YouTubePlayerProps) => {
+const YouTubePlayer = ({ videoId, onReady, onStateChange, autoplay = false }: YouTubePlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<any>(null)
   const dispatch = useAppDispatch()
@@ -59,7 +60,7 @@ const YouTubePlayer = ({ videoId, onReady, onStateChange }: YouTubePlayerProps) 
         width: '100%',
         videoId: videoId,
         playerVars: {
-          autoplay: 0,
+          autoplay: autoplay ? 1 : 0,
           controls: 1,
           modestbranding: 1,
           rel: 0,

@@ -5,6 +5,7 @@ import { addToHistory } from '../store/slices/historySlice'
 import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { addToAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'
+import { toggleAutoplay } from '../store/slices/uiSlice'
 import { useVideo } from '../hooks/useVideo'
 import { 
   fetchAnimeInfo, 
@@ -41,6 +42,9 @@ const WatchPage = () => {
   // Get random videos from saved channels
   const { randomVideos } = useAppSelector((state) => state.videos)
   
+  // Get autoplay setting
+  const { autoplay } = useAppSelector((state) => state.ui)
+  
   // Anime state
   const { 
     currentAnime, 
@@ -59,7 +63,7 @@ const WatchPage = () => {
     if (!isAnime) {
       dispatch(fetchRandomVideosFromSavedChannels(200))
     }
-  }, [dispatch, isAnime])
+  }, [dispatch, isAnime, videoId]) // Add videoId to refresh when video changes
 
   // Fetch anime info, episodes, and recommendations if this is an anime page
   useEffect(() => {
@@ -130,8 +134,10 @@ const WatchPage = () => {
             const message = `Auto-playing: ${randomVideo.title}`
             console.log(message)
             
-            // Navigate to the random video
-            navigate(`/watch/${randomVideo.id}`, { replace: true })
+            // Small delay to ensure smooth navigation
+            setTimeout(() => {
+              navigate(`/watch/${randomVideo.id}`)
+            }, 500)
           } else {
             console.log('🎬 Video ended, but no random videos available')
           }
@@ -151,7 +157,8 @@ const WatchPage = () => {
   // Handle video selection from Up Next
   const handleVideoSelect = (video: any) => {
     if (video && video.id) {
-      navigate(`/watch/${video.id}`, { replace: true })
+      console.log('🎬 Navigating to video from Up Next:', video.title, video.id)
+      navigate(`/watch/${video.id}`)
     }
   }
 
@@ -279,6 +286,7 @@ const WatchPage = () => {
                   videoId={video!.id} 
                   showControls={true}
                   onVideoEnd={handleVideoEnd}
+                  autoplay={autoplay}
                 />
 
                 {/* Up Next section */}
@@ -286,6 +294,28 @@ const WatchPage = () => {
                   currentVideoId={video!.id}
                   onVideoSelect={handleVideoSelect}
                 />
+
+                {/* Autoplay control */}
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={autoplay}
+                          onChange={() => dispatch(toggleAutoplay())}
+                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Autoplay videos
+                        </span>
+                      </label>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {autoplay ? 'Videos will start playing automatically' : 'Videos will not autoplay'}
+                    </div>
+                  </div>
+                </div>
 
                 {/* Video info */}
                 <VideoInfo video={video!} />

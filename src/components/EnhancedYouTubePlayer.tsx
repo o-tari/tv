@@ -8,6 +8,7 @@ interface EnhancedYouTubePlayerProps {
   onStateChange?: (state: number) => void
   onVideoEnd?: () => void
   showControls?: boolean
+  autoplay?: boolean
 }
 
 declare global {
@@ -78,7 +79,7 @@ const logYouTubeEvent = (eventName: string, data?: any) => {
   }
 }
 
-const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, showControls = true }: EnhancedYouTubePlayerProps) => {
+const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, showControls = true, autoplay = false }: EnhancedYouTubePlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<any>(null)
   const dispatch = useAppDispatch()
@@ -167,7 +168,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
         width: '100%',
         videoId: videoId,
         playerVars: {
-          autoplay: 0,
+          autoplay: autoplay ? 1 : 0,
           controls: 1,
           modestbranding: 1,
           rel: 0,
@@ -283,7 +284,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
     // Small delay to ensure DOM is ready
     const timer = setTimeout(initializePlayer, 100)
     return () => clearTimeout(timer)
-  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd])
+  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd, autoplay])
 
   // Update current time periodically
   useEffect(() => {
