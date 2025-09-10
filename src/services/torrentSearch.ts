@@ -5,13 +5,23 @@ import {
   type TorrentSearchParams,
   type TorrentDetails,
   type TorrentSearchApiProvider,
-  type TorrentSearchApiResponse
+  type TorrentSearchApiResponse,
+  type ApiTorrentSearchResponse
 } from '../types/torrent'
 import { store } from '../store'
-import { selectUseMockData } from '../store/slices/settingsSlice'
+import { selectUseMockData, selectTorrentApiUrl } from '../store/slices/settingsSlice'
+import axios from 'axios'
 
-// Import torrent-search-api
-const TorrentSearchApi = require('torrent-search-api')
+// Import torrent-search-api (only in Node.js environment)
+let TorrentSearchApi: any = null
+try {
+  // This will only work in Node.js environment, not in browser
+  if (typeof window === 'undefined') {
+    TorrentSearchApi = require('torrent-search-api')
+  }
+} catch (error) {
+  console.warn('torrent-search-api not available in browser environment')
+}
 
 // Mock data for demonstration - in a real app, you'd use actual torrent APIs
 const mockTorrents: Torrent[] = [
@@ -63,7 +73,7 @@ const mockTorrents: Torrent[] = [
 let isApiInitialized = false
 
 const initializeApi = () => {
-  if (isApiInitialized) return
+  if (isApiInitialized || !TorrentSearchApi) return
   
   try {
     // Enable public providers by default
@@ -146,7 +156,28 @@ export const searchTorrents = async (params: TorrentSearchParams): Promise<Torre
       }
     }
     
-    // Use real torrent-search-api
+    // Use real torrent-search-api (only if available)
+    if (!TorrentSearchApi) {
+      console.log('Torrent Search API not available, using mock data')
+      // Fall back to mock data if API is not available
+      let filteredTorrents = mockTorrents.filter(torrent => {
+        const matchesQuery = torrent.title.toLowerCase().includes(query.toLowerCase())
+        const matchesCategory = category === 'All' || torrent.category === category
+        const matchesProvider = !providers || providers.length === 0 || providers.includes(torrent.provider)
+        
+        return matchesQuery && matchesCategory && matchesProvider
+      })
+      
+      filteredTorrents = filteredTorrents.slice(0, limit)
+      
+      return {
+        torrents: filteredTorrents,
+        totalResults: filteredTorrents.length,
+        currentPage: 1,
+        hasNextPage: filteredTorrents.length === limit
+      }
+    }
+    
     console.log('Using real torrent search API')
     initializeApi()
     
@@ -154,7 +185,7 @@ export const searchTorrents = async (params: TorrentSearchParams): Promise<Torre
     
     if (providers && providers.length > 0) {
       // Search with specific providers
-      searchResults = await TorrentSearchApi.search(providers, query, category === 'All' ? undefined : category, limit)
+      searchResults = await TorrentSearchApi.search(providers, query, category === 'All' ? undefined : category, limit)                                                                                                 
     } else {
       // Search with all active providers
       searchResults = await TorrentSearchApi.search(query, category === 'All' ? undefined : category, limit)
@@ -184,6 +215,9 @@ export const searchTorrents = async (params: TorrentSearchParams): Promise<Torre
 // Get available providers
 export const getProviders = (): TorrentProvider[] => {
   try {
+    if (!TorrentSearchApi) {
+      return []
+    }
     initializeApi()
     const apiProviders = TorrentSearchApi.getProviders()
     return apiProviders.map(convertApiProvider)
@@ -196,6 +230,9 @@ export const getProviders = (): TorrentProvider[] => {
 // Get active providers
 export const getActiveProviders = (): TorrentProvider[] => {
   try {
+    if (!TorrentSearchApi) {
+      return []
+    }
     initializeApi()
     const activeApiProviders = TorrentSearchApi.getActiveProviders()
     return activeApiProviders.map(convertApiProvider)
@@ -208,6 +245,9 @@ export const getActiveProviders = (): TorrentProvider[] => {
 // Enable a specific provider
 export const enableProvider = (providerName: string, credentials?: string | string[]): boolean => {
   try {
+    if (!TorrentSearchApi) {
+      return false
+    }
     initializeApi()
     
     if (credentials) {
@@ -223,7 +263,7 @@ export const enableProvider = (providerName: string, credentials?: string | stri
       TorrentSearchApi.enableProvider(providerName)
     }
     
-    console.log(`Enabled provider: ${providerName}`, credentials ? 'with credentials' : 'without credentials')
+    console.log(`Enabled provider: ${providerName}`, credentials ? 'with credentials' : 'without credentials')                                                                                                          
     return true
   } catch (error) {
     console.error(`Error enabling provider ${providerName}:`, error)
@@ -234,6 +274,9 @@ export const enableProvider = (providerName: string, credentials?: string | stri
 // Disable a specific provider
 export const disableProvider = (providerName: string): boolean => {
   try {
+    if (!TorrentSearchApi) {
+      return false
+    }
     initializeApi()
     TorrentSearchApi.disableProvider(providerName)
     console.log(`Disabled provider: ${providerName}`)
@@ -247,6 +290,9 @@ export const disableProvider = (providerName: string): boolean => {
 // Enable all public providers
 export const enableAllPublicProviders = (): boolean => {
   try {
+    if (!TorrentSearchApi) {
+      return false
+    }
     initializeApi()
     TorrentSearchApi.enablePublicProviders()
     console.log('Enabled all public providers')
@@ -260,6 +306,9 @@ export const enableAllPublicProviders = (): boolean => {
 // Disable all providers
 export const disableAllProviders = (): boolean => {
   try {
+    if (!TorrentSearchApi) {
+      return false
+    }
     initializeApi()
     TorrentSearchApi.disableAllProviders()
     console.log('Disabled all providers')
@@ -273,6 +322,9 @@ export const disableAllProviders = (): boolean => {
 // Check if a provider is active
 export const isProviderActive = (providerName: string): boolean => {
   try {
+    if (!TorrentSearchApi) {
+      return false
+    }
     initializeApi()
     return TorrentSearchApi.isProviderActive(providerName)
   } catch (error) {
@@ -299,6 +351,15 @@ export const getTorrentDetails = async (torrent: Torrent): Promise<TorrentDetail
           { author: 'User1', text: 'Great quality!', date: '2 hours ago' },
           { author: 'User2', text: 'Thanks for sharing!', date: '1 day ago' }
         ]
+      }
+    }
+    
+    if (!TorrentSearchApi) {
+      return {
+        title: torrent.title,
+        description: `Details for ${torrent.title}`,
+        files: [],
+        comments: []
       }
     }
     
@@ -350,6 +411,10 @@ export const getMagnetUrl = async (torrent: Torrent): Promise<string | null> => 
       return torrent.magnet || `magnet:?xt=urn:btih:${torrent.infoHash}&dn=${encodeURIComponent(torrent.title)}`
     }
     
+    if (!TorrentSearchApi) {
+      return torrent.magnet || `magnet:?xt=urn:btih:${torrent.infoHash}&dn=${encodeURIComponent(torrent.title)}`
+    }
+    
     initializeApi()
     
     // Convert our torrent back to API format for magnet request
@@ -387,6 +452,10 @@ export const downloadTorrent = async (torrent: Torrent, filename?: string): Prom
   try {
     if (shouldUseMockData()) {
       console.log(`Downloading torrent: ${torrent.title}`, filename ? `as ${filename}` : 'as buffer')
+      return null
+    }
+    
+    if (!TorrentSearchApi) {
       return null
     }
     
@@ -441,3 +510,89 @@ export const getPopularCategories = (): string[] => {
     'Other'
   ]
 }
+
+// New API-based torrent search service
+class ApiTorrentSearchService {
+  private baseUrl: string
+
+  constructor() {
+    const state = store.getState()
+    this.baseUrl = selectTorrentApiUrl(state)
+  }
+
+  setBaseUrl(url: string) {
+    this.baseUrl = url
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl
+  }
+
+  async searchTorrents(params: { site: string; query: string }): Promise<ApiTorrentSearchResponse> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/api/v1/search`, {
+        params: {
+          site: params.site,
+          query: params.query
+        },
+        timeout: 10000 // 10 second timeout
+      })
+
+      return response.data
+    } catch (error) {
+      console.error('API torrent search error:', error)
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          throw new Error(`Cannot connect to torrent API at ${this.baseUrl}. Please check your API endpoint in settings.`)
+        } else if (error.response?.status === 404) {
+          throw new Error('Torrent API endpoint not found. Please check your API endpoint in settings.')
+        } else if (error.response?.status >= 500) {
+          throw new Error('Torrent API server error. Please try again later.')
+        } else if (error.response?.status === 400) {
+          throw new Error('Invalid search parameters. Please check your search query.')
+        }
+      }
+      
+      throw new Error('Failed to search for torrents. Please check your API endpoint in settings.')
+    }
+  }
+
+  async searchMovieTorrents(movieTitle: string, site: string = 'piratebay'): Promise<ApiTorrentSearchResponse> {
+    const query = movieTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
+    return this.searchTorrents({ site, query })
+  }
+
+  async searchTVTorrents(showTitle: string, season: number, episode: number, site: string = 'piratebay'): Promise<ApiTorrentSearchResponse> {
+    const seasonStr = season.toString().padStart(2, '0')
+    const episodeStr = episode.toString().padStart(2, '0')
+    const query = `${showTitle} s${seasonStr}e${episodeStr}`.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
+    return this.searchTorrents({ site, query })
+  }
+
+  getBestTorrent(torrents: ApiTorrentSearchResponse): string | null {
+    if (!torrents.data || torrents.data.length === 0) {
+      return null
+    }
+
+    // Sort by seeders (descending) and prefer HD quality
+    const sortedTorrents = torrents.data.sort((a, b) => {
+      const aSeeders = parseInt(a.seeders) || 0
+      const bSeeders = parseInt(b.seeders) || 0
+      
+      // Prefer HD/1080p/4K torrents
+      const aIsHD = a.name.toLowerCase().includes('1080p') || a.name.toLowerCase().includes('4k') || a.name.toLowerCase().includes('hd')
+      const bIsHD = b.name.toLowerCase().includes('1080p') || b.name.toLowerCase().includes('4k') || b.name.toLowerCase().includes('hd')
+      
+      if (aIsHD && !bIsHD) return -1
+      if (!aIsHD && bIsHD) return 1
+      
+      return bSeeders - aSeeders
+    })
+
+    return sortedTorrents[0].magnet
+  }
+}
+
+// Export the API-based service instance
+export const torrentSearchService = new ApiTorrentSearchService()

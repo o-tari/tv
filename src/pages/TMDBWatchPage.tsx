@@ -5,7 +5,7 @@ import { selectTmdbApiKey } from '../store/slices/settingsSlice'
 import { addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
-import YouTubePlayer from '../components/YouTubePlayer'
+import TorrentPlayer from '../components/TorrentPlayer'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const TMDBWatchPage = () => {
@@ -278,26 +278,34 @@ const TMDBWatchPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Video Player */}
-            {trailer ? (
-              <div className="mb-6">
-                <YouTubePlayer
-                  videoId={trailer.key}
+            <div className="mb-6">
+              {isTV && selectedEpisode ? (
+                <TorrentPlayer
+                  showTitle={(content as TMDBTVDetails).name}
+                  season={selectedEpisode.season_number}
+                  episode={selectedEpisode.episode_number}
+                  youtubeVideoId={trailer?.key}
                 />
-              </div>
-            ) : (
-              <div className="mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
-                    No trailer available
-                  </p>
-                  <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+              ) : !isTV ? (
+                <TorrentPlayer
+                  movieTitle={(content as TMDBMovieDetails).title}
+                  youtubeVideoId={trailer?.key}
+                />
+              ) : (
+                <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+                      Select an episode to watch
+                    </p>
+                    <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Content Details */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">

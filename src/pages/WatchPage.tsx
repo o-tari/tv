@@ -13,6 +13,7 @@ import {
   clearAnimeEpisodes 
 } from '../store/slices/animeSlice'
 import EnhancedYouTubePlayer from '../components/EnhancedYouTubePlayer'
+import TorrentPlayer from '../components/TorrentPlayer'
 import VideoInfo from '../components/VideoInfo'
 import RelatedVideosList from '../components/RelatedVideosList'
 import UpNextSection from '../components/UpNextSection'
@@ -170,6 +171,9 @@ const WatchPage = () => {
 
   // Add timeout for loading states to prevent infinite loading
   const [loadingTimeout, setLoadingTimeout] = useState(false)
+  
+  // State for torrent player preference
+  const [useTorrentPlayer, setUseTorrentPlayer] = useState(true)
   
   useEffect(() => {
     if (isLoading) {
@@ -415,14 +419,24 @@ const WatchPage = () => {
               </svg>
             </button>
             
-            <EnhancedYouTubePlayer 
-              videoId={video!.id} 
-              video={video || undefined}
-              showControls={true}
-              onVideoEnd={handleVideoEnd}
-              autoplay={autoplay}
-              fullWindow={true}
-            />
+            {useTorrentPlayer ? (
+              <TorrentPlayer
+                movieTitle={video!.title}
+                youtubeVideoId={video!.id}
+                onVideoEnd={handleVideoEnd}
+                onError={() => setUseTorrentPlayer(false)}
+                className="w-full h-full"
+              />
+            ) : (
+              <EnhancedYouTubePlayer 
+                videoId={video!.id} 
+                video={video || undefined}
+                showControls={true}
+                onVideoEnd={handleVideoEnd}
+                autoplay={autoplay}
+                fullWindow={true}
+              />
+            )}
           </div>
 
           {/* Scrollable content below the player */}
@@ -435,24 +449,47 @@ const WatchPage = () => {
                 onVideoSelect={handleVideoSelect}
               />
 
-              {/* Autoplay control */}
+              {/* Player and Autoplay controls */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={autoplay}
-                        onChange={() => dispatch(toggleAutoplay())}
-                        className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        Autoplay videos
-                      </span>
-                    </label>
+                <div className="space-y-4">
+                  {/* Player type toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={useTorrentPlayer}
+                          onChange={() => setUseTorrentPlayer(!useTorrentPlayer)}
+                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Use torrent player (with YouTube fallback)
+                        </span>
+                      </label>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {useTorrentPlayer ? 'Searching torrents first, then YouTube' : 'Using YouTube only'}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {autoplay ? 'Videos will start playing automatically' : 'Videos will not autoplay'}
+                  
+                  {/* Autoplay control */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={autoplay}
+                          onChange={() => dispatch(toggleAutoplay())}
+                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Autoplay videos
+                        </span>
+                      </label>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {autoplay ? 'Videos will start playing automatically' : 'Videos will not autoplay'}
+                    </div>
                   </div>
                 </div>
               </div>

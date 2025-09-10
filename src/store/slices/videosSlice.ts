@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import { type Video, type Channel, type SearchResponse } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { requestCache } from '../../utils/requestCache'

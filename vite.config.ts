@@ -24,4 +24,17 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@reduxjs/toolkit', 'react-redux'],
   },
+  define: {
+    global: 'globalThis',
+  },
+  resolve: {
+    alias: {
+      events: 'events',
+      path: 'path-browserify',
+      crypto: 'crypto-browserify',
+      stream: 'stream-browserify',
+      buffer: 'buffer',
+      process: 'process/browser',
+    },
+  },
 })

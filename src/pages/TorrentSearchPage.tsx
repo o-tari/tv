@@ -3,18 +3,40 @@ import {
   searchTorrents, 
   getActiveProviders, 
   getMagnetUrl, 
-  getPopularCategories 
+  getPopularCategories,
+  torrentSearchService
 } from '../services/torrentSearch'
-import { type Torrent, type TorrentSearchParams } from '../types/torrent'
+import { type Torrent, type TorrentSearchParams, type ApiTorrentSearchResponse } from '../types/torrent'
 import LoadingSpinner from '../components/LoadingSpinner'
 import TorrentProviderManager from '../components/TorrentProviderManager'
 import { useAppSelector } from '../store'
-import { selectUseMockData } from '../store/slices/settingsSlice'
+import { selectUseMockData, selectTorrentApiUrl } from '../store/slices/settingsSlice'
+
+// Torrent sites configuration
+const TORRENT_SITES = [
+  { id: 'piratebay', name: 'PirateBay', url: 'https://thepiratebay10.org', status: '❌' },
+  { id: '1337x', name: '1337x', url: 'https://1337x.to', status: '❌' },
+  { id: 'tgx', name: 'Torrent Galaxy', url: 'https://torrentgalaxy.to', status: '❌' },
+  { id: 'torlock', name: 'Torlock', url: 'https://www.torlock.com', status: '❌' },
+  { id: 'nyaasi', name: 'Nyaasi', url: 'https://nyaa.si', status: '❌' },
+  { id: 'zooqle', name: 'Zooqle', url: 'https://zooqle.com', status: '❌' },
+  { id: 'kickass', name: 'KickAss', url: 'https://kickasstorrents.to', status: '❌' },
+  { id: 'bitsearch', name: 'Bitsearch', url: 'https://bitsearch.to', status: '❌' },
+  { id: 'magnetdl', name: 'MagnetDL', url: 'https://www.magnetdl.com', status: '✅' },
+  { id: 'libgen', name: 'Libgen', url: 'https://libgen.is', status: '❌' },
+  { id: 'yts', name: 'YTS', url: 'https://yts.mx', status: '❌' },
+  { id: 'limetorrent', name: 'Limetorrent', url: 'https://www.limetorrents.pro', status: '❌' },
+  { id: 'torrentfunk', name: 'TorrentFunk', url: 'https://www.torrentfunk.com', status: '❌' },
+  { id: 'glodls', name: 'Glodls', url: 'https://glodls.to', status: '❌' },
+  { id: 'torrentproject', name: 'TorrentProject', url: 'https://torrentproject2.com', status: '❌' },
+  { id: 'ybt', name: 'YourBittorrent', url: 'https://yourbittorrent.com', status: '❌' }
+]
 
 const TorrentSearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedProvider, setSelectedProvider] = useState('')
+  const [selectedSite, setSelectedSite] = useState('piratebay')
   const [torrents, setTorrents] = useState<Torrent[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +44,7 @@ const TorrentSearchPage = () => {
   const [categories] = useState(getPopularCategories())
   const [showProviderManager, setShowProviderManager] = useState(false)
   const useMockData = useAppSelector(selectUseMockData)
+  const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
 
   useEffect(() => {
     // Load active providers
@@ -41,17 +64,46 @@ const TorrentSearchPage = () => {
     setError(null)
 
     try {
-      const params: TorrentSearchParams = {
-        query: searchQuery.trim(),
-        category: selectedCategory === 'All' ? undefined : selectedCategory,
-        limit: 50,
-        providers: selectedProvider ? [selectedProvider] : undefined
-      }
+      if (useMockData) {
+        // Use the old mock data approach
+        const params: TorrentSearchParams = {
+          query: searchQuery.trim(),
+          category: selectedCategory === 'All' ? undefined : selectedCategory,
+          limit: 50,
+          providers: selectedProvider ? [selectedProvider] : undefined
+        }
 
-      const result = await searchTorrents(params)
-      setTorrents(result.torrents)
+        const result = await searchTorrents(params)
+        setTorrents(result.torrents)
+      } else {
+        // Use the new API-based approach
+        torrentSearchService.setBaseUrl(torrentApiUrl)
+        const response: ApiTorrentSearchResponse = await torrentSearchService.searchTorrents({
+          site: selectedSite,
+          query: searchQuery.trim()
+        })
+
+        // Convert API response to Torrent format
+        const convertedTorrents: Torrent[] = response.data.map((item, index) => ({
+          id: `${selectedSite}-${index}-${Date.now()}`,
+          title: item.name,
+          provider: selectedSite,
+          time: item.date,
+          size: item.size,
+          seeds: parseInt(item.seeders) || 0,
+          peers: parseInt(item.leechers) || 0,
+          magnet: item.magnet,
+          category: item.category,
+          url: item.url,
+          infoHash: item.hash,
+          uploader: item.uploader
+        }))
+
+        setTorrents(convertedTorrents)
+      }
     } catch (err) {
-      setError('Failed to search torrents. Please try again.')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search torrents. Please try again.'
+      setError(errorMessage)
       console.error('Search error:', err)
     } finally {
       setLoading(false)
@@ -66,13 +118,23 @@ const TorrentSearchPage = () => {
 
   const handleMagnetClick = async (torrent: Torrent) => {
     try {
-      const magnetUrl = await getMagnetUrl(torrent)
-      if (magnetUrl) {
-        // Copy to clipboard
-        await navigator.clipboard.writeText(magnetUrl)
-        alert('Magnet link copied to clipboard!')
+      if (useMockData) {
+        const magnetUrl = await getMagnetUrl(torrent)
+        if (magnetUrl) {
+          // Copy to clipboard
+          await navigator.clipboard.writeText(magnetUrl)
+          alert('Magnet link copied to clipboard!')
+        } else {
+          alert('Failed to get magnet link')
+        }
       } else {
-        alert('Failed to get magnet link')
+        // For API mode, use the magnet URL directly from the torrent
+        if (torrent.magnet) {
+          await navigator.clipboard.writeText(torrent.magnet)
+          alert('Magnet link copied to clipboard!')
+        } else {
+          alert('No magnet link available for this torrent')
+        }
       }
     } catch (err) {
       console.error('Error getting magnet:', err)
@@ -113,11 +175,18 @@ const TorrentSearchPage = () => {
               Manage Providers
             </button>
           </div>
-          {useMockData && (
+          {useMockData ? (
             <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4">
               <p className="text-sm text-blue-700 dark:text-blue-300">
                 <strong>Demo Mode:</strong> This is a demonstration using mock data. In a production app, 
                 you would integrate with actual torrent search APIs or implement web scraping for real torrent sites.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 p-4">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                <strong>API Mode:</strong> Using real torrent search API at <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{torrentApiUrl}</code>. 
+                Select a torrent site from the dropdown above to search.
               </p>
             </div>
           )}
@@ -141,42 +210,64 @@ const TorrentSearchPage = () => {
               />
             </div>
 
-            {/* Category Select */}
+            {/* Site Select */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Category
+                Torrent Site
               </label>
               <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={selectedSite}
+                onChange={(e) => setSelectedSite(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                {TORRENT_SITES.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name} {site.status}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Provider Select */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Provider
-              </label>
-              <select
-                value={selectedProvider}
-                onChange={(e) => setSelectedProvider(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All Providers</option>
-                {providers.map((provider) => (
-                  <option key={provider} value={provider}>
-                    {provider}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Category Select - Only show in mock data mode */}
+            {useMockData && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Provider Select - Only show in mock data mode */}
+            {useMockData && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Provider
+                </label>
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Providers</option>
+                  {providers.map((provider) => (
+                    <option key={provider} value={provider}>
+                      {provider}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Search Button */}
@@ -195,6 +286,16 @@ const TorrentSearchPage = () => {
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 mb-6">
             <p className="text-red-700 dark:text-red-300">{error}</p>
+            {error.includes('API endpoint') && (
+              <div className="mt-2">
+                <a
+                  href="/settings"
+                  className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                >
+                  Open Settings
+                </a>
+              </div>
+            )}
           </div>
         )}
 
@@ -295,19 +396,9 @@ const TorrentSearchPage = () => {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {useMockData 
                 ? 'Try adjusting your search terms or category.'
-                : 'Torrent search requires mock data to be enabled in settings. Please enable mock data mode to search for torrents.'
+                : 'Try adjusting your search terms or selecting a different torrent site.'
               }
             </p>
-            {!useMockData && (
-              <div className="mt-4">
-                <a
-                  href="/settings"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Open Settings
-                </a>
-              </div>
-            )}
           </div>
         )}
 

@@ -259,7 +259,7 @@ class LocalStorageCache {
     }
     keysToRemove.forEach(key => localStorage.removeItem(key))
     // Clear ongoing requests for this video
-    for (const [key, promise] of this.ongoingRequests.entries()) {
+    for (const [key] of this.ongoingRequests.entries()) {
       if (key.includes(videoId)) {
         this.ongoingRequests.delete(key)
       }

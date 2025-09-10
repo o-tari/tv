@@ -89,3 +89,36 @@ export interface TorrentSearchApiResponse {
   uploader?: string
   verified?: boolean
 }
+
+// New API-based torrent search types
+export interface ApiTorrentSearchResult {
+  name: string
+  size: string
+  seeders: string
+  leechers: string
+  category: string
+  uploader: string
+  url: string
+  date: string
+  hash: string
+  magnet: string
+}
+
+export interface ApiTorrentSearchResponse {
+  data: ApiTorrentSearchResult[]
+  time: number
+  total: number
+}
+
+export interface ApiTorrentSearchParams {
+  site: string
+  query: string
+}
+
+export interface TorrentPlayerState {
+  isLoading: boolean
+  error: string | null
+  status: 'idle' | 'searching' | 'fetching' | 'loading' | 'playing' | 'failed'
+  progress: number
+  message: string
+}
