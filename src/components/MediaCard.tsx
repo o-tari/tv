@@ -13,9 +13,11 @@ interface MediaCardProps {
   media: Media
   variant?: 'default' | 'compact' | 'large'
   searchType?: 'video' | 'channel' | 'playlist'
+  progress?: number // Progress percentage (0-100)
+  showProgress?: boolean // Whether to show progress indicator
 }
 
-const MediaCard = ({ media, variant = 'default', searchType }: MediaCardProps) => {
+const MediaCard = ({ media, variant = 'default', searchType, progress, showProgress = false }: MediaCardProps) => {
   const dispatch = useAppDispatch()
   const isChannelSaved = useAppSelector(selectIsChannelSaved(media.type === 'video' ? media.channelId : ''))
   const getTimeAgo = (publishedAt: string) => {
@@ -85,6 +87,14 @@ const MediaCard = ({ media, variant = 'default', searchType }: MediaCardProps) =
           <span className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
             {formatDuration(video.duration)}
           </span>
+          {showProgress && progress !== undefined && progress > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600 bg-opacity-50">
+              <div 
+                className="h-full bg-red-600 transition-all duration-300"
+                style={{ width: `${Math.min(progress, 100)}%` }}
+              />
+            </div>
+          )}
           {searchType === 'channel' && (
             <button
               onClick={handleAddChannel}
@@ -221,6 +231,14 @@ const MediaCard = ({ media, variant = 'default', searchType }: MediaCardProps) =
                 {formatDuration(media.duration)}
               </span>
             )}
+            {showProgress && progress !== undefined && progress > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600 bg-opacity-50">
+                <div 
+                  className="h-full bg-red-600 transition-all duration-300"
+                  style={{ width: `${Math.min(progress, 100)}%` }}
+                />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0 space-y-1">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -266,6 +284,14 @@ const MediaCard = ({ media, variant = 'default', searchType }: MediaCardProps) =
               <span className="absolute bottom-3 right-3 bg-black bg-opacity-80 text-white text-sm px-2 py-1 rounded">
                 {formatDuration(media.duration)}
               </span>
+            )}
+            {showProgress && progress !== undefined && progress > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600 bg-opacity-50">
+                <div 
+                  className="h-full bg-red-600 transition-all duration-300"
+                  style={{ width: `${Math.min(progress, 100)}%` }}
+                />
+              </div>
             )}
           </div>
           <div className="space-y-3">

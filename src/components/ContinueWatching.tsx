@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectContinueWatching, removeFromContinueWatching } from '../store/slices/continueWatchingSlice'
+import { selectContinueWatching, removeFromContinueWatching, selectVideoProgress } from '../store/slices/continueWatchingSlice'
 import VideoCard from './VideoCard'
 import type { Video } from '../types/youtube'
 
@@ -14,6 +14,7 @@ interface ContinueWatchingProps {
 const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: ContinueWatchingProps) => {
   const dispatch = useAppDispatch()
   const continueWatchingVideos = useAppSelector(selectContinueWatching)
+  const videoProgress = useAppSelector(selectVideoProgress)
   const [showAll, setShowAll] = useState(false)
 
   const displayedVideos = limit && !showAll ? continueWatchingVideos.slice(0, limit) : continueWatchingVideos
@@ -58,7 +59,12 @@ const ContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: Contin
         {displayedVideos.map((video: Video) => (
           <div key={video.id} className="relative group">
             <Link to={`/watch/${video.id}`}>
-              <VideoCard video={video} variant="default" />
+              <VideoCard 
+                video={video} 
+                variant="default" 
+                progress={videoProgress[video.id]}
+                showProgress={true}
+              />
             </Link>
             
             {/* Remove button */}

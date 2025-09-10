@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchTrendingVideos } from '../store/slices/videosSlice'
 import { selectWatchHistory, selectWatchLater, selectSubscriptions } from '../store/slices/historySlice'
-import { selectContinueWatching } from '../store/slices/continueWatchingSlice'
+import { selectContinueWatching, selectVideoProgress } from '../store/slices/continueWatchingSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import SearchBar from '../components/SearchBar'
-import ChannelsSection from '../components/ChannelsSection'
 
 const YouTubePage = () => {
   const navigate = useNavigate()
@@ -24,6 +23,7 @@ const YouTubePage = () => {
   const watchLater = useAppSelector(selectWatchLater)
   const subscriptions = useAppSelector(selectSubscriptions)
   const continueWatching = useAppSelector(selectContinueWatching)
+  const videoProgress = useAppSelector(selectVideoProgress)
 
   useEffect(() => {
     if (trendingVideos.length === 0 && !hasInitialized.current && !trendingLoading) {
@@ -109,6 +109,8 @@ const YouTubePage = () => {
             <VideoGrid
               videos={continueWatching.slice(0, 8)}
               loading={false}
+              videoProgress={videoProgress}
+              showProgress={true}
             />
           </div>
         )}

@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
-import { useAppSelector, useAppDispatch } from '../store'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useAppDispatch, useAppSelector } from '../store'
 import { updatePlayerState } from '../store/slices/uiSlice'
+import { updateVideoProgress, addToContinueWatchingWithProgress, selectVideoSavedProgress } from '../store/slices/continueWatchingSlice'
+import { type Video } from '../types/youtube'
 
 interface EnhancedYouTubePlayerProps {
   videoId: string
+  video?: Video // Video object for continue watching
   onReady?: () => void
   onStateChange?: (state: number) => void
   onVideoEnd?: () => void
@@ -12,9 +15,62 @@ interface EnhancedYouTubePlayerProps {
   fullWindow?: boolean
 }
 
+interface YouTubePlayer {
+  getCurrentTime(): number
+  getDuration(): number
+  getVolume(): number
+  getPlaybackRate(): number
+  getAvailableQualityLevels(): string[]
+  getPlaybackQuality(): string
+  playVideo(): void
+  pauseVideo(): void
+  seekTo(seconds: number, allowSeekAhead: boolean): void
+  setVolume(volume: number): void
+  mute(): void
+  unMute(): void
+  isMuted(): boolean
+  setPlaybackRate(rate: number): void
+  setPlaybackQuality(quality: string): void
+  getIframe(): HTMLIFrameElement | null
+  destroy(): void
+}
+
+interface YouTubePlayerEvent {
+  target: YouTubePlayer
+  data: number
+}
+
+interface YouTubePlayerConfig {
+  height: string
+  width: string
+  videoId: string
+  playerVars: {
+    autoplay: number
+    controls: number
+    modestbranding: number
+    rel: number
+    showinfo: number
+    iv_load_policy: number
+    fs: number
+    cc_load_policy: number
+    playsinline: number
+  }
+  events: {
+    onReady: (event: YouTubePlayerEvent) => void
+    onStateChange: (event: YouTubePlayerEvent) => void
+    onPlaybackQualityChange: (event: YouTubePlayerEvent) => void
+    onPlaybackRateChange: (event: YouTubePlayerEvent) => void
+    onError: (event: YouTubePlayerEvent) => void
+    onApiChange: (event: YouTubePlayerEvent) => void
+    onVolumeChange: () => void
+  }
+}
+
 declare global {
   interface Window {
-    YT: any
+    YT: {
+      Player: new (elementId: string | HTMLElement, config: YouTubePlayerConfig) => YouTubePlayer
+    }
     onYouTubeIframeAPIReady: () => void
   }
 }
@@ -30,9 +86,9 @@ const YT_PLAYER_STATE = {
 }
 
 // Event logging utility
-const logYouTubeEvent = (eventName: string, data?: any) => {
+const logYouTubeEvent = (eventName: string, data?: unknown) => {
   // Safe JSON stringify that handles circular references
-  const safeStringify = (obj: any): string => {
+  const safeStringify = (obj: unknown): string => {
     try {
       return JSON.stringify(obj, (key, value) => {
         // Skip circular references and DOM elements
@@ -54,7 +110,7 @@ const logYouTubeEvent = (eventName: string, data?: any) => {
         }
         return value
       })
-    } catch (error) {
+    } catch {
       return '[Object - Circular Reference]'
     }
   }
@@ -80,11 +136,11 @@ const logYouTubeEvent = (eventName: string, data?: any) => {
   }
 }
 
-const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, showControls = true, autoplay = false, fullWindow = false }: EnhancedYouTubePlayerProps) => {
+const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideoEnd, showControls = true, autoplay = false, fullWindow = false }: EnhancedYouTubePlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null)
-  const playerInstanceRef = useRef<any>(null)
+  const playerInstanceRef = useRef<YouTubePlayer | null>(null)
   const dispatch = useAppDispatch()
-  const { } = useAppSelector((state) => state.ui)
+  const savedProgress = useAppSelector(selectVideoSavedProgress(videoId))
   const [isAPIReady, setIsAPIReady] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -99,6 +155,14 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
   const [showLogsModal, setShowLogsModal] = useState(false)
   const [isPictureInPicture, setIsPictureInPicture] = useState(false)
   const [isPictureInPictureSupported, setIsPictureInPictureSupported] = useState(false)
+  const [hasWatchedMinimum, setHasWatchedMinimum] = useState(false)
+  const [hasResumed, setHasResumed] = useState(false)
+
+  // Reset resume state when videoId changes
+  useEffect(() => {
+    setHasResumed(false)
+    setHasWatchedMinimum(false)
+  }, [videoId])
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -164,7 +228,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
 
       logYouTubeEvent('PLAYER_INITIALIZING', { videoId })
 
-      playerInstanceRef.current = new window.YT.Player(playerRef.current, {
+      const config: YouTubePlayerConfig = {
         height: '100%',
         width: '100%',
         videoId: videoId,
@@ -180,7 +244,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
           playsinline: 1,
         },
         events: {
-          onReady: (event: any) => {
+          onReady: (event: YouTubePlayerEvent) => {
             logYouTubeEvent('PLAYER_READY', event)
             
             // Get initial player state
@@ -206,10 +270,32 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
               currentQuality: player.getPlaybackQuality()
             })
             
+            // Resume from saved progress if available
+            if (savedProgress > 0 && !hasResumed && initialDuration > 0) {
+              // Don't seek if we're too close to the end (within 5 seconds)
+              const maxSeekTime = initialDuration - 5
+              const seekTime = Math.min(savedProgress, maxSeekTime)
+              
+              if (seekTime > 5) { // Only seek if we're more than 5 seconds in
+                console.log(`🎬 Resuming video from ${seekTime.toFixed(1)}s (${((seekTime / initialDuration) * 100).toFixed(1)}%)`)
+                // Seek immediately when player is ready, before any playing starts
+                setTimeout(() => {
+                  if (playerInstanceRef.current) {
+                    playerInstanceRef.current.seekTo(seekTime, true)
+                    setCurrentTime(seekTime)
+                    setHasResumed(true)
+                  }
+                }, 200) // Slightly longer delay to ensure player is fully ready
+              } else {
+                console.log(`🎬 Saved progress too close to start/end, starting from beginning`)
+                setHasResumed(true)
+              }
+            }
+            
             onReady?.()
           },
           
-          onStateChange: (event: any) => {
+          onStateChange: (event: YouTubePlayerEvent) => {
             const state = event.data
             const stateName = Object.keys(YT_PLAYER_STATE).find(key => YT_PLAYER_STATE[key as keyof typeof YT_PLAYER_STATE] === state) || 'UNKNOWN'
             
@@ -239,19 +325,19 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
             }))
           },
           
-          onPlaybackQualityChange: (event: any) => {
+          onPlaybackQualityChange: (event: YouTubePlayerEvent) => {
             const quality = event.data
             logYouTubeEvent('QUALITY_CHANGE', { quality })
-            setCurrentQuality(quality)
+            setCurrentQuality(String(quality))
           },
           
-          onPlaybackRateChange: (event: any) => {
+          onPlaybackRateChange: (event: YouTubePlayerEvent) => {
             const rate = event.data
             logYouTubeEvent('PLAYBACK_RATE_CHANGE', { rate })
             setPlaybackRate(rate)
           },
           
-          onError: (event: any) => {
+          onError: (event: YouTubePlayerEvent) => {
             const error = event.data
             const errorMessages = {
               2: 'Invalid video ID',
@@ -267,7 +353,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
             })
           },
           
-          onApiChange: (event: any) => {
+          onApiChange: (event: YouTubePlayerEvent) => {
             logYouTubeEvent('API_CHANGE', event)
           },
           
@@ -278,56 +364,85 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
             setVolume(currentVolume)
             setIsMuted(isMuted)
           }
-        },
-      })
+        }
+      }
+      
+      if (playerRef.current) {
+        playerInstanceRef.current = new window.YT.Player(playerRef.current, config)
+      }
     }
 
     // Small delay to ensure DOM is ready
     const timer = setTimeout(initializePlayer, 100)
     return () => clearTimeout(timer)
-  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd, autoplay])
+  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd, autoplay, savedProgress, hasResumed])
 
-  // Update current time periodically
+  // Update current time periodically and track progress
   useEffect(() => {
     if (!isPlaying || !playerInstanceRef.current) return
 
     const interval = setInterval(() => {
       const time = playerInstanceRef.current?.getCurrentTime() || 0
+      const videoDuration = playerInstanceRef.current?.getDuration() || 0
+      
       setCurrentTime(time)
+      
+      // Check if we've watched for at least 10 seconds (accounting for resumed position)
+      const effectiveWatchTime = hasResumed ? time - savedProgress : time
+      if (effectiveWatchTime >= 10 && !hasWatchedMinimum) {
+        setHasWatchedMinimum(true)
+        // Add to continue watching if we have video data
+        if (video) {
+          dispatch(addToContinueWatchingWithProgress({
+            video,
+            currentTime: time,
+            duration: videoDuration
+          }))
+        }
+      }
+      
+      // Update progress if we have video data and have watched minimum
+      if (video && hasWatchedMinimum && videoDuration > 0) {
+        dispatch(updateVideoProgress({
+          videoId: video.id,
+          currentTime: time,
+          duration: videoDuration
+        }))
+      }
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isPlaying])
+  }, [isPlaying, hasWatchedMinimum, video, dispatch, hasResumed, savedProgress])
 
   // Player control functions
-  const play = () => {
+  const play = useCallback(() => {
     if (playerInstanceRef.current) {
       logYouTubeEvent('CONTROL_PLAY')
       playerInstanceRef.current.playVideo()
     }
-  }
+  }, [])
 
-  const pause = () => {
+  const pause = useCallback(() => {
     if (playerInstanceRef.current) {
       logYouTubeEvent('CONTROL_PAUSE')
       playerInstanceRef.current.pauseVideo()
     }
-  }
+  }, [])
 
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     if (isPlaying) {
       pause()
     } else {
       play()
     }
-  }
+  }, [isPlaying, play, pause])
 
-  const seekTo = (seconds: number) => {
+  const seekTo = useCallback((seconds: number) => {
     if (playerInstanceRef.current) {
       logYouTubeEvent('CONTROL_SEEK', { seconds })
       playerInstanceRef.current.seekTo(seconds, true)
     }
-  }
+  }, [])
 
   const handleSetVolume = (newVolume: number) => {
     if (playerInstanceRef.current) {
@@ -337,7 +452,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
     }
   }
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (playerInstanceRef.current) {
       if (isMuted) {
         logYouTubeEvent('CONTROL_UNMUTE')
@@ -348,7 +463,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
       }
       setIsMuted(!isMuted)
     }
-  }
+  }, [isMuted])
 
   const handleSetPlaybackRate = (rate: number) => {
     if (playerInstanceRef.current) {
@@ -366,20 +481,22 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
     }
   }
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (playerInstanceRef.current) {
       logYouTubeEvent('CONTROL_FULLSCREEN', { isFullscreen: !isFullscreen })
       const playerElement = playerInstanceRef.current.getIframe()
-      if (playerElement.requestFullscreen) {
-        playerElement.requestFullscreen()
-      } else if ((playerElement as any).webkitRequestFullscreen) {
-        (playerElement as any).webkitRequestFullscreen()
-      } else if ((playerElement as any).msRequestFullscreen) {
-        (playerElement as any).msRequestFullscreen()
+      if (playerElement) {
+        if (playerElement.requestFullscreen) {
+          playerElement.requestFullscreen()
+        } else if ((playerElement as HTMLIFrameElement & { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen) {
+          (playerElement as HTMLIFrameElement & { webkitRequestFullscreen: () => void }).webkitRequestFullscreen()
+        } else if ((playerElement as HTMLIFrameElement & { msRequestFullscreen?: () => void }).msRequestFullscreen) {
+          (playerElement as HTMLIFrameElement & { msRequestFullscreen: () => void }).msRequestFullscreen()
+        }
+        setIsFullscreen(!isFullscreen)
       }
-      setIsFullscreen(!isFullscreen)
     }
-  }
+  }, [isFullscreen])
 
   const togglePictureInPicture = async () => {
     try {
@@ -400,15 +517,15 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
     }
   }
 
-  const skipBackward = () => {
+  const skipBackward = useCallback(() => {
     const newTime = Math.max(0, currentTime - 10)
     seekTo(newTime)
-  }
+  }, [currentTime, seekTo])
 
-  const skipForward = () => {
+  const skipForward = useCallback(() => {
     const newTime = Math.min(duration, currentTime + 10)
     seekTo(newTime)
-  }
+  }, [currentTime, duration, seekTo])
 
   // Format time helper
   const formatTime = (seconds: number) => {
@@ -476,7 +593,7 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, currentTime, duration, volume, isMuted])
+  }, [isPlaying, currentTime, duration, volume, isMuted, skipBackward, skipForward, toggleFullscreen, toggleMute, togglePlayPause])
 
 
   return (

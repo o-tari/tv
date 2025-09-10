@@ -83,11 +83,10 @@ const WatchPage = () => {
     }
   }, [dispatch, isAnime])
 
-  // Add to history and continue watching when content loads
+  // Add to history when content loads
   useEffect(() => {
     if (video) {
       dispatch(addToHistory(video))
-      dispatch(addToContinueWatching(video))
     }
   }, [dispatch, video])
 
@@ -368,6 +367,7 @@ const WatchPage = () => {
             
             <EnhancedYouTubePlayer 
               videoId={video!.id} 
+              video={video}
               showControls={true}
               onVideoEnd={handleVideoEnd}
               autoplay={autoplay}

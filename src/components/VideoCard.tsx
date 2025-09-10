@@ -6,9 +6,11 @@ import MediaCard from './MediaCard'
 interface VideoCardProps {
   video: Video
   variant?: 'default' | 'compact' | 'large'
+  progress?: number // Progress percentage (0-100)
+  showProgress?: boolean // Whether to show progress indicator
 }
 
-const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
+const VideoCard = memo(({ video, variant = 'default', progress, showProgress = false }: VideoCardProps) => {
   // Convert Video to VideoMedia format for MediaCard
   const videoMedia: VideoMedia = {
     id: video.id,
@@ -24,7 +26,7 @@ const VideoCard = memo(({ video, variant = 'default' }: VideoCardProps) => {
     viewCount: video.viewCount,
   }
 
-  return <MediaCard media={videoMedia} variant={variant} />
+  return <MediaCard media={videoMedia} variant={variant} progress={progress} showProgress={showProgress} />
 })
 
 VideoCard.displayName = 'VideoCard'

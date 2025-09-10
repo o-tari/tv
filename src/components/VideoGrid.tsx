@@ -7,13 +7,17 @@ interface VideoGridProps {
   loading?: boolean
   variant?: 'default' | 'compact' | 'large'
   searchType?: 'video' | 'channel' | 'playlist'
+  videoProgress?: Record<string, number> // videoId -> progress percentage
+  showProgress?: boolean
 }
 
 const VideoGrid = ({
   videos,
   loading = false,
   variant = 'default',
-  searchType
+  searchType,
+  videoProgress,
+  showProgress = false
 }: VideoGridProps) => {
   // Convert videos to media format for MediaGrid
   const videoMedia: VideoMedia[] = videos.map((video) => ({
@@ -30,7 +34,7 @@ const VideoGrid = ({
     viewCount: video.viewCount,
   }))
 
-  return <MediaGrid media={videoMedia} loading={loading} variant={variant} searchType={searchType} />
+  return <MediaGrid media={videoMedia} loading={loading} variant={variant} searchType={searchType} videoProgress={videoProgress} showProgress={showProgress} />
 }
 
 export default VideoGrid
