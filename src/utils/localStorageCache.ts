@@ -136,6 +136,9 @@ class LocalStorageCache {
     }
   }
 
+  // Track ongoing requests to prevent duplicate calls
+  private ongoingRequests = new Map<string, Promise<any>>()
+
   // Public methods
   async get<T>(
     type: LocalStorageCacheEntry['type'],
@@ -151,16 +154,32 @@ class LocalStorageCache {
       return cached.data
     }
 
+    // Check if we're already fetching this data
+    if (this.ongoingRequests.has(key)) {
+      console.log(`⏳ Request already in progress for ${type}${videoId ? ` (video: ${videoId})` : ''}, waiting...`)
+      return this.ongoingRequests.get(key)!
+    }
+
     console.log(`🌐 Cache miss for ${type}${videoId ? ` (video: ${videoId})` : ''}, fetching from API`)
     
-    try {
-      const data = await fetcher()
-      this.setItem(key, data, type, videoId)
-      return data
-    } catch (error) {
-      console.error(`Failed to fetch ${type}:`, error)
-      throw error
-    }
+    const fetchPromise = (async () => {
+      try {
+        const data = await fetcher()
+        this.setItem(key, data, type, videoId)
+        return data
+      } catch (error) {
+        console.error(`Failed to fetch ${type}:`, error)
+        throw error
+      } finally {
+        // Remove from ongoing requests when done
+        this.ongoingRequests.delete(key)
+      }
+    })()
+
+    // Store the promise to prevent duplicate requests
+    this.ongoingRequests.set(key, fetchPromise)
+    
+    return fetchPromise
   }
 
   // Video-specific caching methods
@@ -202,6 +221,8 @@ class LocalStorageCache {
       }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key))
+    // Clear ongoing requests
+    this.ongoingRequests.clear()
     console.log(`🗑️ Cleared ${keysToRemove.length} cache entries`)
   }
 
@@ -237,7 +258,18 @@ class LocalStorageCache {
       }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key))
+    // Clear ongoing requests for this video
+    for (const [key, promise] of this.ongoingRequests.entries()) {
+      if (key.includes(videoId)) {
+        this.ongoingRequests.delete(key)
+      }
+    }
     console.log(`🎬 Cleared ${keysToRemove.length} cache entries for video ${videoId}`)
+  }
+
+  clearOngoingRequests(): void {
+    this.ongoingRequests.clear()
+    console.log('🔄 Cleared all ongoing requests')
   }
 
   getStats(): CacheStats {

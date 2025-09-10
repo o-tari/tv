@@ -17,25 +17,48 @@ const YouTubePlayer = ({ videoId, onReady, onStateChange, autoplay = false }: Yo
   const { playerState } = useAppSelector((state) => state.ui)
   const [isAPIReady, setIsAPIReady] = useState(false)
 
-  // Load YouTube IFrame API
+  // Load YouTube IFrame API with timeout
   useEffect(() => {
     if (window.YT) {
       setIsAPIReady(true)
       return
     }
 
+    let timeoutId: NodeJS.Timeout
     const script = document.createElement('script')
     script.src = 'https://www.youtube.com/iframe_api'
     script.async = true
+    
+    // Add error handling for script loading
+    script.onerror = () => {
+      console.error('Failed to load YouTube IFrame API')
+      setIsAPIReady(false)
+    }
+    
     document.head.appendChild(script)
 
+    // Set up timeout to prevent infinite loading
+    timeoutId = setTimeout(() => {
+      console.warn('YouTube IFrame API loading timeout')
+      setIsAPIReady(false)
+    }, 10000) // 10 second timeout
+
     window.onYouTubeIframeAPIReady = () => {
+      clearTimeout(timeoutId)
       setIsAPIReady(true)
     }
 
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
       if (script.parentNode) {
         script.parentNode.removeChild(script)
+      }
+      // Clean up global callback
+      if (typeof window.onYouTubeIframeAPIReady === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).onYouTubeIframeAPIReady = undefined
       }
     }
   }, [])
@@ -203,7 +226,8 @@ const YouTubePlayer = ({ videoId, onReady, onStateChange, autoplay = false }: Yo
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-            <p>Loading player...</p>
+            <p>Loading YouTube API...</p>
+            <p className="text-sm text-gray-400 mt-2">This may take a few seconds</p>
           </div>
         </div>
       )}

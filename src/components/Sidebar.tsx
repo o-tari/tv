@@ -46,32 +46,40 @@ const Sidebar = () => {
   // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Prevent conflicts with other click handlers
+      if (event.defaultPrevented) return
+      
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false)
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside, { capture: true })
+    return () => document.removeEventListener('mousedown', handleClickOutside, { capture: true })
   }, [])
 
   // Close sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Prevent conflicts with other click handlers
+      if (event.defaultPrevented) return
+      
       if (sidebarOpen && !(event.target as Element).closest('.sidebar-modal')) {
+        event.preventDefault()
         dispatch(toggleSidebar())
       }
     }
 
     if (sidebarOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
+      // Use capture phase to handle before other listeners
+      document.addEventListener('mousedown', handleClickOutside, { capture: true })
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('mousedown', handleClickOutside, { capture: true })
       document.body.style.overflow = 'unset'
     }
   }, [sidebarOpen, dispatch])

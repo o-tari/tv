@@ -8,9 +8,10 @@ interface RelatedVideosListProps {
   loading?: boolean
   error?: string | null
   onRetry?: () => void
+  title?: string
 }
 
-const RelatedVideosList = ({ videos, loading, error, onRetry }: RelatedVideosListProps) => {
+const RelatedVideosList = ({ videos, loading, error, onRetry, title = "Related Videos" }: RelatedVideosListProps) => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -65,8 +66,12 @@ const RelatedVideosList = ({ videos, loading, error, onRetry }: RelatedVideosLis
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {videos.map((video) => (
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {videos.map((video) => (
         <Link
           key={video.id}
           to={`/watch/${video.id}`}
@@ -119,6 +124,7 @@ const RelatedVideosList = ({ videos, loading, error, onRetry }: RelatedVideosLis
           </div>
         </Link>
       ))}
+      </div>
     </div>
   )
 }

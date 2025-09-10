@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
-import { fetchRandomVideosFromSavedChannels, fetchRandomVideosFromChannel } from '../store/slices/videosSlice'
+import { fetchRandomVideosFromSavedChannels, fetchRandomVideosFromChannel, selectChannelRandomVideos } from '../store/slices/videosSlice'
 import { type Video } from '../types/youtube'
 import { formatNumber } from '../utils/formatNumber'
 import { formatDuration } from '../utils/formatTime'
@@ -17,29 +17,31 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
   const { 
     randomVideos, 
     randomVideosLoading, 
-    randomVideosError,
-    channelRandomVideos,
-    channelRandomVideosLoading,
-    channelRandomVideosError
+    randomVideosError
   } = useAppSelector((state) => state.videos)
+
+  // Get current channel's random videos using selector
+  const currentChannelVideos = useAppSelector(selectChannelRandomVideos(currentChannelId || ''))
 
   // Fetch current channel videos if channelId is provided
   useEffect(() => {
-    if (currentChannelId && channelRandomVideos.length === 0 && !channelRandomVideosLoading) {
-      console.log('🎲 UpNextSection: Fetching random videos from current channel...')
+    if (currentChannelId && currentChannelVideos.videos.length === 0 && !currentChannelVideos.loading) {
+      console.log('🎲 UpNextSection: Fetching random videos from current channel...', currentChannelId)
       dispatch(fetchRandomVideosFromChannel({ channelId: currentChannelId, count: 20 }))
     }
-  }, [dispatch, currentChannelId, channelRandomVideos.length, channelRandomVideosLoading])
+  }, [dispatch, currentChannelId, currentChannelVideos.videos.length, currentChannelVideos.loading])
 
   const handleVideoClick = (video: Video) => {
     console.log('🎬 Up Next video clicked:', video.title, video.id)
     onVideoSelect?.(video)
   }
 
-  // Combine videos from saved channels and current channel
-  const allVideos = [...channelRandomVideos, ...randomVideos]
-  const isLoading = randomVideosLoading || channelRandomVideosLoading
-  const hasError = randomVideosError || channelRandomVideosError
+  // Prioritize current channel videos, fallback to saved channels
+  const allVideos = currentChannelVideos.videos.length > 0 
+    ? currentChannelVideos.videos 
+    : randomVideos
+  const isLoading = randomVideosLoading || currentChannelVideos.loading
+  const hasError = randomVideosError || currentChannelVideos.error
 
   if (isLoading) {
     return (
@@ -72,9 +74,10 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
           </p>
           <button
             onClick={() => {
-              dispatch(fetchRandomVideosFromSavedChannels(200))
               if (currentChannelId) {
                 dispatch(fetchRandomVideosFromChannel({ channelId: currentChannelId, count: 20 }))
+              } else {
+                dispatch(fetchRandomVideosFromSavedChannels(200))
               }
             }}
             className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
@@ -94,7 +97,10 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
         </h3>
         <div className="text-center py-4">
           <p className="text-gray-600 dark:text-gray-400 text-sm">
-            No videos available from your saved channels
+            {currentChannelId 
+              ? 'No videos available from this channel' 
+              : 'No videos available from your saved channels'
+            }
           </p>
         </div>
       </div>
@@ -112,7 +118,7 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
   // Debug logging
   console.log('🎬 Up Next - currentVideoId:', currentVideoId)
   console.log('🎬 Up Next - currentChannelId:', currentChannelId)
-  console.log('🎬 Up Next - channelRandomVideos length:', channelRandomVideos.length)
+  console.log('🎬 Up Next - currentChannelVideos:', currentChannelVideos)
   console.log('🎬 Up Next - randomVideos length:', randomVideos.length)
   console.log('🎬 Up Next - allVideos length:', allVideos.length)
   console.log('🎬 Up Next - filteredVideos length:', filteredVideos.length)
@@ -122,7 +128,7 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-        Up Next
+        {currentChannelId ? 'More from this channel' : 'Up Next'}
       </h3>
       <div className="flex space-x-3 overflow-x-auto">
         {displayVideos.map((video) => (

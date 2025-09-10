@@ -158,33 +158,69 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
   const [isPictureInPictureSupported, setIsPictureInPictureSupported] = useState(false)
   const [hasWatchedMinimum, setHasWatchedMinimum] = useState(false)
   const [hasResumed, setHasResumed] = useState(false)
+  const [playerError, setPlayerError] = useState<string | null>(null)
+  const [isInitializing, setIsInitializing] = useState(false)
 
   // Reset resume state when videoId changes
   useEffect(() => {
     setHasResumed(false)
     setHasWatchedMinimum(false)
+    setPlayerError(null)
+    setIsInitializing(false)
   }, [videoId])
 
-  // Load YouTube IFrame API
+  // Load YouTube IFrame API with timeout and error handling
   useEffect(() => {
     if (window.YT) {
       setIsAPIReady(true)
       return
     }
 
-    const script = document.createElement('script')
-    script.src = 'https://www.youtube.com/iframe_api'
-    script.async = true
-    document.head.appendChild(script)
+    let timeoutId: NodeJS.Timeout
+    let script: HTMLScriptElement | null = null
 
-    window.onYouTubeIframeAPIReady = () => {
-      logYouTubeEvent('API_READY')
-      setIsAPIReady(true)
+    const loadYouTubeAPI = () => {
+      script = document.createElement('script')
+      script.src = 'https://www.youtube.com/iframe_api'
+      script.async = true
+      
+      // Add error handling for script loading
+      script.onerror = () => {
+        console.error('Failed to load YouTube IFrame API')
+        logYouTubeEvent('API_LOAD_ERROR')
+        // Set a fallback state to prevent infinite loading
+        setIsAPIReady(false)
+      }
+      
+      document.head.appendChild(script)
+
+      // Set up timeout to prevent infinite loading
+      timeoutId = setTimeout(() => {
+        console.warn('YouTube IFrame API loading timeout')
+        logYouTubeEvent('API_LOAD_TIMEOUT')
+        setIsAPIReady(false)
+      }, 10000) // 10 second timeout
+
+      window.onYouTubeIframeAPIReady = () => {
+        clearTimeout(timeoutId)
+        logYouTubeEvent('API_READY')
+        setIsAPIReady(true)
+      }
     }
 
+    loadYouTubeAPI()
+
     return () => {
-      if (script.parentNode) {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      if (script && script.parentNode) {
         script.parentNode.removeChild(script)
+      }
+      // Clean up global callback
+      if (typeof window.onYouTubeIframeAPIReady === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).onYouTubeIframeAPIReady = undefined
       }
     }
   }, [])
@@ -223,13 +259,17 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
     if (!isAPIReady || !playerRef.current || !videoId) return
 
     const initializePlayer = () => {
-      if (playerInstanceRef.current) {
-        playerInstanceRef.current.destroy()
-      }
+      try {
+        setIsInitializing(true)
+        setPlayerError(null)
+        
+        if (playerInstanceRef.current) {
+          playerInstanceRef.current.destroy()
+        }
 
-      logYouTubeEvent('PLAYER_INITIALIZING', { videoId })
+        logYouTubeEvent('PLAYER_INITIALIZING', { videoId })
 
-      const config: YouTubePlayerConfig = {
+        const config: YouTubePlayerConfig = {
         height: '100%',
         width: '100%',
         videoId: videoId,
@@ -246,32 +286,39 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
         },
         events: {
           onReady: (event: YouTubePlayerEvent) => {
-            logYouTubeEvent('PLAYER_READY', event)
-            
-            // Get initial player state
-            const player = event.target
-            const initialDuration = player.getDuration()
-            const initialVolume = player.getVolume()
-            const initialPlaybackRate = player.getPlaybackRate()
-            
-            setDuration(initialDuration)
-            setVolume(initialVolume)
-            setPlaybackRate(initialPlaybackRate)
-            
-            // Get available qualities
-            const qualities = player.getAvailableQualityLevels()
-            setAvailableQualities(qualities)
-            setCurrentQuality(player.getPlaybackQuality())
-            
-            logYouTubeEvent('PLAYER_INITIAL_STATE', {
-              duration: initialDuration,
-              volume: initialVolume,
-              playbackRate: initialPlaybackRate,
-              qualities: qualities,
-              currentQuality: player.getPlaybackQuality()
-            })
-            
-            onReady?.()
+            try {
+              logYouTubeEvent('PLAYER_READY', event)
+              setIsInitializing(false)
+              
+              // Get initial player state
+              const player = event.target
+              const initialDuration = player.getDuration()
+              const initialVolume = player.getVolume()
+              const initialPlaybackRate = player.getPlaybackRate()
+              
+              setDuration(initialDuration)
+              setVolume(initialVolume)
+              setPlaybackRate(initialPlaybackRate)
+              
+              // Get available qualities
+              const qualities = player.getAvailableQualityLevels()
+              setAvailableQualities(qualities)
+              setCurrentQuality(player.getPlaybackQuality())
+              
+              logYouTubeEvent('PLAYER_INITIAL_STATE', {
+                duration: initialDuration,
+                volume: initialVolume,
+                playbackRate: initialPlaybackRate,
+                qualities: qualities,
+                currentQuality: player.getPlaybackQuality()
+              })
+              
+              onReady?.()
+            } catch (error) {
+              console.error('Error in onReady callback:', error)
+              setPlayerError('Failed to initialize player')
+              setIsInitializing(false)
+            }
           },
           
           onStateChange: (event: YouTubePlayerEvent) => {
@@ -326,9 +373,13 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
               150: 'Video not allowed in embedded players'
             }
             
+            const errorMessage = errorMessages[error as keyof typeof errorMessages] || 'Unknown error'
+            setPlayerError(errorMessage)
+            setIsInitializing(false)
+            
             logYouTubeEvent('ERROR', { 
               error, 
-              message: errorMessages[error as keyof typeof errorMessages] || 'Unknown error'
+              message: errorMessage
             })
           },
           
@@ -349,11 +400,19 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
       if (playerRef.current) {
         playerInstanceRef.current = new window.YT.Player(playerRef.current, config)
       }
+      } catch (error) {
+        console.error('Error initializing YouTube player:', error)
+        setPlayerError('Failed to create player instance')
+        setIsInitializing(false)
+      }
     }
 
     // Small delay to ensure DOM is ready
     const timer = setTimeout(initializePlayer, 100)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      setIsInitializing(false)
+    }
   }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd, autoplay])
 
   // Handle saved progress restoration after player is ready
@@ -609,11 +668,76 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
       <div className={`relative w-full bg-black overflow-hidden ${fullWindow ? "h-full" : "aspect-video rounded-lg"}`}>
         <div ref={playerRef} className="w-full h-full" />
         
-        {!isAPIReady && (
+        {(!isAPIReady || isInitializing) && !playerError && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
             <div className="text-white text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-              <p>Loading player...</p>
+              <p>{isInitializing ? 'Initializing player...' : 'Loading YouTube API...'}</p>
+            </div>
+          </div>
+        )}
+        
+        {playerError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+            <div className="text-white text-center p-4">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Player Error</h3>
+              <p className="text-gray-300 mb-4">{playerError}</p>
+              <button
+                onClick={() => {
+                  setPlayerError(null)
+                  setIsInitializing(false)
+                  // Force re-initialization
+                  if (window.YT && playerRef.current && videoId) {
+                    setTimeout(() => {
+                      const initializePlayer = () => {
+                        if (playerInstanceRef.current) {
+                          playerInstanceRef.current.destroy()
+                        }
+                        playerInstanceRef.current = new window.YT.Player(playerRef.current!, {
+                          height: '100%',
+                          width: '100%',
+                          videoId: videoId,
+                          playerVars: {
+                            autoplay: autoplay ? 1 : 0,
+                            controls: 1,
+                            modestbranding: 1,
+                            rel: 0,
+                            showinfo: 0,
+                            iv_load_policy: 3,
+                            fs: 1,
+                            cc_load_policy: 0,
+                            playsinline: 1,
+                          },
+                          events: {
+                            onReady: () => {
+                              setIsInitializing(false)
+                              onReady?.()
+                            },
+                            onStateChange: () => {},
+                            onPlaybackQualityChange: () => {},
+                            onPlaybackRateChange: () => {},
+                            onError: () => {
+                              setPlayerError('Failed to load video')
+                              setIsInitializing(false)
+                            },
+                            onApiChange: () => {},
+                            onVolumeChange: () => {}
+                          }
+                        })
+                      }
+                      initializePlayer()
+                    }, 100)
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}

@@ -38,10 +38,12 @@ interface VideosState {
   randomVideosLoading: boolean
   randomVideosError: string | null
 
-  // Random videos from current channel for Up Next
-  channelRandomVideos: Video[]
-  channelRandomVideosLoading: boolean
-  channelRandomVideosError: string | null
+  // Random videos from channels for Up Next - stored per channel
+  channelRandomVideos: Record<string, {
+    videos: Video[]
+    loading: boolean
+    error: string | null
+  }>
 
   // Channel
   currentChannel: Channel | null
@@ -91,9 +93,7 @@ const initialState: VideosState = {
   randomVideosLoading: false,
   randomVideosError: null,
 
-  channelRandomVideos: [],
-  channelRandomVideosLoading: false,
-  channelRandomVideosError: null,
+  channelRandomVideos: {},
 
   currentChannel: null,
   channelLoading: false,
@@ -155,7 +155,7 @@ export const fetchVideoDetails = createAsyncThunk(
 export const fetchRelatedVideos = createAsyncThunk(
   'videos/fetchRelatedVideos',
   async ({ videoId, pageToken }: { videoId: string; pageToken?: string }) => {
-    const response = await youtubeService.getRelatedVideos(videoId, pageToken)
+    const response = await youtubeService.getRelatedVideosBySearch(videoId, pageToken)
     return response
   }
 )
@@ -314,6 +314,10 @@ const videosSlice = createSlice({
       state.channelError = null
       state.channelVideosError = null
     },
+    clearChannelRandomVideos: (state, action: PayloadAction<string>) => {
+      const channelId = action.payload
+      delete state.channelRandomVideos[channelId]
+    },
     clearAllData: (state) => {
       // Clear all video data when settings change
       state.trendingVideos = []
@@ -333,6 +337,7 @@ const videosSlice = createSlice({
       
       state.relatedVideos = {}
       
+      state.channelRandomVideos = {}
       
       state.currentChannel = null
       state.channelLoading = false
@@ -512,17 +517,41 @@ const videosSlice = createSlice({
 
     // Random videos from specific channel
     builder
-      .addCase(fetchRandomVideosFromChannel.pending, (state) => {
-        state.channelRandomVideosLoading = true
-        state.channelRandomVideosError = null
+      .addCase(fetchRandomVideosFromChannel.pending, (state, action) => {
+        const channelId = action.meta.arg.channelId
+        if (!state.channelRandomVideos[channelId]) {
+          state.channelRandomVideos[channelId] = {
+            videos: [],
+            loading: false,
+            error: null
+          }
+        }
+        state.channelRandomVideos[channelId].loading = true
+        state.channelRandomVideos[channelId].error = null
       })
       .addCase(fetchRandomVideosFromChannel.fulfilled, (state, action) => {
-        state.channelRandomVideosLoading = false
-        state.channelRandomVideos = action.payload
+        const channelId = action.meta.arg.channelId
+        if (!state.channelRandomVideos[channelId]) {
+          state.channelRandomVideos[channelId] = {
+            videos: [],
+            loading: false,
+            error: null
+          }
+        }
+        state.channelRandomVideos[channelId].loading = false
+        state.channelRandomVideos[channelId].videos = action.payload
       })
       .addCase(fetchRandomVideosFromChannel.rejected, (state, action) => {
-        state.channelRandomVideosLoading = false
-        state.channelRandomVideosError = action.error.message || 'Failed to fetch random videos from channel'
+        const channelId = action.meta.arg.channelId
+        if (!state.channelRandomVideos[channelId]) {
+          state.channelRandomVideos[channelId] = {
+            videos: [],
+            loading: false,
+            error: null
+          }
+        }
+        state.channelRandomVideos[channelId].loading = false
+        state.channelRandomVideos[channelId].error = action.error.message || 'Failed to fetch random videos from channel'
       })
 
     // Category videos
@@ -625,5 +654,14 @@ const videosSlice = createSlice({
   },
 })
 
-export const { clearSearchResults, clearCurrentVideo, clearChannel, clearAllData } = videosSlice.actions
+// Selectors
+export const selectChannelRandomVideos = (channelId: string) => (state: { videos: VideosState }) => {
+  return state.videos.channelRandomVideos[channelId] || {
+    videos: [],
+    loading: false,
+    error: null
+  }
+}
+
+export const { clearSearchResults, clearCurrentVideo, clearChannel, clearChannelRandomVideos, clearAllData } = videosSlice.actions
 export default videosSlice.reducer

@@ -684,7 +684,97 @@ const searchByTrending = async (videoDetails: Video, totalResults: number): Prom
   }
 }
 
-// Get related videos using hybrid approach with channel priority
+// Get related videos using search endpoint with video title as query
+export const getRelatedVideosBySearch = async (
+  videoId: string,
+  pageToken?: string
+): Promise<SearchResponse> => {
+  if (shouldUseMockData()) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    return mockRelatedVideos
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.params.key) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
+  return localStorageCache.getRelatedVideos(videoId, async () => {
+    try {
+      // Get video details to extract title and category
+      const videoDetails = await getVideoDetails(videoId)
+      
+      // Use video title as search query
+      const searchQuery = videoDetails.title
+      
+      const params: any = {
+        part: 'snippet',
+        q: searchQuery,
+        type: 'video',
+        maxResults: 50,
+        order: 'relevance',
+        videoEmbeddable: true,
+        safeSearch: 'moderate',
+        videoDefinition: 'high', // Prefer HD videos
+        videoDuration: 'medium', // Prefer medium length videos (4-20 minutes)
+        relevanceLanguage: 'en', // Prefer English content
+      }
+
+      // Add category ID if available
+      if (videoDetails.categoryId) {
+        params.videoCategoryId = videoDetails.categoryId
+      }
+
+      // Add pagination token if provided
+      if (pageToken) {
+        params.pageToken = pageToken
+      }
+
+      console.log('🔍 Searching for related videos with query:', searchQuery)
+      console.log('📂 Using category ID:', videoDetails.categoryId)
+      console.log('📺 Channel ID:', videoDetails.channelId)
+      console.log('🏷️ Video tags:', videoDetails.tags?.slice(0, 5)) // Show first 5 tags
+
+      const api = getApiInstance()
+      const response: AxiosResponse = await api.get('/search', { params })
+
+      const videos = response.data.items.map((item: any) => ({
+        id: item.id.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description || '',
+        thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || '',
+        channelTitle: item.snippet.channelTitle,
+        channelId: item.snippet.channelId,
+        publishedAt: item.snippet.publishedAt,
+        duration: '', // Will be filled by getVideoDetails if needed
+        viewCount: '', // Will be filled by getVideoDetails if needed
+        tags: [], // Will be filled by getVideoDetails if needed
+        categoryId: videoDetails.categoryId, // Use the same category as the original video
+      }))
+
+      // Filter out the current video from results
+      const filteredVideos = videos.filter((video: any) => video.id !== videoId)
+
+      console.log('✅ Found', filteredVideos.length, 'related videos')
+      console.log('📄 Next page token:', response.data.nextPageToken ? 'Available' : 'None')
+      console.log('📊 Total results:', response.data.pageInfo?.totalResults || filteredVideos.length)
+
+      return {
+        items: filteredVideos,
+        nextPageToken: response.data.nextPageToken,
+        totalResults: response.data.pageInfo?.totalResults || filteredVideos.length,
+      }
+
+    } catch (error) {
+      console.error('Error fetching related videos by search:', error)
+      handleApiError(error)
+      throw error
+    }
+  })
+}
+
+// Get related videos using hybrid approach with channel priority (keeping for backward compatibility)
 export const getRelatedVideos = async (
   videoId: string,
   pageToken?: string

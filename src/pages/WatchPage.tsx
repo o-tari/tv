@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
@@ -168,7 +168,22 @@ const WatchPage = () => {
   const isLoading = isAnime ? currentAnimeLoading : loading
   const currentError = isAnime ? currentAnimeError : error
 
-  if (isLoading) {
+  // Add timeout for loading states to prevent infinite loading
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
+  
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        setLoadingTimeout(true)
+      }, 15000) // 15 second timeout
+      
+      return () => clearTimeout(timeout)
+    } else {
+      setLoadingTimeout(false)
+    }
+  }, [isLoading])
+
+  if (isLoading && !loadingTimeout) {
     return (
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
@@ -180,6 +195,38 @@ const WatchPage = () => {
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (loadingTimeout) {
+    return (
+      <div className="p-8 text-center">
+        <div className="w-24 h-24 mx-auto mb-4 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+          <svg className="w-12 h-12 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          Loading Timeout
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          The content is taking longer than expected to load. This might be due to network issues or API problems.
+        </p>
+        <div className="space-x-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-primary"
+          >
+            Reload Page
+          </button>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     )
@@ -415,14 +462,12 @@ const WatchPage = () => {
 
               {/* Related Videos */}
               <div className="w-full">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Related videos
-                </h3>
                 <RelatedVideosList
                   videos={relatedVideos}
                   loading={relatedLoading}
                   error={relatedError}
                   onRetry={retryRelatedVideos}
+                  title="Videos similar to this one"
                 />
               </div>
             </div>
