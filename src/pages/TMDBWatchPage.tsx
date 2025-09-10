@@ -561,116 +561,82 @@ const TMDBWatchPage = () => {
                 </h3>
                 
                 <div className="space-y-4">
-                  {content.seasons.map((season) => (
-                    <div key={season.id}>
-                      <div className={`p-3 rounded-lg transition-colors ${
-                        selectedSeason === season.season_number
-                          ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                      }`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <button
-                            onClick={() => handleSeasonSelect(season.season_number)}
-                            className="flex-1 text-left hover:opacity-80 transition-opacity"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold">
-                                Season {season.season_number}
-                              </span>
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {season.episode_count} episodes
-                              </span>
-                            </div>
-                            {season.air_date && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                {formatDate(season.air_date)}
-                              </p>
-                            )}
-                          </button>
-                          
-                          {/* External Link for Season */}
-                          <a
-                            href={generateSeasonExternalLink(season.season_number)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ml-3 inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                            title={`Search for Season ${season.season_number} on 1337x`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
+                  {/* Season Buttons - Reverse order (newer seasons first) */}
+                  <div className="flex flex-wrap gap-2">
+                    {content.seasons
+                      .slice()
+                      .reverse()
+                      .map((season) => (
+                        <button
+                          key={season.id}
+                          onClick={() => handleSeasonSelect(season.season_number)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                            selectedSeason === season.season_number
+                              ? 'bg-red-600 text-white'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          Season {season.season_number}
+                        </button>
+                      ))}
+                  </div>
+                  
+                  {/* Selected Season Episodes */}
+                  {selectedSeason !== null && (
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      {episodesLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <LoadingSpinner />
+                          <span className="ml-3 text-gray-600 dark:text-gray-400">
+                            Loading episodes...
+                          </span>
                         </div>
-                      </div>
-                      
-                      {selectedSeason === season.season_number && (
-                        <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          {episodesLoading ? (
-                            <div className="flex items-center justify-center py-4">
-                              <LoadingSpinner />
-                            </div>
-                          ) : episodes.length > 0 ? (
-                            <div className="space-y-2">
-                              <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                Episodes ({episodes.length})
-                              </h4>
-                              {episodes.map((episode) => (
+                      ) : episodes.length > 0 ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-gray-900 dark:text-white">
+                              Season {selectedSeason} Episodes ({episodes.length})
+                            </h4>
+                            <a
+                              href={generateSeasonExternalLink(selectedSeason)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                              title={`Search for Season ${selectedSeason} on 1337x`}
+                            >
+                              <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          </div>
+                          
+                          {/* Episode Number Buttons - Reverse order (newer episodes first) */}
+                          <div className="flex flex-wrap gap-2">
+                            {episodes
+                              .slice()
+                              .reverse()
+                              .map((episode) => (
                                 <button
                                   key={episode.id}
                                   onClick={() => handleEpisodeSelect(episode)}
-                                  className={`w-full flex items-start space-x-3 p-2 rounded transition-colors ${
+                                  className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all ${
                                     selectedEpisode?.id === episode.id
-                                      ? 'bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700'
-                                      : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                                      ? 'bg-red-600 text-white border-red-600'
+                                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                                   }`}
                                 >
-                                  <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${
-                                    selectedEpisode?.id === episode.id
-                                      ? 'bg-red-500 text-white'
-                                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                                  }`}>
-                                    {episode.episode_number}
-                                  </div>
-                                  <div className="flex-1 min-w-0 text-left">
-                                    <h5 className={`text-sm font-medium truncate ${
-                                      selectedEpisode?.id === episode.id
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-gray-900 dark:text-white'
-                                    }`}>
-                                      {episode.name}
-                                    </h5>
-                                    {episode.air_date && (
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        {formatDate(episode.air_date)}
-                                      </p>
-                                    )}
-                                    {episode.overview && (
-                                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                        {episode.overview}
-                                      </p>
-                                    )}
-                                    {episode.vote_average > 0 && (
-                                      <div className="flex items-center mt-1">
-                                        <span className="text-yellow-500 text-xs mr-1">★</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                          {episode.vote_average.toFixed(1)}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
+                                  {episode.episode_number}
                                 </button>
                               ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                              No episodes available
-                            </p>
-                          )}
+                          </div>
                         </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                          No episodes available
+                        </p>
                       )}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
