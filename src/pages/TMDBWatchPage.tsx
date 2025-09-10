@@ -10,6 +10,7 @@ import type { ApiTorrentSearchResponse } from '../types/torrent'
 import TorrentPlayer from '../components/TorrentPlayer'
 import TorrentsTable from '../components/TorrentsTable'
 import LoadingSpinner from '../components/LoadingSpinner'
+import SeasonSearchModal from '../components/SeasonSearchModal'
 
 const TMDBWatchPage = () => {
   const { id, type } = useParams<{ id: string; type: 'movie' | 'tv' }>()
@@ -26,6 +27,7 @@ const TMDBWatchPage = () => {
   const [selectedEpisode, setSelectedEpisode] = useState<TMDBEpisode | null>(null)
   const [torrentResults, setTorrentResults] = useState<ApiTorrentSearchResponse | null>(null)
   const [torrentLoading, setTorrentLoading] = useState(false)
+  const [seasonSearchModalOpen, setSeasonSearchModalOpen] = useState(false)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
@@ -597,17 +599,28 @@ const TMDBWatchPage = () => {
                             <h4 className="font-semibold text-gray-900 dark:text-white">
                               Season {selectedSeason} Episodes ({episodes.length})
                             </h4>
-                            <a
-                              href={generateSeasonExternalLink(selectedSeason)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                              title={`Search for Season ${selectedSeason} on 1337x`}
-                            >
-                              <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            </a>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => setSeasonSearchModalOpen(true)}
+                                className="inline-flex items-center justify-center w-8 h-8 bg-blue-200 dark:bg-blue-600 hover:bg-blue-300 dark:hover:bg-blue-500 rounded-lg transition-colors"
+                                title={`Search torrents for Season ${selectedSeason}`}
+                              >
+                                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                              </button>
+                              <a
+                                href={generateSeasonExternalLink(selectedSeason)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                                title={`Search for Season ${selectedSeason} on 1337x`}
+                              >
+                                <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            </div>
                           </div>
                           
                           {/* Episode Number Buttons - Reverse order (newer episodes first) */}
@@ -701,6 +714,16 @@ const TMDBWatchPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Season Search Modal */}
+      {isTV && content && (
+        <SeasonSearchModal
+          isOpen={seasonSearchModalOpen}
+          onClose={() => setSeasonSearchModalOpen(false)}
+          showTitle={(content as TMDBTVDetails).name}
+          seasonNumber={selectedSeason}
+        />
+      )}
     </div>
   )
 }

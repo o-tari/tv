@@ -67,7 +67,8 @@ const TorrentsTable = ({
             {searchResults.data.slice(0, displayedTorrents).map((torrent, index) => (
               <tr
                 key={index}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                onClick={() => onTorrentSelect?.(torrent)}
+                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
                   selectedTorrent?.magnet === torrent.magnet
                     ? 'bg-green-50 dark:bg-green-900/10'
                     : ''
