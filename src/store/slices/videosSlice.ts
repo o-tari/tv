@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { type Video, type Channel } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { requestCache } from '../../utils/requestCache'
+import { getCachedData, setCachedData, isCached, YOUTUBE_CACHE_KEYS } from '../../utils/cache'
 
 interface RelatedVideosState {
   videos: Video[]
@@ -82,7 +83,26 @@ const initialState: VideosState = {
 export const fetchTrendingVideos = createAsyncThunk(
   'videos/fetchTrendingVideos',
   async (pageToken?: string) => {
+    const cacheKey = pageToken ? `${YOUTUBE_CACHE_KEYS.TRENDING}:${pageToken}` : YOUTUBE_CACHE_KEYS.TRENDING
+    
+    // Check cache first
+    if (!pageToken && isCached(cacheKey)) {
+      const cachedData = getCachedData(cacheKey)
+      if (cachedData) {
+        console.log('📦 Using cached trending videos')
+        return cachedData
+      }
+    }
+    
+    // Fetch from API
+    console.log('🌐 Fetching trending videos from API')
     const response = await youtubeService.getTrendingVideos(pageToken)
+    
+    // Cache the response (only cache initial load, not pagination)
+    if (!pageToken) {
+      setCachedData(cacheKey, response)
+    }
+    
     return response
   }
 )
@@ -131,7 +151,24 @@ export const fetchChannelVideos = createAsyncThunk(
 export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
   'videos/fetchRandomVideosFromSavedChannels',
   async (count: number = 200) => {
+    const cacheKey = `${YOUTUBE_CACHE_KEYS.RANDOM_VIDEOS}:${count}`
+    
+    // Check cache first
+    if (isCached(cacheKey)) {
+      const cachedData = getCachedData<Video[]>(cacheKey)
+      if (cachedData) {
+        console.log('📦 Using cached random videos')
+        return cachedData
+      }
+    }
+    
+    // Fetch from API
+    console.log('🌐 Fetching random videos from API')
     const videos = await youtubeService.getRandomVideosFromSavedChannels(count)
+    
+    // Cache the response
+    setCachedData(cacheKey, videos)
+    
     return videos
   }
 )

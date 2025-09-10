@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import { type Channel, type Video } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
+import { getCachedData, setCachedData, isCached, YOUTUBE_CACHE_KEYS } from '../../utils/cache'
 
 interface ChannelsState {
   savedChannels: Channel[]
@@ -54,9 +55,27 @@ export const fetchAllChannelVideos = createAsyncThunk(
     const state = getState() as { channels: ChannelsState }
     const savedChannels = state.channels.savedChannels
     
-    const promises = savedChannels.map(channel => 
-      youtubeService.getChannelVideos(channel.id)
-    )
+    const promises = savedChannels.map(async (channel) => {
+      const cacheKey = YOUTUBE_CACHE_KEYS.CHANNEL_VIDEOS(channel.id)
+      
+      // Check cache first
+      if (isCached(cacheKey)) {
+        const cachedData = getCachedData(cacheKey)
+        if (cachedData) {
+          console.log(`📦 Using cached videos for channel: ${channel.title}`)
+          return cachedData
+        }
+      }
+      
+      // Fetch from API
+      console.log(`🌐 Fetching videos for channel: ${channel.title}`)
+      const response = await youtubeService.getChannelVideos(channel.id)
+      
+      // Cache the response
+      setCachedData(cacheKey, response)
+      
+      return response
+    })
     
     const responses = await Promise.all(promises)
     return responses.map((response, index) => ({

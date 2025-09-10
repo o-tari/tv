@@ -7,6 +7,7 @@ import {
   selectChannelsLoading,
   fetchAllChannelVideos 
 } from '../store/slices/channelsSlice'
+import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'
 import VideoGrid from './VideoGrid'
 import ChannelsManagementModal from './ChannelsManagementModal'
 
@@ -18,12 +19,30 @@ const ChannelsSection = () => {
   const savedChannels = useAppSelector(selectSavedChannels)
   const latestVideos = useAppSelector(selectLatestChannelVideos)
   const loading = useAppSelector(selectChannelsLoading)
+  const { randomVideos } = useAppSelector((state) => state.videos)
 
   useEffect(() => {
     if (savedChannels.length > 0) {
       dispatch(fetchAllChannelVideos())
+      // Also fetch random videos for the random button
+      dispatch(fetchRandomVideosFromSavedChannels(200))
     }
   }, [dispatch, savedChannels.length])
+
+  const handleRandomVideo = () => {
+    if (randomVideos && randomVideos.length > 0) {
+      const randomIndex = Math.floor(Math.random() * randomVideos.length)
+      const randomVideo = randomVideos[randomIndex]
+      
+      if (randomVideo && randomVideo.id) {
+        console.log('🎲 Random video selected:', randomVideo.title)
+        navigate(`/watch/${randomVideo.id}`)
+      }
+    } else {
+      // If no random videos available, fetch them first
+      dispatch(fetchRandomVideosFromSavedChannels(200))
+    }
+  }
 
   if (savedChannels.length === 0) {
     return null
@@ -37,6 +56,16 @@ const ChannelsSection = () => {
             📺 Channels
           </h2>
           <div className="flex items-center space-x-2">
+            <button
+              onClick={handleRandomVideo}
+              className="flex items-center space-x-1 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+              title="Play Random Video from Saved Channels"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Random</span>
+            </button>
             <button
               onClick={() => setShowModal(true)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
