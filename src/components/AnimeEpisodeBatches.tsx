@@ -2,8 +2,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToAnimeContinueWatching, saveAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
 import { selectAnimeContinueWatching, selectAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
+import { torrentSearchService } from '../services/torrentSearch'
 import { type AnimeEpisode, type AnimeMedia } from '../types/anime'
+import type { ApiTorrentSearchResponse } from '../types/torrent'
 import LoadingSpinner from './LoadingSpinner'
+import TorrentsTable from './TorrentsTable'
 
 interface AnimeEpisodeBatchesProps {
   episodes: AnimeEpisode[]
@@ -38,6 +41,8 @@ const AnimeEpisodeBatches = ({
   const [selectedRange, setSelectedRange] = useState<string>('')
   const [selectedEpisode, setSelectedEpisode] = useState<AnimeEpisode | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [torrentResults, setTorrentResults] = useState<ApiTorrentSearchResponse | null>(null)
+  const [torrentLoading, setTorrentLoading] = useState(false)
   
 
   // Create episode ranges based on total episode count
@@ -141,7 +146,42 @@ const AnimeEpisodeBatches = ({
       episodeNumber: episode.episodeNumber,
       episodeTitle: episode.title
     }))
-    
+
+    // Search for torrents for this episode
+    searchForEpisodeTorrents(episode)
+  }
+
+  const searchForEpisodeTorrents = async (episode: AnimeEpisode) => {
+    try {
+      setTorrentLoading(true)
+      console.log('🔍 Searching for anime episode torrents:', {
+        anime: animeTitle,
+        episode: episode.episodeNumber,
+        title: episode.title
+      })
+
+      // Create search query for anime episode
+      const seasonStr = '01' // Most anime are single season, use 01 as default
+      const episodeStr = episode.episodeNumber.toString().padStart(2, '0')
+      const searchQuery = `${animeTitle} s${seasonStr}e${episodeStr}`
+      
+      console.log('🔍 Anime search query:', searchQuery)
+      
+      const results = await torrentSearchService.searchTVTorrents(
+        animeTitle,
+        1, // Season 1 for most anime
+        episode.episodeNumber,
+        'piratebay'
+      )
+      
+      console.log('🔍 Anime torrent search results:', results)
+      setTorrentResults(results)
+    } catch (error) {
+      console.error('❌ Error searching for anime episode torrents:', error)
+      setTorrentResults(null)
+    } finally {
+      setTorrentLoading(false)
+    }
   }
 
 
@@ -241,6 +281,26 @@ const AnimeEpisodeBatches = ({
               </span>
             )}
           </div>
+
+          {/* Torrents Table for Selected Episode */}
+          {torrentLoading ? (
+            <div className="mt-4 flex items-center justify-center py-8">
+              <LoadingSpinner />
+              <span className="ml-3 text-gray-600 dark:text-gray-400">
+                Searching for torrents...
+              </span>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <TorrentsTable 
+                searchResults={torrentResults}
+                selectedTorrent={null}
+                onTorrentSelect={(torrent) => {
+                  console.log('🎬 Anime torrent selected:', torrent.name)
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
