@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { type Video, type Channel } from '../../types/youtube'
+import { type Video, type Channel, type SearchResponse } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { requestCache } from '../../utils/requestCache'
 import { getCachedData, setCachedData, isCached, YOUTUBE_CACHE_KEYS } from '../../utils/cache'
@@ -80,14 +80,14 @@ const initialState: VideosState = {
 }
 
 // Async thunks
-export const fetchTrendingVideos = createAsyncThunk(
+export const fetchTrendingVideos = createAsyncThunk<SearchResponse, string | undefined>(
   'videos/fetchTrendingVideos',
   async (pageToken?: string) => {
     const cacheKey = pageToken ? `${YOUTUBE_CACHE_KEYS.TRENDING}:${pageToken}` : YOUTUBE_CACHE_KEYS.TRENDING
     
     // Check cache first
     if (!pageToken && isCached(cacheKey)) {
-      const cachedData = getCachedData(cacheKey)
+      const cachedData = getCachedData(cacheKey) as SearchResponse
       if (cachedData) {
         console.log('📦 Using cached trending videos')
         return cachedData

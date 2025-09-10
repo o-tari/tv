@@ -33,6 +33,7 @@ interface YouTubePlayer {
   setPlaybackQuality(quality: string): void
   getIframe(): HTMLIFrameElement | null
   destroy(): void
+  loadVideoById(videoId: string): void
 }
 
 interface YouTubePlayerEvent {
@@ -270,28 +271,6 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
               currentQuality: player.getPlaybackQuality()
             })
             
-            // Resume from saved progress if available
-            if (savedProgress > 0 && !hasResumed && initialDuration > 0) {
-              // Don't seek if we're too close to the end (within 5 seconds)
-              const maxSeekTime = initialDuration - 5
-              const seekTime = Math.min(savedProgress, maxSeekTime)
-              
-              if (seekTime > 5) { // Only seek if we're more than 5 seconds in
-                console.log(`🎬 Resuming video from ${seekTime.toFixed(1)}s (${((seekTime / initialDuration) * 100).toFixed(1)}%)`)
-                // Seek immediately when player is ready, before any playing starts
-                setTimeout(() => {
-                  if (playerInstanceRef.current) {
-                    playerInstanceRef.current.seekTo(seekTime, true)
-                    setCurrentTime(seekTime)
-                    setHasResumed(true)
-                  }
-                }, 200) // Slightly longer delay to ensure player is fully ready
-              } else {
-                console.log(`🎬 Saved progress too close to start/end, starting from beginning`)
-                setHasResumed(true)
-              }
-            }
-            
             onReady?.()
           },
           
@@ -375,7 +354,35 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
     // Small delay to ensure DOM is ready
     const timer = setTimeout(initializePlayer, 100)
     return () => clearTimeout(timer)
-  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd, autoplay, savedProgress, hasResumed])
+  }, [isAPIReady, videoId, dispatch, onReady, onStateChange, onVideoEnd, autoplay])
+
+  // Handle saved progress restoration after player is ready
+  useEffect(() => {
+    if (playerInstanceRef.current && savedProgress > 0 && !hasResumed) {
+      const duration = playerInstanceRef.current.getDuration()
+      if (duration > 0) {
+        // Don't seek if we're too close to the end (within 5 seconds)
+        const maxSeekTime = duration - 5
+        const seekTime = Math.min(savedProgress, maxSeekTime)
+        
+        if (seekTime > 5) { // Only seek if we're more than 5 seconds in
+          console.log(`🎬 Resuming video from ${seekTime.toFixed(1)}s (${((seekTime / duration) * 100).toFixed(1)}%)`)
+          // Seek immediately when player is ready, before any playing starts
+          setTimeout(() => {
+            if (playerInstanceRef.current) {
+              playerInstanceRef.current.seekTo(seekTime, true)
+              setCurrentTime(seekTime)
+              setHasResumed(true)
+            }
+          }, 200) // Slightly longer delay to ensure player is fully ready
+        } else {
+          console.log(`🎬 Saved progress too close to start/end, starting from beginning`)
+          setHasResumed(true)
+        }
+      }
+    }
+  }, [savedProgress, hasResumed])
+
 
   // Update current time periodically and track progress
   useEffect(() => {

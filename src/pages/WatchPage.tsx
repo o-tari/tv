@@ -2,7 +2,6 @@ import { useEffect, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToHistory } from '../store/slices/historySlice'
-import { addToContinueWatching } from '../store/slices/continueWatchingSlice'
 import { addToAnimeContinueWatching } from '../store/slices/animeContinueWatchingSlice'
 import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'
 import { toggleAutoplay } from '../store/slices/uiSlice'
@@ -109,14 +108,16 @@ const WatchPage = () => {
     }
   }, [dispatch, currentAnime])
 
-  // Handle video end - navigate to random video from saved channels
+  // Handle video end - navigate to random video from saved channels (only if autoplay is enabled)
   const handleVideoEnd = useCallback(() => {
     console.log('🎬 Video ended! Checking for auto-play...')
     console.log('isAnime:', isAnime)
+    console.log('autoplay enabled:', autoplay)
     console.log('randomVideos length:', randomVideos?.length || 0)
     console.log('current videoId:', videoId)
     
-    if (!isAnime) {
+    // Only auto-navigate if autoplay is enabled and this is not an anime page
+    if (!isAnime && autoplay) {
       if (randomVideos && randomVideos.length > 0) {
         // Filter out current video
         const availableVideos = randomVideos.filter(video => video.id !== videoId)
@@ -149,10 +150,12 @@ const WatchPage = () => {
         // Try to fetch random videos if they're not available
         dispatch(fetchRandomVideosFromSavedChannels(200))
       }
+    } else if (!autoplay) {
+      console.log('🎬 Video ended, but autoplay is disabled - staying on current video')
     } else {
       console.log('🎬 Video ended, but this is an anime page')
     }
-  }, [isAnime, randomVideos, videoId, navigate, dispatch])
+  }, [isAnime, autoplay, randomVideos, videoId, navigate, dispatch])
 
   // Handle video selection from Up Next
   const handleVideoSelect = (video: any) => {
@@ -367,7 +370,7 @@ const WatchPage = () => {
             
             <EnhancedYouTubePlayer 
               videoId={video!.id} 
-              video={video}
+              video={video || undefined}
               showControls={true}
               onVideoEnd={handleVideoEnd}
               autoplay={autoplay}

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, createSelector, type PayloadAction } from '@reduxjs/toolkit'
-import { type Channel, type Video } from '../../types/youtube'
+import { type Channel, type Video, type SearchResponse } from '../../types/youtube'
 import * as youtubeService from '../../services/youtube'
 import { getCachedData, setCachedData, isCached, YOUTUBE_CACHE_KEYS } from '../../utils/cache'
 
@@ -64,7 +64,11 @@ export const fetchChannelVideos = createAsyncThunk(
 // Global flag to prevent multiple simultaneous calls
 let isFetchingAllChannelVideos = false
 
-export const fetchAllChannelVideos = createAsyncThunk(
+export const fetchAllChannelVideos = createAsyncThunk<
+  Array<{ channelId: string } & SearchResponse>,
+  void,
+  { state: { channels: ChannelsState } }
+>(
   'channels/fetchAllChannelVideos',
   async (_, { getState }) => {
     const state = getState() as { channels: ChannelsState }
@@ -81,14 +85,14 @@ export const fetchAllChannelVideos = createAsyncThunk(
     
     try {
       // Process channels sequentially with delays to avoid rate limiting
-      const responses = []
+      const responses: SearchResponse[] = []
       for (let i = 0; i < savedChannels.length; i++) {
         const channel = savedChannels[i]
         const cacheKey = YOUTUBE_CACHE_KEYS.CHANNEL_VIDEOS(channel.id)
         
         // Check cache first
         if (isCached(cacheKey)) {
-          const cachedData = getCachedData(cacheKey)
+          const cachedData = getCachedData(cacheKey) as SearchResponse
           if (cachedData) {
             console.log(`📦 Using cached videos for channel: ${channel.title}`)
             responses.push(cachedData)
@@ -111,7 +115,7 @@ export const fetchAllChannelVideos = createAsyncThunk(
         }
       }
       
-      return responses.map((response, index) => ({
+      return responses.map((response: SearchResponse, index: number) => ({
         channelId: savedChannels[index].id,
         ...response
       }))

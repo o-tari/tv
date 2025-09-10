@@ -43,11 +43,6 @@ const ChannelsManagementModal = ({ isOpen, onClose }: ChannelsManagementModalPro
     setCurrentPage(page)
   }
 
-  const handleLoadMore = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1)
-    }
-  }
 
   const handleRemoveChannel = (channelId: string) => {
     dispatch(removeChannel(channelId))

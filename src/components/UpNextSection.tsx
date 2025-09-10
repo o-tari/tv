@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchRandomVideosFromSavedChannels } from '../store/slices/videosSlice'

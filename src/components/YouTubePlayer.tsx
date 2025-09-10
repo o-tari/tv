@@ -9,12 +9,6 @@ interface YouTubePlayerProps {
   autoplay?: boolean
 }
 
-declare global {
-  interface Window {
-    YT: any
-    onYouTubeIframeAPIReady: () => void
-  }
-}
 
 const YouTubePlayer = ({ videoId, onReady, onStateChange, autoplay = false }: YouTubePlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null)
@@ -55,7 +49,7 @@ const YouTubePlayer = ({ videoId, onReady, onStateChange, autoplay = false }: Yo
         playerInstanceRef.current.destroy()
       }
 
-      playerInstanceRef.current = new window.YT.Player(playerRef.current, {
+      playerInstanceRef.current = new window.YT.Player(playerRef.current!, {
         height: '100%',
         width: '100%',
         videoId: videoId,
@@ -87,8 +81,17 @@ const YouTubePlayer = ({ videoId, onReady, onStateChange, autoplay = false }: Yo
           onPlaybackQualityChange: () => {
             // Playback quality changed
           },
+          onPlaybackRateChange: () => {
+            // Playback rate changed
+          },
           onError: () => {
             // YouTube player error
+          },
+          onApiChange: () => {
+            // API change
+          },
+          onVolumeChange: () => {
+            // Volume change
           },
         },
       })

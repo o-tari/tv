@@ -3,7 +3,6 @@ import Sidebar from '../components/Sidebar'
 import FloatingSidebarButton from '../components/FloatingSidebarButton'
 import MockDataNotification from '../components/MockDataNotification'
 import Settings from '../components/Settings'
-import { useAppSelector } from '../store'
 
 interface LayoutProps {
   children: ReactNode

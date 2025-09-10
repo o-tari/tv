@@ -21,10 +21,16 @@ export const useVideo = (videoId: string) => {
 
   useEffect(() => {
     if (videoId) {
-      dispatch(fetchVideoDetails(videoId))
-      dispatch(fetchRelatedVideos({ videoId }))
+      // Only fetch if we don't already have this video or if it's different from current
+      if (currentVideo?.id !== videoId) {
+        dispatch(fetchVideoDetails(videoId))
+      }
+      // Only fetch related videos if we don't already have them for this video
+      if (!currentRelatedVideos.videos.length && !currentRelatedVideos.loading) {
+        dispatch(fetchRelatedVideos({ videoId }))
+      }
     }
-  }, [dispatch, videoId])
+  }, [dispatch, videoId, currentVideo?.id, currentRelatedVideos.videos.length, currentRelatedVideos.loading])
 
   const loadMoreRelated = () => {
     if (videoId && !currentRelatedVideos.loading) {
