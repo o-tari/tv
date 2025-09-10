@@ -95,6 +95,8 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
   const [isPlaying, setIsPlaying] = useState(false)
   const [isBuffering, setIsBuffering] = useState(false)
   const [showLogsModal, setShowLogsModal] = useState(false)
+  const [isPictureInPicture, setIsPictureInPicture] = useState(false)
+  const [isPictureInPictureSupported, setIsPictureInPictureSupported] = useState(false)
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -119,6 +121,35 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
       }
     }
   }, [])
+
+  // Check Picture-in-Picture support
+  useEffect(() => {
+    const checkPictureInPictureSupport = () => {
+      // Check if the browser supports Picture-in-Picture API
+      const isSupported = 'pictureInPictureEnabled' in document
+      console.log('Picture-in-Picture support check:', isSupported)
+      setIsPictureInPictureSupported(isSupported)
+    }
+
+    checkPictureInPictureSupport()
+  }, [isAPIReady])
+
+  // Listen for Picture-in-Picture events
+  useEffect(() => {
+    const handlePictureInPictureChange = () => {
+      setIsPictureInPicture(!!document.pictureInPictureElement)
+    }
+
+    if (isPictureInPictureSupported) {
+      document.addEventListener('enterpictureinpicture', handlePictureInPictureChange)
+      document.addEventListener('leavepictureinpicture', handlePictureInPictureChange)
+    }
+
+    return () => {
+      document.removeEventListener('enterpictureinpicture', handlePictureInPictureChange)
+      document.removeEventListener('leavepictureinpicture', handlePictureInPictureChange)
+    }
+  }, [isPictureInPictureSupported])
 
   // Initialize player with comprehensive event logging
   useEffect(() => {
@@ -344,6 +375,25 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
         (playerElement as any).msRequestFullscreen()
       }
       setIsFullscreen(!isFullscreen)
+    }
+  }
+
+  const togglePictureInPicture = async () => {
+    try {
+      if (!isPictureInPictureSupported) {
+        console.warn('Picture-in-Picture is not supported in this browser')
+        alert('Picture-in-Picture is not supported in this browser.')
+        return
+      }
+
+      // YouTube iframes don't support Picture-in-Picture directly
+      // Show a helpful message to the user
+      alert('Picture-in-Picture is not available for YouTube videos due to browser security restrictions. You can use the browser\'s native Picture-in-Picture feature by right-clicking on the video and selecting "Picture in Picture" from the context menu.')
+      
+      logYouTubeEvent('CONTROL_PIP', { action: 'info_shown' })
+    } catch (error) {
+      console.error('Picture-in-Picture error:', error)
+      logYouTubeEvent('CONTROL_PIP_ERROR', { error: error instanceof Error ? error.message : String(error) })
     }
   }
 
@@ -587,6 +637,19 @@ const EnhancedYouTubePlayer = ({ videoId, onReady, onStateChange, onVideoEnd, sh
                   <path fillRule="evenodd" d="M3 4a1 1 0 000 2h1.5a1 1 0 000-2H3zm0 4a1 1 0 000 2h1.5a1 1 0 000-2H3zm0 4a1 1 0 000 2h1.5a1 1 0 000-2H3zm4-8a1 1 0 000 2h1.5a1 1 0 000-2H7zm0 4a1 1 0 000 2h1.5a1 1 0 000-2H7zm0 4a1 1 0 000 2h1.5a1 1 0 000-2H7zm4-8a1 1 0 000 2h1.5a1 1 0 000-2h-1.5zm0 4a1 1 0 000 2h1.5a1 1 0 000-2h-1.5zm0 4a1 1 0 000 2h1.5a1 1 0 000-2h-1.5z" clipRule="evenodd" />
                 </svg>
               </button>
+
+              {/* Picture-in-Picture */}
+              {isPictureInPictureSupported && (
+                <button
+                  onClick={togglePictureInPicture}
+                  className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  title={isPictureInPicture ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M2 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H3a1 1 0 01-1-1v-2zm6-6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1v-2zm6-6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
 
               {/* Fullscreen */}
               <button
