@@ -37,7 +37,7 @@ const initialState: SettingsState = {
   tmdbApiKey: loadFromStorage('tmdbApiKey', ''),
   showUpcomingReleases: loadFromStorage('showUpcomingReleases', true),
   hianimeApiKey: loadFromStorage('hianimeApiKey', ''),
-  torrentApiUrl: loadFromStorage('torrentApiUrl', 'https://torrent-api-py-nx0x.onrender.com'),
+  torrentApiUrl: loadFromStorage('torrentApiUrl', ''),
 }
 
 const settingsSlice = createSlice({
@@ -84,7 +84,7 @@ const settingsSlice = createSlice({
       state.tmdbApiKey = ''
       state.showUpcomingReleases = true
       state.hianimeApiKey = ''
-      state.torrentApiUrl = 'https://torrent-api-py-nx0x.onrender.com'
+      state.torrentApiUrl = ''
       saveToStorage('youtubeApiKey', '')
       saveToStorage('useMockData', true)
       saveToStorage('regionCode', 'US')
@@ -92,7 +92,7 @@ const settingsSlice = createSlice({
       saveToStorage('tmdbApiKey', '')
       saveToStorage('showUpcomingReleases', true)
       saveToStorage('hianimeApiKey', '')
-      saveToStorage('torrentApiUrl', 'https://torrent-api-py-nx0x.onrender.com')
+      saveToStorage('torrentApiUrl', '')
     },
   },
 })
@@ -118,5 +118,7 @@ export const selectTmdbApiKey = (state: { settings: SettingsState }) => state.se
 export const selectShowUpcomingReleases = (state: { settings: SettingsState }) => state.settings.showUpcomingReleases
 export const selectHianimeApiKey = (state: { settings: SettingsState }) => state.settings.hianimeApiKey
 export const selectTorrentApiUrl = (state: { settings: SettingsState }) => state.settings.torrentApiUrl
+export const selectIsTorrentEndpointConfigured = (state: { settings: SettingsState }) => 
+  state.settings.torrentApiUrl.trim() !== ''
 
 export default settingsSlice.reducer

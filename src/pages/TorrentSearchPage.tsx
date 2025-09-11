@@ -10,7 +10,7 @@ import { type Torrent, type TorrentSearchParams, type ApiTorrentSearchResponse }
 import LoadingSpinner from '../components/LoadingSpinner'
 import TorrentProviderManager from '../components/TorrentProviderManager'
 import { useAppSelector } from '../store'
-import { selectUseMockData, selectTorrentApiUrl } from '../store/slices/settingsSlice'
+import { selectUseMockData, selectTorrentApiUrl, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 
 // Torrent sites configuration
 const TORRENT_SITES = [
@@ -45,6 +45,7 @@ const TorrentSearchPage = () => {
   const [showProviderManager, setShowProviderManager] = useState(false)
   const useMockData = useAppSelector(selectUseMockData)
   const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
+  const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
 
   useEffect(() => {
     // Load active providers
@@ -152,6 +153,38 @@ const TorrentSearchPage = () => {
       return `${(seeds / 1000).toFixed(1)}K`
     }
     return seeds.toString()
+  }
+
+  // Show message if torrent endpoint is not configured
+  if (!isTorrentEndpointConfigured) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900 mb-4">
+              <span className="text-2xl">⚠️</span>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Torrent Search Not Configured
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+              Please configure a torrent search API endpoint in settings to use this feature.
+            </p>
+            <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 max-w-2xl mx-auto">
+              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                How to configure:
+              </h3>
+              <ol className="text-left text-yellow-700 dark:text-yellow-300 space-y-2">
+                <li>1. Go to Settings</li>
+                <li>2. Find the "Torrent API URL" field</li>
+                <li>3. Enter your torrent search API endpoint URL</li>
+                <li>4. Save the settings</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

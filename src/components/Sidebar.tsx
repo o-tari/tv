@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
 import { logout } from '../store/slices/authSlice'
+import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import SearchBar from './SearchBar'
 
 const Sidebar = () => {
@@ -11,6 +12,7 @@ const Sidebar = () => {
   const dispatch = useAppDispatch()
   const { sidebarOpen } = useAppSelector((state) => state.ui)
   const { isAuthenticated } = useAppSelector((state) => state.auth)
+  const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
@@ -19,7 +21,7 @@ const Sidebar = () => {
     { label: 'Movies & TV', href: '/movies-tv', icon: '🎬' },
     { label: 'Anime', href: '/anime', icon: '🎌' },
     { label: 'HiAnime', href: '/hianime', icon: '🌸' },
-    { label: 'Torrent Search', href: '/torrents', icon: '🔍' },
+    ...(isTorrentEndpointConfigured ? [{ label: 'Torrent Search', href: '/torrents', icon: '🔍' }] : []),
   ]
 
   const isActive = (href: string) => {

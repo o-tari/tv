@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, selectHianimeApiKey, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, setHianimeApiKey, resetSettings } from '../store/slices/settingsSlice'
+import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguage, selectTmdbApiKey, selectShowUpcomingReleases, selectHianimeApiKey, selectTorrentApiUrl, setYoutubeApiKey, setUseMockData, setRegionCode, setLanguage, setTmdbApiKey, setShowUpcomingReleases, setHianimeApiKey, setTorrentApiUrl, resetSettings } from '../store/slices/settingsSlice'
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 import { localStorageCache } from '../utils/localStorageCache'
@@ -15,6 +15,7 @@ const SettingsPage = () => {
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
   const showUpcomingReleases = useAppSelector(selectShowUpcomingReleases)
   const hianimeApiKey = useAppSelector(selectHianimeApiKey)
+  const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
@@ -23,6 +24,7 @@ const SettingsPage = () => {
   const [localTmdbApiKey, setLocalTmdbApiKey] = useState(tmdbApiKey)
   const [localShowUpcomingReleases, setLocalShowUpcomingReleases] = useState(showUpcomingReleases)
   const [localHianimeApiKey, setLocalHianimeApiKey] = useState(hianimeApiKey)
+  const [localTorrentApiUrl, setLocalTorrentApiUrl] = useState(torrentApiUrl)
   const [showApiKey, setShowApiKey] = useState(false)
   const [showTmdbApiKey, setShowTmdbApiKey] = useState(false)
   const [showHianimeApiKey, setShowHianimeApiKey] = useState(false)
@@ -78,6 +80,7 @@ const SettingsPage = () => {
     dispatch(setTmdbApiKey(localTmdbApiKey))
     dispatch(setShowUpcomingReleases(localShowUpcomingReleases))
     dispatch(setHianimeApiKey(localHianimeApiKey))
+    dispatch(setTorrentApiUrl(localTorrentApiUrl))
     // Clear all cached data so it will be refetched with new settings
     dispatch(clearAllData())
   }
@@ -92,6 +95,7 @@ const SettingsPage = () => {
       setLocalTmdbApiKey('')
       setLocalShowUpcomingReleases(true)
       setLocalHianimeApiKey('')
+      setLocalTorrentApiUrl('')
     }
   }
 
@@ -103,6 +107,7 @@ const SettingsPage = () => {
     setLocalTmdbApiKey(tmdbApiKey)
     setLocalShowUpcomingReleases(showUpcomingReleases)
     setLocalHianimeApiKey(hianimeApiKey)
+    setLocalTorrentApiUrl(torrentApiUrl)
   }
 
   return (
@@ -292,6 +297,23 @@ const SettingsPage = () => {
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                   Get your API key from RapidAPI HiAnime
+                </p>
+              </div>
+
+              {/* Torrent API URL */}
+              <div>
+                <label className="block text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Torrent API URL
+                </label>
+                <input
+                  type="url"
+                  value={localTorrentApiUrl}
+                  onChange={(e) => setLocalTorrentApiUrl(e.target.value)}
+                  placeholder="https://torrent-api-py-nx0x.onrender.com"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-base"
+                />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Base URL for the torrent search API. Leave empty to disable torrent search functionality.
                 </p>
               </div>
 

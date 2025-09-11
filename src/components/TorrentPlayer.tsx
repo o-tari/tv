@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppSelector } from '../store'
-import { selectTorrentApiUrl, selectUseMockData } from '../store/slices/settingsSlice'
+import { selectTorrentApiUrl, selectUseMockData, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { torrentSearchService as torrentService } from '../services/torrentSearch'
 import type { TorrentPlayerState, ApiTorrentSearchResponse } from '../types/torrent'
 import YouTubePlayer from './YouTubePlayer'
@@ -33,6 +33,7 @@ const TorrentPlayer = ({
 }: TorrentPlayerProps) => {
   const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
   const useMockData = useAppSelector(selectUseMockData)
+  const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
   const [playerState, setPlayerState] = useState<TorrentPlayerState>({
     isLoading: false,
     error: null,
@@ -110,6 +111,18 @@ const TorrentPlayer = ({
     if (!useTorrent) {
       console.log('🔍 Torrent search disabled, skipping...')
       setUseTorrent(false)
+      return
+    }
+
+    if (!isTorrentEndpointConfigured) {
+      console.log('🔍 Torrent endpoint not configured, skipping...')
+      setUseTorrent(false)
+      updateState({
+        isLoading: false,
+        status: 'failed',
+        message: 'Torrent search endpoint not configured. Please configure it in settings.',
+        progress: 0
+      })
       return
     }
 
@@ -204,7 +217,7 @@ const TorrentPlayer = ({
         message: 'Falling back to YouTube...'
       })
     }
-  }, [movieTitle, showTitle, season, episode, useTorrent, updateState, torrentApiUrl, useMockData])
+  }, [movieTitle, showTitle, season, episode, useTorrent, updateState, torrentApiUrl, useMockData, isTorrentEndpointConfigured])
 
   const loadTorrent = useCallback(async (magnet: string) => {
     console.log('📥 TorrentPlayer: Starting torrent load...')

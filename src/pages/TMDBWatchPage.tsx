@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectTmdbApiKey } from '../store/slices/settingsSlice'
+import { selectTmdbApiKey, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
 import { torrentSearchService } from '../services/torrentSearch'
@@ -17,6 +17,7 @@ const TMDBWatchPage = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
+  const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
   
   const [content, setContent] = useState<TMDBMovieDetails | TMDBTVDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -154,6 +155,12 @@ const TMDBWatchPage = () => {
   }
 
   const searchForEpisodeTorrents = async (show: TMDBTVDetails, episode: TMDBEpisode) => {
+    if (!isTorrentEndpointConfigured) {
+      console.log('🔍 Torrent endpoint not configured, skipping torrent search')
+      setTorrentResults(null)
+      return
+    }
+
     try {
       setTorrentLoading(true)
       console.log('🔍 Searching for episode torrents:', {

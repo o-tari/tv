@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { useAppSelector } from '../store'
+import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { torrentSearchService } from '../services/torrentSearch'
 import { type ApiTorrentSearchResponse } from '../types/torrent'
 import TorrentsTable from './TorrentsTable'
@@ -12,6 +14,7 @@ interface SeasonSearchModalProps {
 }
 
 const SeasonSearchModal = ({ isOpen, onClose, showTitle, seasonNumber }: SeasonSearchModalProps) => {
+  const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
   const [searchResults, setSearchResults] = useState<ApiTorrentSearchResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -23,6 +26,12 @@ const SeasonSearchModal = ({ isOpen, onClose, showTitle, seasonNumber }: SeasonS
   }, [isOpen, showTitle, seasonNumber])
 
   const searchForSeasonTorrents = async () => {
+    if (!isTorrentEndpointConfigured) {
+      setError('Torrent search endpoint not configured. Please configure it in settings.')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToAnimeContinueWatching, saveAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
 import { selectAnimeContinueWatching, selectAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
+import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { torrentSearchService } from '../services/torrentSearch'
 import { type AnimeEpisode, type AnimeMedia } from '../types/anime'
 import type { ApiTorrentSearchResponse } from '../types/torrent'
@@ -38,6 +39,7 @@ const AnimeEpisodeBatches = ({
 }: AnimeEpisodeBatchesProps) => {
   const dispatch = useAppDispatch()
   const continueWatching = useAppSelector(selectAnimeContinueWatching)
+  const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
   const [selectedRange, setSelectedRange] = useState<string>('')
   const [selectedEpisode, setSelectedEpisode] = useState<AnimeEpisode | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -152,6 +154,13 @@ const AnimeEpisodeBatches = ({
   }
 
   const searchForEpisodeTorrents = async (episode: AnimeEpisode) => {
+    if (!isTorrentEndpointConfigured) {
+      console.log('🔍 Torrent endpoint not configured, skipping torrent search')
+      setTorrentResults(null)
+      setTorrentLoading(false)
+      return
+    }
+
     try {
       setTorrentLoading(true)
       console.log('🔍 Searching for anime episode torrents:', {

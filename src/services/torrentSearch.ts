@@ -547,7 +547,7 @@ class ApiTorrentSearchService {
           throw new Error(`Cannot connect to torrent API at ${this.baseUrl}. Please check your API endpoint in settings.`)
         } else if (error.response?.status === 404) {
           throw new Error('Torrent API endpoint not found. Please check your API endpoint in settings.')
-        } else if (error.response?.status >= 500) {
+        } else if (error.response?.status && error.response.status >= 500) {
           throw new Error('Torrent API server error. Please try again later.')
         } else if (error.response?.status === 400) {
           throw new Error('Invalid search parameters. Please check your search query.')
