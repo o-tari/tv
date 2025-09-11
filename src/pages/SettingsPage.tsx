@@ -4,6 +4,8 @@ import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguag
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 import { localStorageCache } from '../utils/localStorageCache'
+import { selectSavedChannels, addChannel, clearChannels } from '../store/slices/channelsSlice'
+import type { Channel } from '../types/youtube'
 
 const SettingsPage = () => {
   const dispatch = useAppDispatch()
@@ -16,6 +18,7 @@ const SettingsPage = () => {
   const showUpcomingReleases = useAppSelector(selectShowUpcomingReleases)
   const hianimeApiKey = useAppSelector(selectHianimeApiKey)
   const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
+  const savedChannels = useAppSelector(selectSavedChannels)
   
   const [localApiKey, setLocalApiKey] = useState(youtubeApiKey)
   const [localUseMockData, setLocalUseMockData] = useState(useMockData)
@@ -28,6 +31,9 @@ const SettingsPage = () => {
   const [showApiKey, setShowApiKey] = useState(false)
   const [showTmdbApiKey, setShowTmdbApiKey] = useState(false)
   const [showHianimeApiKey, setShowHianimeApiKey] = useState(false)
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'general' | 'import-export'>('general')
   
   // Cache management state
   const [cacheStats, setCacheStats] = useState({
@@ -110,6 +116,142 @@ const SettingsPage = () => {
     setLocalTorrentApiUrl(torrentApiUrl)
   }
 
+  // Import/Export functions
+  const exportSettings = () => {
+    const settings = {
+      youtubeApiKey,
+      useMockData,
+      regionCode,
+      language,
+      tmdbApiKey,
+      showUpcomingReleases,
+      hianimeApiKey,
+      torrentApiUrl
+    }
+    
+    const dataStr = JSON.stringify(settings, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+    
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'tv-settings.json'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const settings = JSON.parse(e.target?.result as string)
+        
+        // Validate settings structure
+        if (typeof settings === 'object' && settings !== null) {
+          if (settings.youtubeApiKey !== undefined) setLocalApiKey(settings.youtubeApiKey)
+          if (settings.useMockData !== undefined) setLocalUseMockData(settings.useMockData)
+          if (settings.regionCode !== undefined) setLocalRegionCode(settings.regionCode)
+          if (settings.language !== undefined) setLocalLanguage(settings.language)
+          if (settings.tmdbApiKey !== undefined) setLocalTmdbApiKey(settings.tmdbApiKey)
+          if (settings.showUpcomingReleases !== undefined) setLocalShowUpcomingReleases(settings.showUpcomingReleases)
+          if (settings.hianimeApiKey !== undefined) setLocalHianimeApiKey(settings.hianimeApiKey)
+          if (settings.torrentApiUrl !== undefined) setLocalTorrentApiUrl(settings.torrentApiUrl)
+          
+          alert('Settings imported successfully! Click "Save Settings" to apply them.')
+        } else {
+          alert('Invalid settings file format.')
+        }
+      } catch (error) {
+        alert('Error parsing settings file. Please make sure it\'s a valid JSON file.')
+      }
+    }
+    reader.readAsText(file)
+    
+    // Reset file input
+    event.target.value = ''
+  }
+
+  const exportChannels = () => {
+    const csvContent = [
+      'Channel Id,Channel Url,Channel Title',
+      ...savedChannels.map(channel => 
+        `${channel.id},https://www.youtube.com/channel/${channel.id},"${channel.title}"`
+      )
+    ].join('\n')
+    
+    const dataBlob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(dataBlob)
+    
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'youtube-channels.csv'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const importChannels = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const csvText = e.target?.result as string
+        const lines = csvText.split('\n').filter(line => line.trim())
+        
+        if (lines.length < 2) {
+          alert('CSV file must contain at least a header row and one data row.')
+          return
+        }
+
+        // Skip header row
+        const dataLines = lines.slice(1)
+        const channels: Channel[] = []
+        
+        for (const line of dataLines) {
+          const [channelId, channelUrl, channelTitle] = line.split(',').map(field => field.trim().replace(/"/g, ''))
+          
+          if (channelId && channelTitle) {
+            channels.push({
+              id: channelId,
+              title: channelTitle,
+              description: '',
+              thumbnail: '',
+              subscriberCount: '0',
+              videoCount: '0',
+              viewCount: '0'
+            })
+          }
+        }
+        
+        if (channels.length === 0) {
+          alert('No valid channels found in the CSV file.')
+          return
+        }
+        
+        // Add channels to store
+        channels.forEach(channel => {
+          dispatch(addChannel(channel))
+        })
+        
+        alert(`Successfully imported ${channels.length} channels!`)
+      } catch (error) {
+        alert('Error parsing CSV file. Please make sure it\'s in the correct format.')
+      }
+    }
+    reader.readAsText(file)
+    
+    // Reset file input
+    event.target.value = ''
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -123,10 +265,39 @@ const SettingsPage = () => {
           </p>
         </div>
 
-        {/* Settings Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6">
-            <div className="space-y-8">
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('general')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'general'
+                    ? 'border-red-500 text-red-600 dark:text-red-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                General
+              </button>
+              <button
+                onClick={() => setActiveTab('import-export')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'import-export'
+                    ? 'border-red-500 text-red-600 dark:text-red-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                Import / Export
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'general' && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6">
+              <div className="space-y-8">
               {/* Theme Selection */}
               <div>
                 <label className="block text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -474,6 +645,101 @@ const SettingsPage = () => {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Import/Export Tab */}
+        {activeTab === 'import-export' && (
+          <div className="space-y-6">
+            {/* Settings Import/Export */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Settings Import / Export
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Import or export your application settings as a JSON file.
+                </p>
+              </div>
+              
+              <div className="px-6 py-4">
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={exportSettings}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                    >
+                      Export Settings
+                    </button>
+                    <label className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors cursor-pointer text-center">
+                      Import Settings
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={importSettings}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Settings will be exported as a JSON file. When importing, make sure to click "Save Settings" to apply the imported settings.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* YouTube Channels Import/Export */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  YouTube Channels Import / Export
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Import or export your saved YouTube channels as a CSV file.
+                </p>
+              </div>
+              
+              <div className="px-6 py-4">
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={exportChannels}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                    >
+                      Export Channels ({savedChannels.length})
+                    </button>
+                    <label className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors cursor-pointer text-center">
+                      Import Channels
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={importChannels}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                      CSV Format
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                      The CSV file should have the following format:
+                    </p>
+                    <div className="bg-gray-100 dark:bg-gray-600 rounded p-2 font-mono text-xs">
+                      Channel Id,Channel Url,Channel Title<br/>
+                      UC1XvxnHFtWruS9egyFasP1Q,http://www.youtube.com/channel/UC1XvxnHFtWruS9egyFasP1Q,"What about it!?"<br/>
+                      UC28n0tlcNSa1iPe5mettocg,http://www.youtube.com/channel/UC28n0tlcNSa1iPe5mettocg,"voidzilla"
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Currently saved: {savedChannels.length} channels. Imported channels will be added to your existing collection.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
