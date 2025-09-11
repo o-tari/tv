@@ -5,6 +5,7 @@ import { torrentSearchService as torrentService } from '../services/torrentSearc
 import type { TorrentPlayerState, ApiTorrentSearchResponse } from '../types/torrent'
 import YouTubePlayer from './YouTubePlayer'
 import LoadingSpinner from './LoadingSpinner'
+import WebTorrent from 'webtorrent'
 
 interface TorrentPlayerProps {
   // For movies
@@ -58,10 +59,6 @@ const TorrentPlayer = ({
       try {
         console.log('🚀 TorrentPlayer: Initializing WebTorrent client...')
         setTorrentError(null)
-        
-        // Import WebTorrent
-        const WebTorrent = (await import('webtorrent')).default
-        console.log('✅ WebTorrent loaded successfully')
         
         // Create client
         const client = new WebTorrent()
