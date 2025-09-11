@@ -30,6 +30,7 @@ export interface SearchFilters {
   duration?: 'short' | 'medium' | 'long'
   uploadDate?: 'hour' | 'today' | 'week' | 'month' | 'year'
   sortBy?: 'relevance' | 'date' | 'rating' | 'title' | 'viewCount'
+  categoryId?: string
 }
 
 export interface SearchResponse {

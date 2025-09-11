@@ -20,6 +20,17 @@ class LocalStorageCache {
 
   private getCacheKey(type: string, videoId?: string, additionalParams?: any): string {
     const baseKey = `${this.CACHE_PREFIX}${type}`
+    
+    // For related videos, include mock data setting in cache key to force refresh when setting changes
+    if (type === 'relatedVideos') {
+      const mockDataSetting = localStorage.getItem('useMockData') || 'true'
+      const baseKeyWithMock = `${baseKey}_mock_${mockDataSetting}`
+      if (videoId) {
+        return `${baseKeyWithMock}_${videoId}`
+      }
+      return baseKeyWithMock
+    }
+    
     if (videoId) {
       return `${baseKey}_${videoId}`
     }
@@ -304,6 +315,18 @@ class LocalStorageCache {
       videoEntries,
       totalSize: `${(totalSize / 1024 / 1024).toFixed(2)} MB`
     }
+  }
+
+  // Clear related videos cache (useful when mock data setting changes)
+  clearRelatedVideosCache(): void {
+    const keysToRemove: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(`${this.CACHE_PREFIX}relatedVideos`)) {
+        keysToRemove.push(key)
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key))
   }
 
   // Auto-cleanup expired entries every hour

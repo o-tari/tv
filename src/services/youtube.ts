@@ -153,6 +153,10 @@ export const searchVideos = async (
     params.publishedAfter = publishedAfter
   }
 
+  if (filters.categoryId) {
+    params.videoCategoryId = filters.categoryId
+  }
+
   return localStorageCache.getSearchResults(query, params, async () => {
     const api = getApiInstance()
     const response: AxiosResponse = await api.get('/search', { params })
@@ -689,14 +693,17 @@ export const getRelatedVideosBySearch = async (
   videoId: string,
   pageToken?: string
 ): Promise<SearchResponse> => {
-  if (shouldUseMockData()) {
+  // Check if API key is available first
+  const config = createApiInstance()
+  
+  // If we have an API key, use real API calls regardless of mock data setting
+  if (config.params.key) {
+    // Use real API calls
+  } else if (shouldUseMockData()) {
+    // Only use mock data if no API key and mock data is enabled
     await new Promise(resolve => setTimeout(resolve, 400))
     return mockRelatedVideos
-  }
-
-  // Check if API key is available when not using mock data
-  const config = createApiInstance()
-  if (!config.params.key) {
+  } else {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
@@ -779,14 +786,17 @@ export const getRelatedVideos = async (
   videoId: string,
   pageToken?: string
 ): Promise<SearchResponse> => {
-  if (shouldUseMockData()) {
+  // Check if API key is available first
+  const config = createApiInstance()
+  
+  // If we have an API key, use real API calls regardless of mock data setting
+  if (config.params.key) {
+    // Use real API calls
+  } else if (shouldUseMockData()) {
+    // Only use mock data if no API key and mock data is enabled
     await new Promise(resolve => setTimeout(resolve, 400))
     return mockRelatedVideos
-  }
-
-  // Check if API key is available when not using mock data
-  const config = createApiInstance()
-  if (!config.params.key) {
+  } else {
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
