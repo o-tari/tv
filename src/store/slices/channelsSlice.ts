@@ -17,6 +17,10 @@ interface ChannelsState {
   totalVideos: number
   hasMoreVideos: boolean
   loadingMore: boolean
+  // Optimized search state
+  optimizedSearchVideos: Video[]
+  optimizedSearchLoading: boolean
+  optimizedSearchError: string | null
 }
 
 const loadFromStorage = (key: string, defaultValue: any) => {
@@ -36,8 +40,10 @@ const saveToStorage = (key: string, value: any) => {
   }
 }
 
+const savedChannels = loadFromStorage('savedChannels', [])
+
 const initialState: ChannelsState = {
-  savedChannels: loadFromStorage('savedChannels', []),
+  savedChannels,
   channelVideos: {},
   channelVideosLoading: {},
   channelVideosError: {},
@@ -50,6 +56,10 @@ const initialState: ChannelsState = {
   totalVideos: 0,
   hasMoreVideos: false,
   loadingMore: false,
+  // Optimized search state
+  optimizedSearchVideos: [],
+  optimizedSearchLoading: false,
+  optimizedSearchError: null,
 }
 
 // Async thunks
@@ -161,6 +171,36 @@ export const loadMoreChannelVideos = createAsyncThunk(
     }
     
     return responses
+  }
+)
+
+// Fetch videos using optimized search with random channel selection
+export const fetchOptimizedChannelVideos = createAsyncThunk<
+  SearchResponse,
+  { maxChannels?: number; maxResults?: number },
+  { state: { channels: ChannelsState } }
+>(
+  'channels/fetchOptimizedChannelVideos',
+  async ({ maxChannels = 20, maxResults = 50 }, { getState }) => {
+    const state = getState() as { channels: ChannelsState }
+    const savedChannels = state.channels.savedChannels
+    
+    if (savedChannels.length === 0) {
+      return { items: [], nextPageToken: undefined, totalResults: 0 }
+    }
+
+    // Select random channels (up to maxChannels)
+    const shuffledChannels = [...savedChannels].sort(() => 0.5 - Math.random())
+    const selectedChannels = shuffledChannels.slice(0, Math.min(maxChannels, savedChannels.length))
+    const channelIds = selectedChannels.map(channel => channel.id)
+    
+    console.log(`🔍 Searching videos from ${selectedChannels.length} random channels:`, selectedChannels.map(c => c.title))
+    
+    const response = await youtubeService.searchVideosFromChannels(channelIds, maxResults, 'date')
+    
+    console.log(`✅ Found ${response.items.length} videos from optimized search`)
+    
+    return response
   }
 )
 
@@ -314,6 +354,22 @@ const channelsSlice = createSlice({
         state.loadingMore = false
         state.error = action.error.message || 'Failed to load more videos'
       })
+
+    // Fetch optimized channel videos
+    builder
+      .addCase(fetchOptimizedChannelVideos.pending, (state) => {
+        state.optimizedSearchLoading = true
+        state.optimizedSearchError = null
+      })
+      .addCase(fetchOptimizedChannelVideos.fulfilled, (state, action) => {
+        state.optimizedSearchLoading = false
+        state.optimizedSearchVideos = action.payload.items
+        state.optimizedSearchError = null
+      })
+      .addCase(fetchOptimizedChannelVideos.rejected, (state, action) => {
+        state.optimizedSearchLoading = false
+        state.optimizedSearchError = action.error.message || 'Failed to fetch optimized channel videos'
+      })
   },
 })
 
@@ -352,6 +408,12 @@ export const selectCurrentPage = (state: { channels: ChannelsState }) => state.c
 export const selectTotalVideos = (state: { channels: ChannelsState }) => state.channels.totalVideos
 export const selectHasMoreVideos = (state: { channels: ChannelsState }) => state.channels.hasMoreVideos
 export const selectLoadingMore = (state: { channels: ChannelsState }) => state.channels.loadingMore
+
+
+// Optimized search selectors
+export const selectOptimizedSearchVideos = (state: { channels: ChannelsState }) => state.channels.optimizedSearchVideos
+export const selectOptimizedSearchLoading = (state: { channels: ChannelsState }) => state.channels.optimizedSearchLoading
+export const selectOptimizedSearchError = (state: { channels: ChannelsState }) => state.channels.optimizedSearchError
 
 // Get all latest videos from saved channels (memoized)
 export const selectLatestChannelVideos = createSelector(
@@ -409,3 +471,4 @@ export const selectPaginatedChannelVideos = createSelector(
     }
   }
 )
+

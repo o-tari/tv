@@ -59,9 +59,9 @@ const WatchPage = () => {
           filters: searchFilters 
         }))
         
-        if (result.payload && result.payload.items && result.payload.items.length > 0) {
+        if (result.payload && (result.payload as any).items && (result.payload as any).items.length > 0) {
           // Filter out current video
-          const availableVideos = result.payload.items.filter(v => v.id !== videoId)
+          const availableVideos = (result.payload as any).items.filter((v: any) => v.id !== videoId)
           console.log('Available search results after filtering:', availableVideos.length)
           
           if (availableVideos.length > 0) {

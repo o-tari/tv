@@ -25,7 +25,6 @@ const MoviesTVPage = lazy(() => import('../pages/MoviesTVPage'))
 const TMDBWatchPage = lazy(() => import('../pages/TMDBWatchPage'))
 const TorrentSearchPage = lazy(() => import('../pages/TorrentSearchPage'))
 const SettingsPage = lazy(() => import('../pages/SettingsPage'))
-const ChannelsPage = lazy(() => import('../pages/ChannelsPage'))
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
 
 // Component that can access Redux store
@@ -52,7 +51,6 @@ function AppRoutes() {
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/watch-later" element={<WatchLaterPage />} />
         <Route path="/continue-watching" element={<ContinueWatchingPage />} />
-        <Route path="/channels" element={<ChannelsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

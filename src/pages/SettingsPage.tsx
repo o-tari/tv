@@ -4,7 +4,7 @@ import { selectYoutubeApiKey, selectUseMockData, selectRegionCode, selectLanguag
 import { clearAllData } from '../store/slices/videosSlice'
 import { useTheme } from '../app/providers/ThemeProvider'
 import { localStorageCache } from '../utils/localStorageCache'
-import { selectSavedChannels, addChannel, clearChannels } from '../store/slices/channelsSlice'
+import { selectSavedChannels, addChannel } from '../store/slices/channelsSlice'
 import type { Channel } from '../types/youtube'
 
 const SettingsPage = () => {
@@ -216,7 +216,7 @@ const SettingsPage = () => {
         const channels: Channel[] = []
         
         for (const line of dataLines) {
-          const [channelId, channelUrl, channelTitle] = line.split(',').map(field => field.trim().replace(/"/g, ''))
+          const [channelId, , channelTitle] = line.split(',').map(field => field.trim().replace(/"/g, ''))
           
           if (channelId && channelTitle) {
             channels.push({

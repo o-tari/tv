@@ -1134,6 +1134,101 @@ export const getRandomVideosFromChannel = async (channelId: string, count: numbe
   }
 }
 
+// Search videos from multiple channels using channel IDs
+export const searchVideosFromChannels = async (
+  channelIds: string[],
+  maxResults: number = 50,
+  order: string = 'date'
+): Promise<SearchResponse> => {
+  if (shouldUseMockData()) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    
+    // Filter mock videos based on channel IDs
+    let filteredVideos = mockVideos.filter(video => 
+      channelIds.includes(video.channelId)
+    )
+    
+    // Sort by date if requested
+    if (order === 'date') {
+      filteredVideos = filteredVideos.sort((a, b) => 
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      )
+    }
+    
+    return {
+      items: filteredVideos.slice(0, maxResults),
+      nextPageToken: undefined,
+      totalResults: filteredVideos.length,
+    }
+  }
+
+  // Check if API key is available when not using mock data
+  const config = createApiInstance()
+  if (!config.params.key) {
+    throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
+  }
+
+  // For multiple channels, we need to make separate requests and combine results
+  // YouTube API doesn't support searching multiple channels in a single request
+  const allVideos: any[] = []
+  
+  try {
+    // Process channels in batches to avoid rate limiting
+    const batchSize = 5
+    for (let i = 0; i < channelIds.length; i += batchSize) {
+      const batch = channelIds.slice(i, i + batchSize)
+      
+      const batchPromises = batch.map(async (channelId) => {
+        const params: any = {
+          part: 'snippet',
+          channelId: channelId,
+          type: 'video',
+          maxResults: Math.min(Math.ceil(maxResults / channelIds.length), 25), // Distribute results across channels
+          order: order,
+          videoEmbeddable: true,
+        }
+
+        const api = getApiInstance()
+        const response: AxiosResponse = await api.get('/search', { params })
+        
+        return response.data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+          channelTitle: item.snippet.channelTitle,
+          channelId: item.snippet.channelId,
+          publishedAt: item.snippet.publishedAt,
+          duration: '', // Will be filled by getVideoDetails if needed
+          viewCount: '', // Will be filled by getVideoDetails if needed
+        }))
+      })
+      
+      const batchResults = await Promise.all(batchPromises)
+      allVideos.push(...batchResults.flat())
+      
+      // Add delay between batches to avoid rate limiting
+      if (i + batchSize < channelIds.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+    
+    // Sort all videos by date (newest first)
+    allVideos.sort((a, b) => 
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
+    
+    return {
+      items: allVideos.slice(0, maxResults),
+      nextPageToken: undefined,
+      totalResults: allVideos.length,
+    }
+  } catch (error) {
+    handleApiError(error)
+    throw error
+  }
+}
+
 // Get random videos from saved channels (optimized to use cached data)
 export const getRandomVideosFromSavedChannels = async (count: number = 200): Promise<Video[]> => {
   if (shouldUseMockData()) {

@@ -24,11 +24,23 @@ const SubscriptionsPage: React.FC = () => {
   useEffect(() => {
     const channelId = searchParams.get('channel')
     if (channelId) {
-      setSelectedChannel(channelId)
-      // Load videos for the selected channel
-      loadChannelVideos(channelId)
+      console.log('🔍 SubscriptionsPage: Channel ID from URL:', channelId)
+      console.log('📋 Available subscriptions:', subscriptions.map(sub => ({ id: sub.id, title: sub.title })))
+      
+      // Check if the channel is in subscriptions
+      const isSubscribed = subscriptions.some(sub => sub.id === channelId)
+      console.log('✅ Is channel subscribed?', isSubscribed)
+      
+      if (isSubscribed) {
+        setSelectedChannel(channelId)
+        // Load videos for the selected channel
+        loadChannelVideos(channelId)
+      } else {
+        console.warn('⚠️ Channel not found in subscriptions:', channelId)
+        setSelectedChannel(null)
+      }
     }
-  }, [searchParams])
+  }, [searchParams, subscriptions])
 
   // Load videos from all subscribed channels on mount
   useEffect(() => {
@@ -63,10 +75,14 @@ const SubscriptionsPage: React.FC = () => {
 
   const loadChannelVideos = async (channelId: string) => {
     try {
+      console.log('🎬 Loading videos for channel:', channelId)
       setSelectedChannelError(null) // Clear any previous errors
       const result = await dispatch(fetchChannelVideos({ channelId }))
+      console.log('📺 Fetch result:', result)
+      
       if (result.payload && typeof result.payload === 'object' && 'items' in result.payload) {
         const payload = result.payload as { items: Video[] }
+        console.log('✅ Videos loaded:', payload.items.length, 'videos')
         setSelectedChannelVideos(payload.items)
         // Try to get channel title from the first video
         if (payload.items.length > 0) {
@@ -75,11 +91,12 @@ const SubscriptionsPage: React.FC = () => {
           setSelectedChannelTitle('Unknown Channel')
         }
       } else {
+        console.log('❌ No videos in payload:', result.payload)
         setSelectedChannelVideos([])
         setSelectedChannelTitle('Unknown Channel')
       }
     } catch (error) {
-      console.error('Error loading channel videos:', error)
+      console.error('❌ Error loading channel videos:', error)
       setSelectedChannelVideos([])
       setSelectedChannelTitle('Error loading channel')
       // Set a flag to show API error message
@@ -112,6 +129,14 @@ const SubscriptionsPage: React.FC = () => {
     window.history.replaceState({}, '', newUrl)
   }
 
+
+  // Debug logging
+  console.log('🔍 SubscriptionsPage render - subscriptions:', subscriptions.length)
+  console.log('🔍 Selected channel:', selectedChannel)
+  console.log('🔍 Selected channel videos:', selectedChannelVideos.length)
+  console.log('🔍 Channel videos loading:', channelVideosLoading)
+  console.log('🔍 Channel videos error:', channelVideosError)
+  console.log('🔍 Selected channel error:', selectedChannelError)
 
   if (subscriptions.length === 0) {
     return (
@@ -178,6 +203,21 @@ const SubscriptionsPage: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Debug Section - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Debug Info</h3>
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <div>Subscriptions: {subscriptions.length}</div>
+              <div>Selected Channel: {selectedChannel || 'None'}</div>
+              <div>Selected Channel Videos: {selectedChannelVideos.length}</div>
+              <div>Loading: {channelVideosLoading ? 'Yes' : 'No'}</div>
+              <div>Error: {channelVideosError || selectedChannelError || 'None'}</div>
+              <div>Channel Title: {selectedChannelTitle || 'None'}</div>
+            </div>
+          </div>
+        )}
 
         {/* Videos Section */}
         <div>
