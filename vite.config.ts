@@ -9,7 +9,6 @@ export default defineConfig({
       external: [
         'bittorrent-dht',
         'torrent-discovery',
-        'webtorrent',
         'parse-torrent',
         'create-torrent',
         'bittorrent-protocol'
@@ -31,7 +30,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@reduxjs/toolkit', 'react-redux'],
-    exclude: ['webtorrent', 'bittorrent-dht', 'torrent-discovery', 'parse-torrent', 'create-torrent', 'bittorrent-protocol']
+    exclude: ['bittorrent-dht', 'torrent-discovery', 'parse-torrent', 'create-torrent', 'bittorrent-protocol']
   },
   define: {
     global: 'globalThis',

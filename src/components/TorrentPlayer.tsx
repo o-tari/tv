@@ -5,7 +5,6 @@ import { torrentSearchService as torrentService } from '../services/torrentSearc
 import type { TorrentPlayerState, ApiTorrentSearchResponse } from '../types/torrent'
 import YouTubePlayer from './YouTubePlayer'
 import LoadingSpinner from './LoadingSpinner'
-import WebTorrent from 'webtorrent'
 
 interface TorrentPlayerProps {
   // For movies
@@ -60,9 +59,16 @@ const TorrentPlayer = ({
         console.log('🚀 TorrentPlayer: Initializing WebTorrent client...')
         setTorrentError(null)
         
-        // Create client
-        const client = new WebTorrent()
-        clientRef.current = client
+      
+        // Use global WebTorrent from CDN
+        if (typeof window !== 'undefined' && (window as any).WebTorrent) {
+          const WebTorrent = (window as any).WebTorrent
+          const client = new WebTorrent()
+          clientRef.current = client
+          console.log('🔍 WebTorrent client:', client)
+        } else {
+          throw new Error('WebTorrent not loaded from CDN')
+        }
         
         console.log('✅ WebTorrent client initialized successfully')
         setUseTorrent(true)
