@@ -178,7 +178,7 @@ const AnimePage = () => {
         {/* Top Anime Section (Jikan API) */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            🏆 Top Anime
+ Top Anime
           </h2>
           {topAnimeError ? (
             <div className="text-center py-8">
@@ -237,7 +237,7 @@ const AnimePage = () => {
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            🔥 Top Airing
+ Top Airing
           </button>
           <button
             onClick={() => handleTabChange('recent')}

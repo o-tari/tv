@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 
 interface LazyImageProps {
   src: string
   alt: string
   className?: string
-  placeholder?: string
+  placeholder?: string | ReactNode
 }
 
 const LazyImage = ({ src, alt, className = '', placeholder }: LazyImageProps) => {

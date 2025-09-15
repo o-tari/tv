@@ -1,10 +1,22 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { 
+  TvIcon, 
+  FilmIcon, 
+  SparklesIcon, 
+  MagnifyingGlassIcon, 
+  HandThumbUpIcon, 
+  ClipboardDocumentListIcon, 
+  UserIcon, 
+  ClockIcon, 
+  ClockIcon as WatchLaterIcon, 
+  Cog6ToothIcon 
+} from '@heroicons/react/24/outline'
 
 interface SidebarItem {
   id: string
   label: string
   href: string
-  icon: string
+  icon: React.ComponentType<{ className?: string }>
 }
 
 interface FavoritesState {
@@ -13,17 +25,17 @@ interface FavoritesState {
 }
 
 const defaultSidebarItems: SidebarItem[] = [
-  { id: 'youtube', label: 'YouTube', href: '/youtube', icon: '📺' },
-  { id: 'movies-tv', label: 'Movies & TV', href: '/movies-tv', icon: '🎬' },
-  { id: 'anime', label: 'Anime', href: '/anime', icon: '🎌' },
-  { id: 'hianime', label: 'HiAnime', href: '/hianime', icon: '🌸' },
-  { id: 'torrents', label: 'Torrent Search', href: '/torrents', icon: '🔍' },
-  { id: 'liked', label: 'Liked videos', href: '/library/liked', icon: '👍' },
-  { id: 'playlists', label: 'Playlists', href: '/library/playlists', icon: '📋' },
-  { id: 'channel', label: 'Your channel', href: '/channel/me', icon: '👤' },
-  { id: 'history', label: 'History', href: '/history', icon: '🕒' },
-  { id: 'watch-later', label: 'Watch later', href: '/watch-later', icon: '⏰' },
-  { id: 'settings', label: 'Settings', href: '/settings', icon: '⚙️' },
+  { id: 'youtube', label: 'YouTube', href: '/youtube', icon: TvIcon },
+  { id: 'movies-tv', label: 'Movies & TV', href: '/movies-tv', icon: FilmIcon },
+  { id: 'anime', label: 'Anime', href: '/anime', icon: SparklesIcon },
+  { id: 'hianime', label: 'HiAnime', href: '/hianime', icon: SparklesIcon },
+  { id: 'torrents', label: 'Torrent Search', href: '/torrents', icon: MagnifyingGlassIcon },
+  { id: 'liked', label: 'Liked videos', href: '/library/liked', icon: HandThumbUpIcon },
+  { id: 'playlists', label: 'Playlists', href: '/library/playlists', icon: ClipboardDocumentListIcon },
+  { id: 'channel', label: 'Your channel', href: '/channel/me', icon: UserIcon },
+  { id: 'history', label: 'History', href: '/history', icon: ClockIcon },
+  { id: 'watch-later', label: 'Watch later', href: '/watch-later', icon: WatchLaterIcon },
+  { id: 'settings', label: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ]
 
 const initialState: FavoritesState = {

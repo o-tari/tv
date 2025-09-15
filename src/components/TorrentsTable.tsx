@@ -137,12 +137,12 @@ const TorrentsTable = ({
                       }}
                       className="px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      📋 Copy
+                      Copy
                     </button>
                     <button
                       onClick={() => {
-                        console.log('🎬 Opening WebTorrent app with magnet:', torrent.name)
-                        console.log('🎬 Magnet URL:', torrent.magnet)
+                        console.log('Opening WebTorrent app with magnet:', torrent.name)
+                        console.log('Magnet URL:', torrent.magnet)
                         
                         // Create a temporary link element to trigger the magnet protocol
                         const link = document.createElement('a')

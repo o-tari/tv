@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
+import { FilmIcon } from '@heroicons/react/24/outline'
 import { 
   fetchStreamingLinks, 
   clearStreamingLinks, 
@@ -206,7 +207,7 @@ const StreamingLinks = ({ episodes, onEpisodeSelect }: StreamingLinksProps) => {
               <div className="w-full h-full flex items-center justify-center">
                 <div className="text-center text-white">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">🎬</span>
+                    <FilmIcon className="w-8 h-8" />
                   </div>
                   <h4 className="text-lg font-semibold mb-2">HLS Stream</h4>
                   <p className="text-gray-300 mb-4">

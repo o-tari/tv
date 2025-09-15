@@ -35,7 +35,7 @@ const SeasonSearchModal = ({ isOpen, onClose, showTitle, seasonNumber }: SeasonS
     try {
       setLoading(true)
       setError(null)
-      console.log('🔍 Searching for season torrents:', {
+      console.log(' Searching for season torrents:', {
         show: showTitle,
         season: seasonNumber
       })
@@ -44,14 +44,14 @@ const SeasonSearchModal = ({ isOpen, onClose, showTitle, seasonNumber }: SeasonS
       const seasonStr = seasonNumber.toString().padStart(2, '0')
       const searchQuery = `${showTitle} s${seasonStr}`
       
-      console.log('🔍 Season search query:', searchQuery)
+      console.log(' Season search query:', searchQuery)
       
       const results = await torrentSearchService.searchTorrents({
         site: 'piratebay',
         query: searchQuery
       })
       
-      console.log('🔍 Season torrent search results:', results)
+      console.log(' Season torrent search results:', results)
       setSearchResults(results)
     } catch (error) {
       console.error('❌ Error searching for season torrents:', error)
@@ -63,7 +63,7 @@ const SeasonSearchModal = ({ isOpen, onClose, showTitle, seasonNumber }: SeasonS
   }
 
   const handleTorrentSelect = (torrent: any) => {
-    console.log('🎬 Season torrent selected:', torrent.name)
+    console.log(' Season torrent selected:', torrent.name)
     // You can add additional logic here if needed
   }
 

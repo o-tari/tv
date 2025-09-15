@@ -10,7 +10,7 @@ const FavoriteIcons = () => {
   // Get only the favorite items that are currently favorited
   const favoriteSidebarItems = sidebarItems.filter(item => favoriteItems.includes(item.id))
 
-  const handleFavoriteClick = (item: { id: string; href: string; icon: string }) => {
+  const handleFavoriteClick = (item: { id: string; href: string; icon: React.ComponentType<{ className?: string }> }) => {
     // Navigate to the item's page
     navigate(item.href)
   }
@@ -29,9 +29,7 @@ const FavoriteIcons = () => {
           aria-label={`Go to ${item.label}`}
           title={item.label}
         >
-          <span className="text-lg group-hover:scale-110 transition-transform duration-200">
-            {item.icon}
-          </span>
+          <item.icon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
         </button>
       ))}
     </div>

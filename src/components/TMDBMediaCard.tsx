@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../store'
 import { addMovieToContinueWatching, addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { addToWatchLater, removeFromWatchLater, selectIsInWatchLater } from '../store/slices/tmdbWatchLaterSlice'
 import { formatViewCount } from '../utils/formatNumber'
+import { FilmIcon, TvIcon } from '@heroicons/react/24/outline'
 import LazyImage from './LazyImage'
 import type { TMDBContent } from '../types/tmdb'
 
@@ -93,7 +94,7 @@ const TMDBMediaCard = ({
             src={getImageSrc()}
             alt={title}
             className="w-full aspect-[3/4] object-cover rounded-lg"
-            placeholder="🎬"
+            placeholder={<FilmIcon className="w-12 h-12 text-gray-400" />}
           />
           {duration && (
             <span className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
@@ -130,7 +131,7 @@ const TMDBMediaCard = ({
           <div className="flex items-start space-x-3">
             <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0 flex items-center justify-center">
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {type === 'movie' ? '🎬' : '📺'}
+                {type === 'movie' ? <FilmIcon className="w-4 h-4" /> : <TvIcon className="w-4 h-4" />}
               </span>
             </div>
             <div className="flex-1 min-w-0">
@@ -163,7 +164,7 @@ const TMDBMediaCard = ({
             src={getImageSrc()}
             alt={title}
             className="w-32 aspect-[3/4] object-cover rounded-lg"
-            placeholder="🎬"
+            placeholder={<FilmIcon className="w-12 h-12 text-gray-400" />}
           />
           {rating && (
             <span className="absolute top-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 py-0.5 rounded flex items-center">
@@ -219,7 +220,7 @@ const TMDBMediaCard = ({
             src={getImageSrc()}
             alt={title}
             className="w-full aspect-[3/4] object-cover rounded-lg"
-            placeholder="🎬"
+            placeholder={<FilmIcon className="w-12 h-12 text-gray-400" />}
           />
           {duration && (
             <span className="absolute bottom-3 right-3 bg-black bg-opacity-80 text-white text-sm px-2 py-1 rounded">
@@ -256,7 +257,7 @@ const TMDBMediaCard = ({
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0 flex items-center justify-center">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {type === 'movie' ? '🎬' : '📺'}
+                {type === 'movie' ? <FilmIcon className="w-4 h-4" /> : <TvIcon className="w-4 h-4" />}
               </span>
             </div>
             <div className="flex-1 min-w-0">

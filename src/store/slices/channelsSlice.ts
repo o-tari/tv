@@ -104,7 +104,7 @@ export const fetchAllChannelVideos = createAsyncThunk<
         if (isCached(cacheKey)) {
           const cachedData = getCachedData(cacheKey) as SearchResponse
           if (cachedData) {
-            console.log(`📦 Using cached videos for channel: ${channel.title}`)
+            console.log(`Using cached videos for channel: ${channel.title}`)
             responses.push(cachedData)
             continue
           }
@@ -194,7 +194,7 @@ export const fetchOptimizedChannelVideos = createAsyncThunk<
     const selectedChannels = shuffledChannels.slice(0, Math.min(maxChannels, savedChannels.length))
     const channelIds = selectedChannels.map(channel => channel.id)
     
-    console.log(`🔍 Searching videos from ${selectedChannels.length} random channels:`, selectedChannels.map(c => c.title))
+    console.log(`Searching videos from ${selectedChannels.length} random channels:`, selectedChannels.map(c => c.title))
     
     const response = await youtubeService.searchVideosFromChannels(channelIds, maxResults, 'date')
     

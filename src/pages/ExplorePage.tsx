@@ -2,6 +2,21 @@ import { useState } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { searchVideos, clearSearchResults } from '../store/slices/videosSlice'
 import VideoGrid from '../components/VideoGrid'
+import { 
+  MusicalNoteIcon, 
+  CommandLineIcon, 
+  NewspaperIcon, 
+  TrophyIcon, 
+  BookOpenIcon, 
+  BeakerIcon, 
+  FilmIcon, 
+  ScissorsIcon, 
+  PaperAirplaneIcon, 
+  TruckIcon, 
+  FaceSmileIcon, 
+  HeartIcon,
+  FireIcon
+} from '@heroicons/react/24/outline'
 
 const ExplorePage = () => {
   const dispatch = useAppDispatch()
@@ -9,18 +24,18 @@ const ExplorePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const categories = [
-    { id: 'music', name: 'Music', icon: '🎵' },
-    { id: 'gaming', name: 'Gaming', icon: '🎮' },
-    { id: 'news', name: 'News', icon: '📰' },
-    { id: 'sports', name: 'Sports', icon: '⚽' },
-    { id: 'education', name: 'Education', icon: '📚' },
-    { id: 'science', name: 'Science & Technology', icon: '🔬' },
-    { id: 'entertainment', name: 'Entertainment', icon: '🎬' },
-    { id: 'howto', name: 'Howto & Style', icon: '✂️' },
-    { id: 'travel', name: 'Travel & Events', icon: '✈️' },
-    { id: 'autos', name: 'Autos & Vehicles', icon: '🚗' },
-    { id: 'comedy', name: 'Comedy', icon: '😂' },
-    { id: 'pets', name: 'Pets & Animals', icon: '🐕' },
+    { id: 'music', name: 'Music', icon: MusicalNoteIcon },
+    { id: 'gaming', name: 'Gaming', icon: CommandLineIcon },
+    { id: 'news', name: 'News', icon: NewspaperIcon },
+    { id: 'sports', name: 'Sports', icon: TrophyIcon },
+    { id: 'education', name: 'Education', icon: BookOpenIcon },
+    { id: 'science', name: 'Science & Technology', icon: BeakerIcon },
+    { id: 'entertainment', name: 'Entertainment', icon: FilmIcon },
+    { id: 'howto', name: 'Howto & Style', icon: ScissorsIcon },
+    { id: 'travel', name: 'Travel & Events', icon: PaperAirplaneIcon },
+    { id: 'autos', name: 'Autos & Vehicles', icon: TruckIcon },
+    { id: 'comedy', name: 'Comedy', icon: FaceSmileIcon },
+    { id: 'pets', name: 'Pets & Animals', icon: HeartIcon },
   ]
 
   const handleCategoryClick = (categoryId: string) => {
@@ -61,7 +76,7 @@ const ExplorePage = () => {
                     : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                <span className="text-2xl mb-2">{category.icon}</span>
+                <category.icon className="w-8 h-8 mb-2" />
                 <span className="text-sm font-medium text-center">{category.name}</span>
               </button>
             ))}
@@ -80,9 +95,10 @@ const ExplorePage = () => {
                 ? 'border-red-600 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                 : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
             }`}
-          >
-            🔥 Trending Now
-          </button>
+            >
+              <FireIcon className="w-5 h-5 mr-2 inline" />
+              Trending Now
+            </button>
         </div>
 
         {/* Search results */}

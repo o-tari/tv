@@ -153,7 +153,7 @@ const YouTubePage = () => {
         {/* Trending Section */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            🔥 Trending Videos
+ Trending Videos
           </h2>
           <InfiniteScroll
             onLoadMore={loadMoreTrending}
@@ -287,7 +287,7 @@ const YouTubePage = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                🕒 History
+ History
               </h2>
               <button
                 onClick={() => navigate('/history')}
@@ -308,7 +308,7 @@ const YouTubePage = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              🗂️ Cache Management
+ Cache Management
             </h2>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">

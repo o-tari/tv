@@ -716,10 +716,10 @@ export const getRelatedVideosBySearch = async (
         params.pageToken = pageToken
       }
 
-      console.log('🔍 Searching for related videos with query:', searchQuery)
-      console.log('📂 Using category ID:', videoDetails.categoryId)
-      console.log('📺 Channel ID:', videoDetails.channelId)
-      console.log('🏷️ Video tags:', videoDetails.tags?.slice(0, 5)) // Show first 5 tags
+      console.log('Searching for related videos with query:', searchQuery)
+      console.log('Using category ID:', videoDetails.categoryId)
+      console.log('Channel ID:', videoDetails.channelId)
+      console.log('Video tags:', videoDetails.tags?.slice(0, 5)) // Show first 5 tags
 
       const api = getApiInstance()
       const response: AxiosResponse = await api.get('/search', { params })
@@ -742,8 +742,8 @@ export const getRelatedVideosBySearch = async (
       const filteredVideos = videos.filter((video: any) => video.id !== videoId)
 
       console.log('✅ Found', filteredVideos.length, 'related videos')
-      console.log('📄 Next page token:', response.data.nextPageToken ? 'Available' : 'None')
-      console.log('📊 Total results:', response.data.pageInfo?.totalResults || filteredVideos.length)
+      console.log(' Next page token:', response.data.nextPageToken ? 'Available' : 'None')
+      console.log(' Total results:', response.data.pageInfo?.totalResults || filteredVideos.length)
 
       return {
         items: filteredVideos,
@@ -1280,7 +1280,7 @@ export const getRandomVideosFromSavedChannels = async (count: number = 200): Pro
       if (cachedData) {
         const parsedData = JSON.parse(cachedData)
         if (parsedData && parsedData.items) {
-          console.log(`📦 Using cached videos for random selection from channel: ${channel.title}`)
+          console.log(` Using cached videos for random selection from channel: ${channel.title}`)
           allVideos.push(...parsedData.items)
           continue
         }

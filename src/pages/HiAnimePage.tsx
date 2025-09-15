@@ -136,7 +136,7 @@ const HiAnimePage = () => {
           {homeData?.spotlightAnimes && homeData.spotlightAnimes.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                🌟 Spotlight Animes
+ Spotlight Animes
               </h2>
               <MediaGrid
                 media={homeData.spotlightAnimes.map(hianimeService.convertSpotlightToMedia)}
@@ -149,7 +149,7 @@ const HiAnimePage = () => {
           {homeData?.trendingAnimes && homeData.trendingAnimes.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                🔥 Trending Animes
+ Trending Animes
               </h2>
               <MediaGrid
                 media={homeData.trendingAnimes.map(hianimeService.convertTrendingToMedia)}
@@ -175,7 +175,7 @@ const HiAnimePage = () => {
           {homeData?.topUpcomingAnimes && homeData.topUpcomingAnimes.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                📅 Upcoming Animes
+ Upcoming Animes
               </h2>
               <MediaGrid
                 media={homeData.topUpcomingAnimes.map(hianimeService.convertUpcomingToMedia)}
@@ -188,7 +188,7 @@ const HiAnimePage = () => {
           {homeData?.top10Animes?.today && homeData.top10Animes.today.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                🏆 Top 10 Today
+ Top 10 Today
               </h2>
               <MediaGrid
                 media={homeData.top10Animes.today.map(hianimeService.convertTop10ToMedia)}
@@ -201,7 +201,7 @@ const HiAnimePage = () => {
           {homeData?.topAiringAnimes && homeData.topAiringAnimes.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                📺 Top Airing Anime
+ Top Airing Anime
               </h2>
               <MediaGrid
                 media={homeData.topAiringAnimes.map(hianimeService.convertTopAiringToMedia)}
@@ -214,7 +214,7 @@ const HiAnimePage = () => {
           {homeData?.mostPopularAnimes && homeData.mostPopularAnimes.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                🔥 Most Popular
+ Most Popular
               </h2>
               <MediaGrid
                 media={homeData.mostPopularAnimes.map(hianimeService.convertMostPopularToMedia)}
@@ -253,7 +253,7 @@ const HiAnimePage = () => {
           {homeData?.genres && homeData.genres.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                🏷️ Available Genres
+ Available Genres
               </h2>
               <div className="flex flex-wrap gap-2">
                 {homeData.genres.map((genre: string, index: number) => (

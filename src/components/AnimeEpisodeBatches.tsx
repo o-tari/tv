@@ -157,7 +157,7 @@ const AnimeEpisodeBatches = ({
 
   const searchForEpisodeTorrents = async (episode: AnimeEpisode) => {
     if (!isTorrentEndpointConfigured) {
-      console.log('🔍 Torrent endpoint not configured, skipping torrent search')
+      console.log(' Torrent endpoint not configured, skipping torrent search')
       setTorrentResults(null)
       setTorrentLoading(false)
       return
@@ -165,7 +165,7 @@ const AnimeEpisodeBatches = ({
 
     try {
       setTorrentLoading(true)
-      console.log('🔍 Searching for anime episode torrents:', {
+      console.log(' Searching for anime episode torrents:', {
         anime: animeTitle,
         episode: episode.episodeNumber,
         title: episode.title
@@ -176,7 +176,7 @@ const AnimeEpisodeBatches = ({
       const episodeStr = episode.episodeNumber.toString().padStart(2, '0')
       const searchQuery = `${animeTitle} s${seasonStr}e${episodeStr}`
       
-      console.log('🔍 Anime search query:', searchQuery)
+      console.log(' Anime search query:', searchQuery)
       
       const results = await torrentSearchService.searchTVTorrents(
         animeTitle,
@@ -185,7 +185,7 @@ const AnimeEpisodeBatches = ({
         'piratebay'
       )
       
-      console.log('🔍 Anime torrent search results:', results)
+      console.log(' Anime torrent search results:', results)
       setTorrentResults(results)
     } catch (error) {
       console.error('❌ Error searching for anime episode torrents:', error)
@@ -210,7 +210,7 @@ const AnimeEpisodeBatches = ({
         query: query.trim()
       })
       
-      console.log('🔍 Custom anime torrent search results:', results)
+      console.log(' Custom anime torrent search results:', results)
       setTorrentResults(results)
     } catch (error) {
       console.error('❌ Error searching with custom query:', error)
@@ -344,7 +344,7 @@ const AnimeEpisodeBatches = ({
                 searchResults={torrentResults}
                 selectedTorrent={null}
                 onTorrentSelect={(torrent) => {
-                  console.log('🎬 Anime torrent selected:', torrent.name)
+                  console.log(' Anime torrent selected:', torrent.name)
                 }}
                 onQueryChange={handleCustomQueryChange}
                 currentQuery={getCurrentQuery()}

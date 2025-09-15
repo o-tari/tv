@@ -36,7 +36,7 @@ const WatchPage = () => {
 
   // Handle video end - search for similar videos and navigate to random one (only if autoplay is enabled)
   const handleVideoEnd = useCallback(async () => {
-    console.log('🎬 Video ended! Checking for auto-play...')
+    console.log(' Video ended! Checking for auto-play...')
     console.log('autoplay enabled:', autoplay)
     console.log('current videoId:', videoId)
     console.log('current video:', video)
@@ -44,8 +44,8 @@ const WatchPage = () => {
     // Only auto-navigate if autoplay is enabled and we have video details
     if (autoplay && video) {
       try {
-        console.log('🎬 Video ended, searching for similar videos with title:', video.title)
-        console.log('🎬 Using category ID:', video.categoryId)
+        console.log(' Video ended, searching for similar videos with title:', video.title)
+        console.log(' Using category ID:', video.categoryId)
         
         // Search for videos using the current video's title and category
         const searchFilters = {
@@ -70,7 +70,7 @@ const WatchPage = () => {
             const randomVideo = availableVideos[randomIndex]
             
             if (randomVideo && randomVideo.id) {
-              console.log('🎬 Video ended, navigating to random similar video:', randomVideo.title)
+              console.log(' Video ended, navigating to random similar video:', randomVideo.title)
               
               // Show a brief message before navigating
               const message = `Auto-playing: ${randomVideo.title}`
@@ -81,21 +81,21 @@ const WatchPage = () => {
                 navigate(`/watch/${randomVideo.id}`)
               }, 500)
             } else {
-              console.log('🎬 Video ended, but no valid similar videos available')
+              console.log(' Video ended, but no valid similar videos available')
             }
           } else {
-            console.log('🎬 Video ended, but no other similar videos available')
+            console.log(' Video ended, but no other similar videos available')
           }
         } else {
-          console.log('🎬 Video ended, but no search results found')
+          console.log(' Video ended, but no search results found')
         }
       } catch (error) {
-        console.error('🎬 Error searching for similar videos:', error)
+        console.error(' Error searching for similar videos:', error)
       }
     } else if (!autoplay) {
-      console.log('🎬 Video ended, but autoplay is disabled - staying on current video')
+      console.log(' Video ended, but autoplay is disabled - staying on current video')
     } else if (!video) {
-      console.log('🎬 Video ended, but no video details available')
+      console.log(' Video ended, but no video details available')
     }
   }, [autoplay, video, videoId, navigate, dispatch])
 

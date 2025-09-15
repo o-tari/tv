@@ -7,6 +7,8 @@ import { formatDuration } from '../utils/formatTime'
 import { getAnimeImage, getImageUrl } from '../utils/imageProxy'
 import { addChannel, selectIsChannelSaved } from '../store/slices/channelsSlice'
 import { fetchChannelDetails } from '../store/slices/videosSlice'
+import { VideoCameraIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import LazyImage from './LazyImage'
 
 interface MediaCardProps {
@@ -84,7 +86,7 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
             src={video.image}
             alt={video.title}
             className="w-full aspect-video object-cover rounded-lg"
-            placeholder="📹"
+            placeholder={<VideoCameraIcon className="w-12 h-12 text-gray-400" />}
           />
           <span className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded">
             {formatDuration(video.duration)}
@@ -166,7 +168,7 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
               src={imageSrc}
               alt={anime.title}
               className="w-full aspect-[3/4] object-cover rounded-lg"
-              placeholder="🎌"
+              placeholder={<SparklesIcon className="w-12 h-12 text-gray-400" />}
             />
           <div className="absolute bottom-2 right-2 flex flex-col gap-1">
             {anime.totalEpisodes && (
@@ -176,12 +178,12 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
             )}
             {'score' in anime && anime.score && (
               <span className="bg-yellow-600 bg-opacity-90 text-white text-xs px-1.5 py-0.5 rounded">
-                ⭐ {anime.score}
+                <StarSolidIcon className="w-3 h-3 inline mr-1" /> {anime.score}
               </span>
             )}
             {'rating' in anime && anime.rating && (
               <span className="bg-yellow-600 bg-opacity-90 text-white text-xs px-1.5 py-0.5 rounded">
-                ⭐ {anime.rating}
+                <StarSolidIcon className="w-3 h-3 inline mr-1" /> {anime.rating}
               </span>
             )}
           </div>
@@ -238,7 +240,7 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
               src={imageSrc}
               alt={media.title}
               className="w-40 aspect-video object-cover rounded-lg"
-              placeholder={media.type === 'video' ? '📹' : media.type === 'hianime' ? '🌸' : '🎌'}
+              placeholder={media.type === 'video' ? <VideoCameraIcon className="w-12 h-12 text-gray-400" /> : <SparklesIcon className="w-12 h-12 text-gray-400" />}
             />
             {media.type === 'video' && 'duration' in media && (
               <span className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 py-0.5 rounded">
@@ -304,7 +306,7 @@ const MediaCard = ({ media, variant = 'default', searchType, progress, showProgr
               src={imageSrc}
               alt={media.title}
               className="w-full aspect-video object-cover rounded-lg"
-              placeholder={media.type === 'video' ? '📹' : media.type === 'hianime' ? '🌸' : '🎌'}
+              placeholder={media.type === 'video' ? <VideoCameraIcon className="w-12 h-12 text-gray-400" /> : <SparklesIcon className="w-12 h-12 text-gray-400" />}
             />
             {media.type === 'video' && 'duration' in media && (
               <span className="absolute bottom-3 right-3 bg-black bg-opacity-80 text-white text-sm px-2 py-1 rounded">

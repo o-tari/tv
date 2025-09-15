@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
 import { removeFromHiAnimeContinueWatching, selectHiAnimeContinueWatching } from '../store/slices/hianimeContinueWatchingSlice'
 import { getAnimeImage } from '../utils/imageProxy'
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import LazyImage from './LazyImage'
 
 interface HiAnimeContinueWatchingProps {
@@ -82,7 +83,7 @@ const HiAnimeContinueWatching = ({ limit, showMoreButton = false, onMoreClick }:
                     )}
                     {item.rating && (
                       <span className="bg-yellow-600 bg-opacity-90 text-white text-xs px-1.5 py-0.5 rounded">
-                        ⭐ {item.rating}
+                        <StarSolidIcon className="w-3 h-3 inline mr-1" /> {item.rating}
                       </span>
                     )}
                   </div>

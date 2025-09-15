@@ -4,6 +4,7 @@ import { useAppSelector, useAppDispatch } from '../store'
 import { selectTMDBContinueWatching, removeFromTMDBContinueWatching, updateProcessedItems } from '../store/slices/tmdbContinueWatchingSlice'
 import { selectTmdbApiKey } from '../store/slices/settingsSlice'
 import { getNewEpisodeService } from '../services/newEpisodeService'
+import { FilmIcon, TvIcon } from '@heroicons/react/24/outline'
 import LazyImage from './LazyImage'
 
 interface TMDBContinueWatchingProps {
@@ -105,7 +106,7 @@ const TMDBContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: TM
                     src={getImageSrc(item.thumbnail)}
                     alt={item.title}
                     className="w-full aspect-[3/4] object-cover rounded-lg"
-                    placeholder="🎬"
+                    placeholder={<FilmIcon className="w-12 h-12 text-gray-400" />}
                   />
                   <div className="absolute top-2 right-2 flex flex-col gap-1">
                     <span className="bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded flex items-center">
@@ -126,7 +127,7 @@ const TMDBContinueWatching = ({ limit, showMoreButton = false, onMoreClick }: TM
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0 flex items-center justify-center">
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {item.type === 'movie' ? '🎬' : '📺'}
+                        {item.type === 'movie' ? <FilmIcon className="w-4 h-4" /> : <TvIcon className="w-4 h-4" />}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">

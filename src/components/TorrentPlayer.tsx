@@ -82,7 +82,7 @@ const TorrentPlayer = ({
   //         const WebTorrent = (window as unknown as { WebTorrent: WebTorrent.WebTorrentConstructor }).WebTorrent
   //         const client = new WebTorrent()
   //         clientRef.current = client
-  //         console.log('🔍 WebTorrent client:', client)
+  //         console.log(' WebTorrent client:', client)
           
   //         // Restore original console.error
   //         console.error = originalError
@@ -146,11 +146,11 @@ const TorrentPlayer = ({
   // Initialize torrent functionality based on configuration
   useEffect(() => {
     if (isTorrentEndpointConfigured) {
-      console.log('🎬 TorrentPlayer: Torrent endpoint configured, enabling torrent search')
+      console.log(' TorrentPlayer: Torrent endpoint configured, enabling torrent search')
       setUseTorrent(true)
       setTorrentError(null)
     } else {
-      console.log('🎬 TorrentPlayer: Torrent endpoint not configured, using YouTube trailers')
+      console.log(' TorrentPlayer: Torrent endpoint not configured, using YouTube trailers')
       setUseTorrent(false)
       setTorrentError('Torrent search endpoint not configured. Please configure it in settings.')
     }
@@ -167,8 +167,8 @@ const TorrentPlayer = ({
 
   // Torrent loading functionality - COMMENTED OUT
   // const loadTorrent = useCallback(async (magnet: string) => {
-  //   console.log('📥 TorrentPlayer: Starting torrent load...')
-  //   console.log('📥 Magnet URL:', magnet)
+  //   console.log(' TorrentPlayer: Starting torrent load...')
+  //   console.log(' Magnet URL:', magnet)
 
   //   if (!clientRef.current) {
   //     console.error('❌ WebTorrent client not available')
@@ -190,9 +190,9 @@ const TorrentPlayer = ({
   //   currentMagnetRef.current = magnet
 
   //   return new Promise<void>((resolve, reject) => {
-  //     console.log('📥 Adding torrent to WebTorrent client...')
+  //     console.log(' Adding torrent to WebTorrent client...')
   //     const torrent = clientRef.current!.add(magnet, (torrent: WebTorrent.Torrent) => {
-  //       console.log('📥 Torrent added successfully:', {
+  //       console.log(' Torrent added successfully:', {
   //         name: torrent.name,
   //         files: torrent.files.length,
   //         size: torrent.length,
@@ -211,10 +211,10 @@ const TorrentPlayer = ({
 
   //       // Wait for torrent to be ready before accessing files
   //       torrent.on('ready', () => {
-  //         console.log('📥 Torrent ready, files available:', torrent.files.length)
+  //         console.log(' Torrent ready, files available:', torrent.files.length)
           
   //         // Log all files in the torrent
-  //         console.log('📥 Torrent files:', torrent.files.map((file: WebTorrent.TorrentFile) => ({
+  //         console.log(' Torrent files:', torrent.files.map((file: WebTorrent.TorrentFile) => ({
   //           name: file.name,
   //           length: file.length,
   //           type: file.name.split('.').pop()
@@ -228,12 +228,12 @@ const TorrentPlayer = ({
           
   //         if (!file) {
   //           console.error('❌ No video file found in torrent')
-  //           console.log('📥 Available files:', torrent.files.map((f: WebTorrent.TorrentFile) => f.name))
+  //           console.log(' Available files:', torrent.files.map((f: WebTorrent.TorrentFile) => f.name))
   //           reject(new Error('No video file found in torrent'))
   //           return
   //         }
 
-  //         console.log('📥 Selected video file:', {
+  //         console.log(' Selected video file:', {
   //           name: file.name,
   //           length: file.length,
   //           size: (file.length / (1024 * 1024)).toFixed(2) + ' MB'
@@ -247,7 +247,7 @@ const TorrentPlayer = ({
   //         // Use the simple appendTo approach from the example
   //         const video = videoRef.current
   //         if (video) {
-  //           console.log('📥 Appending video file to video element...')
+  //           console.log(' Appending video file to video element...')
             
   //           // Clear the video element first
   //           video.innerHTML = ''
@@ -274,7 +274,7 @@ const TorrentPlayer = ({
   //             }
 
   //             const handleCanPlay = () => {
-  //               console.log('📥 Video can start playing')
+  //               console.log(' Video can start playing')
   //             }
               
   //             video.addEventListener('loadeddata', handleLoadedData, { once: true })
@@ -323,11 +323,11 @@ const TorrentPlayer = ({
   //     })
 
   //     torrent.on('download', (bytes: number) => {
-  //       console.log('📥 Downloaded bytes:', bytes)
+  //       console.log(' Downloaded bytes:', bytes)
   //     })
 
   //     torrent.on('upload', (bytes: number) => {
-  //       console.log('📤 Uploaded bytes:', bytes)
+  //       console.log(' Uploaded bytes:', bytes)
   //     })
 
   //     // Timeout after 5 minutes (increased from 60 seconds)
@@ -349,24 +349,24 @@ const TorrentPlayer = ({
 
   // Mock loadTorrent function that always fails to force YouTube fallback - COMMENTED OUT
   // const loadTorrent = useCallback(async (_magnet: string) => {
-  //   console.log('📥 TorrentPlayer: Torrent loading disabled - using YouTube trailers')
+  //   console.log(' TorrentPlayer: Torrent loading disabled - using YouTube trailers')
   //   throw new Error('Torrent playback disabled - using YouTube trailers')
   // }, [])
 
   const searchForTorrent = useCallback(async (customSearchQuery?: string) => {
-    console.log('🔍 TorrentPlayer: Starting torrent search...')
-    console.log('🔍 Search parameters:', { movieTitle, showTitle, season, episode, useTorrent, customSearchQuery })
-    console.log('🔍 API URL:', torrentApiUrl)
-    console.log('🔍 Mock data mode:', useMockData)
+    console.log(' TorrentPlayer: Starting torrent search...')
+    console.log(' Search parameters:', { movieTitle, showTitle, season, episode, useTorrent, customSearchQuery })
+    console.log(' API URL:', torrentApiUrl)
+    console.log(' Mock data mode:', useMockData)
 
     if (!useTorrent) {
-      console.log('🔍 Torrent search disabled, skipping...')
+      console.log(' Torrent search disabled, skipping...')
       setUseTorrent(false)
       return
     }
 
     if (!isTorrentEndpointConfigured) {
-      console.log('🔍 Torrent endpoint not configured, skipping...')
+      console.log(' Torrent endpoint not configured, skipping...')
       setUseTorrent(false)
       updateState({
         isLoading: false,
@@ -387,25 +387,25 @@ const TorrentPlayer = ({
     try {
       // Update torrent service URL
       torrentService.setBaseUrl(torrentApiUrl)
-      console.log('🔍 Updated torrent service URL to:', torrentService.getBaseUrl())
+      console.log(' Updated torrent service URL to:', torrentService.getBaseUrl())
 
       let searchResult: ApiTorrentSearchResponse
       let searchQuery: string
       
       // Use custom query if provided, otherwise use default logic
       if (customSearchQuery) {
-        console.log('🔍 Using custom search query:', customSearchQuery)
+        console.log(' Using custom search query:', customSearchQuery)
         searchQuery = customSearchQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
         searchResult = await torrentService.searchTorrents({
           site: 'piratebay',
           query: customSearchQuery
         })
       } else if (movieTitle) {
-        console.log('🎬 Searching for movie torrent:', movieTitle)
+        console.log(' Searching for movie torrent:', movieTitle)
         searchQuery = movieTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
         searchResult = await torrentService.searchMovieTorrents(movieTitle, 'piratebay')
       } else if (showTitle && season && episode) {
-        console.log('📺 Searching for TV torrent:', { showTitle, season, episode })
+        console.log(' Searching for TV torrent:', { showTitle, season, episode })
         const seasonStr = season.toString().padStart(2, '0')
         const episodeStr = episode.toString().padStart(2, '0')
         searchQuery = `${showTitle} s${seasonStr}e${episodeStr}`.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
@@ -414,9 +414,9 @@ const TorrentPlayer = ({
         throw new Error('No valid search parameters provided')
       }
 
-      console.log('🔍 Search query:', searchQuery)
-      console.log('🔍 Search results:', searchResult)
-      console.log('🔍 Found torrents:', searchResult.data?.length || 0)
+      console.log(' Search query:', searchQuery)
+      console.log(' Search results:', searchResult)
+      console.log(' Found torrents:', searchResult.data?.length || 0)
 
       setSearchResults(searchResult)
 
@@ -427,7 +427,7 @@ const TorrentPlayer = ({
       })
 
       const bestMagnet = torrentService.getBestTorrent(searchResult)
-      console.log('🔍 Best magnet URL:', bestMagnet)
+      console.log(' Best magnet URL:', bestMagnet)
       
       if (!bestMagnet) {
         throw new Error('No suitable torrent found')
@@ -437,7 +437,7 @@ const TorrentPlayer = ({
       const selected = searchResult.data?.find(t => t.magnet === bestMagnet)
       if (selected) {
         setSelectedTorrent(selected)
-        console.log('🔍 Selected torrent:', {
+        console.log(' Selected torrent:', {
           name: selected.name,
           size: selected.size,
           seeders: selected.seeders,
@@ -456,7 +456,7 @@ const TorrentPlayer = ({
         progress: 100
       })
 
-      console.log('🔍 Torrent search completed, showing results instead of loading torrent')
+      console.log(' Torrent search completed, showing results instead of loading torrent')
       // await loadTorrent(bestMagnet) // COMMENTED OUT - torrent loading disabled
       
     } catch (error) {
@@ -517,7 +517,7 @@ const TorrentPlayer = ({
 
   // Start torrent search when component mounts or parameters change
   useEffect(() => {
-    console.log('🔍 TorrentPlayer useEffect triggered:', {
+    console.log(' TorrentPlayer useEffect triggered:', {
       useTorrent,
       movieTitle,
       showTitle,
@@ -527,7 +527,7 @@ const TorrentPlayer = ({
     })
     
     if (useTorrent && (movieTitle || (showTitle && season && episode))) {
-      console.log('🔍 TorrentPlayer: Starting torrent search for:', movieTitle || `${showTitle} s${season}e${episode}`)
+      console.log(' TorrentPlayer: Starting torrent search for:', movieTitle || `${showTitle} s${season}e${episode}`)
       // Reset state
       // setMagnetUrl(null) // COMMENTED OUT - not used when torrent playback is disabled
       setTorrentError(null)
@@ -540,7 +540,7 @@ const TorrentPlayer = ({
       
       return () => clearTimeout(timeoutId)
     } else {
-      console.log('🔍 TorrentPlayer: Skipping torrent search - conditions not met')
+      console.log(' TorrentPlayer: Skipping torrent search - conditions not met')
     }
   }, [movieTitle, showTitle, season, episode, useTorrent, searchForTorrent, isTorrentEndpointConfigured])
 
@@ -645,12 +645,12 @@ const TorrentPlayer = ({
                                 }}
                                 className="px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                               >
-                                📋 Copy
+ Copy
                               </button>
                               <button
                                 onClick={() => {
-                                  console.log('🎬 Opening WebTorrent app with magnet:', torrent.name)
-                                  console.log('🎬 Magnet URL:', torrent.magnet)
+                                  console.log(' Opening WebTorrent app with magnet:', torrent.name)
+                                  console.log(' Magnet URL:', torrent.magnet)
                                   
                                   // Create a temporary link element to trigger the magnet protocol
                                   const link = document.createElement('a')
@@ -864,12 +864,12 @@ const TorrentPlayer = ({
                             }}
                             className="px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                           >
-                            📋 Copy
+ Copy
                           </button>
                           <button
                             onClick={() => {
-                              console.log('🎬 Opening WebTorrent app with magnet:', torrent.name)
-                              console.log('🎬 Magnet URL:', torrent.magnet)
+                              console.log(' Opening WebTorrent app with magnet:', torrent.name)
+                              console.log(' Magnet URL:', torrent.magnet)
                               
                               // Create a temporary link element to trigger the magnet protocol
                               const link = document.createElement('a')

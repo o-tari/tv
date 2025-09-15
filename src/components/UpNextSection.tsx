@@ -26,13 +26,13 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
   // Fetch current channel videos if channelId is provided
   useEffect(() => {
     if (currentChannelId && currentChannelVideos.videos.length === 0 && !currentChannelVideos.loading) {
-      console.log('🎲 UpNextSection: Fetching random videos from current channel...', currentChannelId)
+      console.log(' UpNextSection: Fetching random videos from current channel...', currentChannelId)
       dispatch(fetchRandomVideosFromChannel({ channelId: currentChannelId, count: 20 }))
     }
   }, [dispatch, currentChannelId, currentChannelVideos.videos.length, currentChannelVideos.loading])
 
   const handleVideoClick = (video: Video) => {
-    console.log('🎬 Up Next video clicked:', video.title, video.id)
+    console.log(' Up Next video clicked:', video.title, video.id)
     onVideoSelect?.(video)
   }
 
@@ -116,14 +116,14 @@ const UpNextSection = ({ currentVideoId, currentChannelId, onVideoSelect }: UpNe
   const displayVideos = filteredVideos.slice(0, 5)
 
   // Debug logging
-  console.log('🎬 Up Next - currentVideoId:', currentVideoId)
-  console.log('🎬 Up Next - currentChannelId:', currentChannelId)
-  console.log('🎬 Up Next - currentChannelVideos:', currentChannelVideos)
-  console.log('🎬 Up Next - randomVideos length:', randomVideos.length)
-  console.log('🎬 Up Next - allVideos length:', allVideos.length)
-  console.log('🎬 Up Next - filteredVideos length:', filteredVideos.length)
-  console.log('🎬 Up Next - displayVideos length:', displayVideos.length)
-  console.log('🎬 Up Next - first video:', displayVideos[0]?.title)
+  console.log(' Up Next - currentVideoId:', currentVideoId)
+  console.log(' Up Next - currentChannelId:', currentChannelId)
+  console.log(' Up Next - currentChannelVideos:', currentChannelVideos)
+  console.log(' Up Next - randomVideos length:', randomVideos.length)
+  console.log(' Up Next - allVideos length:', allVideos.length)
+  console.log(' Up Next - filteredVideos length:', filteredVideos.length)
+  console.log(' Up Next - displayVideos length:', displayVideos.length)
+  console.log(' Up Next - first video:', displayVideos[0]?.title)
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">

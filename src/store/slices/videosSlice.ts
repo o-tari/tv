@@ -117,13 +117,13 @@ export const fetchTrendingVideos = createAsyncThunk<SearchResponse, string | und
     if (!pageToken && isCached(cacheKey)) {
       const cachedData = getCachedData(cacheKey) as SearchResponse
       if (cachedData) {
-        console.log('📦 Using cached trending videos')
+        console.log('Using cached trending videos')
         return cachedData
       }
     }
     
     // Fetch from API (exclude shorts by default)
-    console.log('🌐 Fetching trending videos from API (excluding shorts)')
+    console.log('Fetching trending videos from API (excluding shorts)')
     const response = await youtubeService.getTrendingVideos(pageToken, true)
     
     // Cache the response (only cache initial load, not pagination)
@@ -189,12 +189,12 @@ export const fetchRandomVideosFromChannel = createAsyncThunk(
     if (isCached(cacheKey)) {
       const cachedData = getCachedData<Video[]>(cacheKey)
       if (cachedData) {
-        console.log(`📦 Using cached random videos from channel ${channelId}`)
+        console.log(`Using cached random videos from channel ${channelId}`)
         return cachedData
       }
     }
     
-    console.log(`🌐 Fetching random videos from channel ${channelId}`)
+    console.log(`Fetching random videos from channel ${channelId}`)
     
     const videos = await youtubeService.getRandomVideosFromChannel(channelId, count)
     
@@ -214,19 +214,19 @@ export const fetchRandomVideosFromSavedChannels = createAsyncThunk(
     if (isCached(cacheKey)) {
       const cachedData = getCachedData<Video[]>(cacheKey)
       if (cachedData) {
-        console.log('📦 Using cached random videos')
+        console.log('Using cached random videos')
         return cachedData
       }
     }
     
     // Prevent multiple simultaneous calls
     if (isFetchingRandomVideos) {
-      console.log('⏳ Random videos already being fetched, skipping...')
+      console.log('Random videos already being fetched, skipping...')
       throw new Error('Already fetching random videos')
     }
     
     isFetchingRandomVideos = true
-    console.log('🌐 Fetching random videos from API')
+    console.log('Fetching random videos from API')
     
     try {
       const videos = await youtubeService.getRandomVideosFromSavedChannels(count)
@@ -250,12 +250,12 @@ export const fetchVideosByCategory = createAsyncThunk<SearchResponse, { category
     if (!pageToken && isCached(cacheKey, 60 * 60 * 1000)) { // 1 hour cache
       const cachedData = getCachedData(cacheKey) as SearchResponse
       if (cachedData) {
-        console.log(`📦 Using cached videos for category ${categoryId}`)
+        console.log(`Using cached videos for category ${categoryId}`)
         return cachedData
       }
     }
     
-    console.log(`🌐 Fetching videos for category ${categoryId} from API`)
+    console.log(`Fetching videos for category ${categoryId} from API`)
     const response = await youtubeService.getVideosByCategory(categoryId, pageToken)
     
     // Cache the response (only cache initial load, not pagination)
@@ -276,12 +276,12 @@ export const fetchVideosByQuery = createAsyncThunk<SearchResponse, { query: stri
     if (!pageToken && isCached(cacheKey)) {
       const cachedData = getCachedData(cacheKey) as SearchResponse
       if (cachedData) {
-        console.log(`📦 Using cached videos for query "${query}"`)
+        console.log(`Using cached videos for query "${query}"`)
         return cachedData
       }
     }
     
-    console.log(`🌐 Fetching videos for query "${query}" from API`)
+    console.log(`Fetching videos for query "${query}" from API`)
     const response = await youtubeService.getVideosByQuery(query, pageToken, 25, order)
     
     // Cache the response (only cache initial load, not pagination)

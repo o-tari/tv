@@ -116,7 +116,7 @@ const logYouTubeEvent = (eventName: string, data?: unknown) => {
     }
   }
 
-  console.log(`🎬 YouTube Event: ${eventName}`, data ? data : '')
+  console.log(` YouTube Event: ${eventName}`, data ? data : '')
   
   // Also log to a dedicated event log (optional)
   const eventLog = document.getElementById('youtube-event-log')
@@ -338,7 +338,7 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
             // Check if video has ended
             if (state === YT_PLAYER_STATE.ENDED) {
               logYouTubeEvent('VIDEO_ENDED')
-              console.log('🎬 EnhancedYouTubePlayer: Video ended, calling onVideoEnd')
+              console.log(' EnhancedYouTubePlayer: Video ended, calling onVideoEnd')
               onVideoEnd?.()
             }
             
@@ -425,7 +425,7 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
         const seekTime = Math.min(savedProgress, maxSeekTime)
         
         if (seekTime > 5) { // Only seek if we're more than 5 seconds in
-          console.log(`🎬 Resuming video from ${seekTime.toFixed(1)}s (${((seekTime / duration) * 100).toFixed(1)}%)`)
+          console.log(` Resuming video from ${seekTime.toFixed(1)}s (${((seekTime / duration) * 100).toFixed(1)}%)`)
           // Seek immediately when player is ready, before any playing starts
           setTimeout(() => {
             if (playerInstanceRef.current) {
@@ -435,7 +435,7 @@ const EnhancedYouTubePlayer = ({ videoId, video, onReady, onStateChange, onVideo
             }
           }, 200) // Slightly longer delay to ensure player is fully ready
         } else {
-          console.log(`🎬 Saved progress too close to start/end, starting from beginning`)
+          console.log(` Saved progress too close to start/end, starting from beginning`)
           setHasResumed(true)
         }
       }

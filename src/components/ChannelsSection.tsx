@@ -28,7 +28,7 @@ const ChannelsSection = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              📺 Random Channels
+              Random Channels
             </h2>
             <span className="text-sm text-gray-500 dark:text-gray-400">
               ({randomChannels.length} of {savedChannels.length})

@@ -164,7 +164,7 @@ class LocalStorageCache {
     const cached = this.getItem(key)
 
     if (cached && cached.data) {
-      console.log(`📦 Cache hit for ${type}${videoId ? ` (video: ${videoId})` : ''}`)
+      console.log(`Cache hit for ${type}${videoId ? ` (video: ${videoId})` : ''}`)
       return cached.data
     }
 
@@ -237,7 +237,7 @@ class LocalStorageCache {
     keysToRemove.forEach(key => localStorage.removeItem(key))
     // Clear ongoing requests
     this.ongoingRequests.clear()
-    console.log(`🗑️ Cleared ${keysToRemove.length} cache entries`)
+    console.log(`Cleared ${keysToRemove.length} cache entries`)
   }
 
   clearExpired(): void {
@@ -278,12 +278,12 @@ class LocalStorageCache {
         this.ongoingRequests.delete(key)
       }
     }
-    console.log(`🎬 Cleared ${keysToRemove.length} cache entries for video ${videoId}`)
+    console.log(`Cleared ${keysToRemove.length} cache entries for video ${videoId}`)
   }
 
   clearOngoingRequests(): void {
     this.ongoingRequests.clear()
-    console.log('🔄 Cleared all ongoing requests')
+    console.log('Cleared all ongoing requests')
   }
 
   getStats(): CacheStats {

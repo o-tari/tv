@@ -46,7 +46,7 @@ const TMDBWatchPage = () => {
         try {
           const episodeData = JSON.parse(savedEpisode)
           setSelectedEpisode(episodeData)
-          console.log('📺 Restored saved episode from localStorage:', episodeData.name)
+          console.log('Restored saved episode from localStorage:', episodeData.name)
         } catch (error) {
           console.error('Error parsing saved episode data:', error)
         }
@@ -57,7 +57,7 @@ const TMDBWatchPage = () => {
   // Trigger torrent search when selectedEpisode is restored from localStorage
   useEffect(() => {
     if (selectedEpisode && content && type === 'tv' && isTorrentEndpointConfigured) {
-      console.log('🔍 Auto-triggering torrent search for restored episode:', {
+      console.log('Auto-triggering torrent search for restored episode:', {
         show: (content as TMDBTVDetails).name,
         season: selectedEpisode.season_number,
         episode: selectedEpisode.episode_number
@@ -69,7 +69,7 @@ const TMDBWatchPage = () => {
   const loadContent = async () => {
     if (!id || !type || !tmdbApiKey) return
 
-    console.log('🎬 TMDBWatchPage: Loading content...', { id, type })
+    console.log(' TMDBWatchPage: Loading content...', { id, type })
     setLoading(true)
     setError(null)
     
@@ -77,14 +77,14 @@ const TMDBWatchPage = () => {
       const tmdbService = getTMDBService(tmdbApiKey)
       
       if (type === 'movie') {
-        console.log('🎬 Loading movie details for ID:', id)
+        console.log(' Loading movie details for ID:', id)
         const movieDetails = await tmdbService.getMovieDetails(parseInt(id))
-        console.log('🎬 Movie loaded:', { title: movieDetails.title, year: movieDetails.release_date })
+        console.log(' Movie loaded:', { title: movieDetails.title, year: movieDetails.release_date })
         setContent(movieDetails)
       } else {
-        console.log('📺 Loading TV details for ID:', id)
+        console.log(' Loading TV details for ID:', id)
         const tvDetails = await tmdbService.getTVDetails(parseInt(id))
-        console.log('📺 TV show loaded:', { name: tvDetails.name, seasons: tvDetails.seasons?.length })
+        console.log(' TV show loaded:', { name: tvDetails.name, seasons: tvDetails.seasons?.length })
         setContent(tvDetails)
         
         // Check if there's a saved episode for this TV show
@@ -93,7 +93,7 @@ const TMDBWatchPage = () => {
           try {
             const episodeData = JSON.parse(savedEpisode)
             if (episodeData.season_number) {
-              console.log('📺 Found saved episode, setting season to:', episodeData.season_number)
+              console.log(' Found saved episode, setting season to:', episodeData.season_number)
               setSelectedSeason(episodeData.season_number)
               // Load episodes for the saved season
               loadEpisodes(episodeData.season_number)
@@ -131,12 +131,12 @@ const TMDBWatchPage = () => {
   const loadEpisodes = async (seasonNumber: number) => {
     if (!id || !tmdbApiKey || type !== 'tv') return
 
-    console.log('📺 Loading episodes for season:', seasonNumber)
+    console.log(' Loading episodes for season:', seasonNumber)
     setEpisodesLoading(true)
     try {
       const tmdbService = getTMDBService(tmdbApiKey)
       const seasonDetails = await tmdbService.getSeasonDetails(parseInt(id), seasonNumber)
-      console.log('📺 Episodes loaded:', seasonDetails.episodes?.length || 0)
+      console.log(' Episodes loaded:', seasonDetails.episodes?.length || 0)
       setEpisodes(seasonDetails.episodes || [])
       
       // If we have a saved episode and it's in this season, select it
@@ -145,7 +145,7 @@ const TMDBWatchPage = () => {
           ep => ep.episode_number === selectedEpisode.episode_number
         )
         if (savedEpisode) {
-          console.log('📺 Restored saved episode:', savedEpisode.name)
+          console.log(' Restored saved episode:', savedEpisode.name)
           setSelectedEpisode(savedEpisode)
         }
       }
@@ -163,7 +163,7 @@ const TMDBWatchPage = () => {
   }
 
   const handleEpisodeSelect = (episode: TMDBEpisode) => {
-    console.log('📺 Episode selected:', { 
+    console.log(' Episode selected:', { 
       name: episode.name, 
       season: episode.season_number, 
       episode: episode.episode_number 
@@ -172,7 +172,7 @@ const TMDBWatchPage = () => {
     // Save to localStorage
     if (id && type === 'tv') {
       localStorage.setItem(`tmdb-tv-${id}-selected-episode`, JSON.stringify(episode))
-      console.log('📺 Episode saved to localStorage')
+      console.log(' Episode saved to localStorage')
     }
     
     // Add to continue watching
@@ -181,7 +181,7 @@ const TMDBWatchPage = () => {
         content,
         type: 'tv'
       }))
-      console.log('📺 Added to continue watching')
+      console.log(' Added to continue watching')
     }
 
     // Update last watched episode for new episode detection
@@ -192,7 +192,7 @@ const TMDBWatchPage = () => {
         episodeNumber: episode.episode_number,
         airDate: episode.air_date
       }))
-      console.log('📺 Updated last watched episode for new episode detection')
+      console.log(' Updated last watched episode for new episode detection')
     }
 
     // Search for torrents for this episode
@@ -203,14 +203,14 @@ const TMDBWatchPage = () => {
 
   const searchForEpisodeTorrents = async (show: TMDBTVDetails, episode: TMDBEpisode) => {
     if (!isTorrentEndpointConfigured) {
-      console.log('🔍 Torrent endpoint not configured, skipping torrent search')
+      console.log(' Torrent endpoint not configured, skipping torrent search')
       setTorrentResults(null)
       return
     }
 
     try {
       setTorrentLoading(true)
-      console.log('🔍 Searching for episode torrents:', {
+      console.log(' Searching for episode torrents:', {
         show: show.name,
         season: episode.season_number,
         episode: episode.episode_number,
@@ -225,7 +225,7 @@ const TMDBWatchPage = () => {
       )
       const isLongRunning = show.number_of_episodes > 100
       
-      console.log('🔍 Show analysis:', {
+      console.log(' Show analysis:', {
         isAnimation,
         isLongRunning,
         totalEpisodes: show.number_of_episodes,
@@ -237,8 +237,8 @@ const TMDBWatchPage = () => {
       if (isAnimation && isLongRunning) {
         // For long-running animations like One Piece, use just episode number
         const searchQuery = `${show.name} ${episode.episode_number}`
-        console.log('🔍 Long-running animation search query:', searchQuery)
-        console.log('🔍 Using format: "Show Name EpisodeNumber" (no season)')
+        console.log(' Long-running animation search query:', searchQuery)
+        console.log(' Using format: "Show Name EpisodeNumber" (no season)')
         
         // Use the general search method instead of TV-specific search
         results = await torrentSearchService.searchTorrents({
@@ -250,8 +250,8 @@ const TMDBWatchPage = () => {
         const seasonStr = episode.season_number.toString().padStart(2, '0')
         const episodeStr = episode.episode_number.toString().padStart(2, '0')
         const searchQuery = `${show.name} s${seasonStr}e${episodeStr}`
-        console.log('🔍 Regular TV show search query:', searchQuery)
-        console.log('🔍 Using format: "Show Name S##E##" (with season)')
+        console.log(' Regular TV show search query:', searchQuery)
+        console.log(' Using format: "Show Name S##E##" (with season)')
         
         results = await torrentSearchService.searchTVTorrents(
           show.name,
@@ -261,7 +261,7 @@ const TMDBWatchPage = () => {
         )
       }
       
-      console.log('🔍 Torrent search results:', results)
+      console.log(' Torrent search results:', results)
       setTorrentResults(results)
     } catch (error) {
       console.error('❌ Error searching for episode torrents:', error)
@@ -296,7 +296,7 @@ const TMDBWatchPage = () => {
         query: query.trim()
       })
       
-      console.log('🔍 Custom torrent search results:', results)
+      console.log(' Custom torrent search results:', results)
       setTorrentResults(results)
     } catch (error) {
       console.error('❌ Error searching with custom query:', error)
@@ -472,7 +472,7 @@ const TMDBWatchPage = () => {
             <div className="mb-6">
               {(() => {
                 if (isTV && selectedEpisode) {
-                  console.log('🎬 TMDBWatchPage: Rendering TorrentPlayer for TV show', {
+                  console.log(' TMDBWatchPage: Rendering TorrentPlayer for TV show', {
                     showTitle: (content as TMDBTVDetails).name,
                     season: selectedEpisode.season_number,
                     episode: selectedEpisode.episode_number,
@@ -487,7 +487,7 @@ const TMDBWatchPage = () => {
                     />
                   )
                 } else if (!isTV) {
-                  console.log('🎬 TMDBWatchPage: Rendering TorrentPlayer for movie', {
+                  console.log(' TMDBWatchPage: Rendering TorrentPlayer for movie', {
                     movieTitle: (content as TMDBMovieDetails).title,
                     youtubeVideoId: trailer?.key
                   })
@@ -644,7 +644,7 @@ const TMDBWatchPage = () => {
                       searchResults={torrentResults}
                       selectedTorrent={null}
                       onTorrentSelect={(torrent) => {
-                        console.log('🎬 Torrent selected:', torrent.name)
+                        console.log(' Torrent selected:', torrent.name)
                       }}
                       onQueryChange={handleCustomQueryChange}
                       currentQuery={getCurrentQuery()}

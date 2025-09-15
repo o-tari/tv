@@ -5,6 +5,8 @@ import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
 import { logout } from '../store/slices/authSlice'
 import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { toggleFavorite, selectFavoriteItems, selectSidebarItems } from '../store/slices/favoritesSlice'
+import { StarIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import SearchBar from './SearchBar'
 
 const Sidebar = () => {
@@ -132,9 +134,7 @@ const Sidebar = () => {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <span className="mr-4 text-lg">
-                      {item.icon}
-                    </span>
+                    <item.icon className="mr-4 w-5 h-5" />
                     <span className="truncate">{item.label}</span>
                   </Link>
                   <button
@@ -150,7 +150,11 @@ const Sidebar = () => {
                     }`}
                     aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
                   >
-                    {isItemFavorite ? '⭐' : '☆'}
+                    {isItemFavorite ? (
+                      <StarSolidIcon className="w-4 h-4" />
+                    ) : (
+                      <StarIcon className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               )
@@ -171,7 +175,7 @@ const Sidebar = () => {
                       onClick={() => dispatch(toggleSidebar())}
                       className="flex items-center flex-1 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
                     >
-                      <span className="mr-3">{item.icon}</span>
+                      <item.icon className="mr-3 w-4 h-4" />
                       {item.label}
                     </Link>
                     <button
@@ -187,7 +191,11 @@ const Sidebar = () => {
                       }`}
                       aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
                     >
-                      {isItemFavorite ? '⭐' : '☆'}
+                      {isItemFavorite ? (
+                        <StarSolidIcon className="w-4 h-4" />
+                      ) : (
+                        <StarIcon className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 )
@@ -232,7 +240,7 @@ const Sidebar = () => {
                                 }}
                                 className="flex items-center flex-1 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                               >
-                                <span className="mr-3">{item.icon}</span>
+                                <item.icon className="mr-3 w-4 h-4" />
                                 {item.label}
                               </Link>
                               <button
@@ -248,7 +256,11 @@ const Sidebar = () => {
                                 }`}
                                 aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
                               >
-                                {isItemFavorite ? '⭐' : '☆'}
+                                {isItemFavorite ? (
+                                  <StarSolidIcon className="w-4 h-4" />
+                                ) : (
+                                  <StarIcon className="w-4 h-4" />
+                                )}
                               </button>
                             </div>
                           )
@@ -258,7 +270,7 @@ const Sidebar = () => {
                           onClick={handleLogout}
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
-                          <span className="mr-3">🚪</span>
+                          <ArrowRightOnRectangleIcon className="mr-3 w-4 h-4" />
                           Sign out
                         </button>
                       </>
@@ -290,7 +302,7 @@ const Sidebar = () => {
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
-                <span className="mr-3 text-lg">⚙️</span>
+                <Cog6ToothIcon className="mr-3 w-5 h-5" />
                 <span>Settings</span>
               </Link>
               <button
@@ -306,7 +318,11 @@ const Sidebar = () => {
                 }`}
                 aria-label={`${favoriteItems.includes('settings') ? 'Remove from' : 'Add to'} favorites`}
               >
-                {favoriteItems.includes('settings') ? '⭐' : '☆'}
+                {favoriteItems.includes('settings') ? (
+                  <StarSolidIcon className="w-4 h-4" />
+                ) : (
+                  <StarIcon className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>

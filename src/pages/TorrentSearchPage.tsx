@@ -14,22 +14,22 @@ import { selectUseMockData, selectTorrentApiUrl, selectIsTorrentEndpointConfigur
 
 // Torrent sites configuration
 const TORRENT_SITES = [
-  { id: 'piratebay', name: 'PirateBay', url: 'https://thepiratebay10.org', status: '❌' },
-  { id: '1337x', name: '1337x', url: 'https://1337x.to', status: '❌' },
-  { id: 'tgx', name: 'Torrent Galaxy', url: 'https://torrentgalaxy.to', status: '❌' },
-  { id: 'torlock', name: 'Torlock', url: 'https://www.torlock.com', status: '❌' },
-  { id: 'nyaasi', name: 'Nyaasi', url: 'https://nyaa.si', status: '❌' },
-  { id: 'zooqle', name: 'Zooqle', url: 'https://zooqle.com', status: '❌' },
-  { id: 'kickass', name: 'KickAss', url: 'https://kickasstorrents.to', status: '❌' },
-  { id: 'bitsearch', name: 'Bitsearch', url: 'https://bitsearch.to', status: '❌' },
-  { id: 'magnetdl', name: 'MagnetDL', url: 'https://www.magnetdl.com', status: '✅' },
-  { id: 'libgen', name: 'Libgen', url: 'https://libgen.is', status: '❌' },
-  { id: 'yts', name: 'YTS', url: 'https://yts.mx', status: '❌' },
-  { id: 'limetorrent', name: 'Limetorrent', url: 'https://www.limetorrents.pro', status: '❌' },
-  { id: 'torrentfunk', name: 'TorrentFunk', url: 'https://www.torrentfunk.com', status: '❌' },
-  { id: 'glodls', name: 'Glodls', url: 'https://glodls.to', status: '❌' },
-  { id: 'torrentproject', name: 'TorrentProject', url: 'https://torrentproject2.com', status: '❌' },
-  { id: 'ybt', name: 'YourBittorrent', url: 'https://yourbittorrent.com', status: '❌' }
+  { id: 'piratebay', name: 'PirateBay', url: 'https://thepiratebay10.org', status: ' ' },
+  { id: '1337x', name: '1337x', url: 'https://1337x.to', status: ' ' },
+  { id: 'tgx', name: 'Torrent Galaxy', url: 'https://torrentgalaxy.to', status: ' ' },
+  { id: 'torlock', name: 'Torlock', url: 'https://www.torlock.com', status: ' ' },
+  { id: 'nyaasi', name: 'Nyaasi', url: 'https://nyaa.si', status: ' ' },
+  { id: 'zooqle', name: 'Zooqle', url: 'https://zooqle.com', status: ' ' },
+  { id: 'kickass', name: 'KickAss', url: 'https://kickasstorrents.to', status: ' ' },
+  { id: 'bitsearch', name: 'Bitsearch', url: 'https://bitsearch.to', status: ' ' },
+  { id: 'magnetdl', name: 'MagnetDL', url: 'https://www.magnetdl.com', status: ' ' },
+  { id: 'libgen', name: 'Libgen', url: 'https://libgen.is', status: ' ' },
+  { id: 'yts', name: 'YTS', url: 'https://yts.mx', status: ' ' },
+  { id: 'limetorrent', name: 'Limetorrent', url: 'https://www.limetorrents.pro', status: ' ' },
+  { id: 'torrentfunk', name: 'TorrentFunk', url: 'https://www.torrentfunk.com', status: ' ' },
+  { id: 'glodls', name: 'Glodls', url: 'https://glodls.to', status: ' ' },
+  { id: 'torrentproject', name: 'TorrentProject', url: 'https://torrentproject2.com', status: ' ' },
+  { id: 'ybt', name: 'YourBittorrent', url: 'https://yourbittorrent.com', status: ' ' }
 ]
 
 const TorrentSearchPage = () => {
