@@ -17,6 +17,7 @@ const ChannelPage = () => {
     videosLoading,
     videosError,
     loadMoreVideos,
+    hasMoreVideos,
   } = useChannel(channelId || '')
 
   const isSubscribed = useAppSelector(selectIsSubscribed(channelId || ''))
@@ -165,7 +166,7 @@ const ChannelPage = () => {
             ) : (
               <InfiniteScroll
                 onLoadMore={loadMoreVideos}
-                hasMore={videos.length > 0}
+                hasMore={hasMoreVideos}
                 loading={videosLoading}
               >
                 <VideoGrid

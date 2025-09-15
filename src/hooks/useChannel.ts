@@ -11,6 +11,7 @@ export const useChannel = (channelId: string) => {
     channelVideos,
     channelVideosLoading,
     channelVideosError,
+    channelVideosNextPageToken,
   } = useAppSelector((state) => state.videos)
 
   useEffect(() => {
@@ -21,8 +22,8 @@ export const useChannel = (channelId: string) => {
   }, [dispatch, channelId])
 
   const loadMoreVideos = () => {
-    if (channelId && !channelVideosLoading) {
-      dispatch(fetchChannelVideos({ channelId }))
+    if (channelId && !channelVideosLoading && channelVideosNextPageToken) {
+      dispatch(fetchChannelVideos({ channelId, pageToken: channelVideosNextPageToken }))
     }
   }
 
@@ -34,5 +35,6 @@ export const useChannel = (channelId: string) => {
     videosLoading: channelVideosLoading,
     videosError: channelVideosError,
     loadMoreVideos,
+    hasMoreVideos: !!channelVideosNextPageToken,
   }
 }

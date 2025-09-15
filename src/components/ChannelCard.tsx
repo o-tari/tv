@@ -33,8 +33,8 @@ const ChannelCard = ({
     if (onClick) {
       onClick()
     } else {
-      // Navigate to subscriptions page with this channel selected
-      navigate(`/subscriptions?channel=${channel.id}`)
+      // Navigate to channel page
+      navigate(`/channel/${channel.id}`)
     }
   }
   if (variant === 'compact') {
