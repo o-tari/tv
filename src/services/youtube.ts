@@ -377,7 +377,7 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
     const response: AxiosResponse = await api.get('/channels', {
       params: {
         id: channelId,
-        part: 'snippet,statistics,brandingSettings',
+        part: 'snippet,statistics,contentDetails,brandingSettings',
       },
     })
 
@@ -396,6 +396,7 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
       viewCount: channel.statistics.viewCount,
       customUrl: channel.snippet.customUrl,
       country: channel.snippet.country,
+      uploadsPlaylistId: channel.contentDetails?.relatedPlaylists?.uploads,
     }
   } catch (error) {
     handleApiError(error)
@@ -403,10 +404,11 @@ export const getChannelDetails = async (channelId: string): Promise<Channel> => 
   }
 }
 
-// Get channel videos using activities endpoint (more efficient than search)
+// Get channel videos using playlistItems endpoint
 export const getChannelVideos = async (
   channelId: string,
-  pageToken?: string
+  pageToken?: string,
+  uploadsPlaylistId?: string
 ): Promise<SearchResponse> => {
   if (shouldUseMockData()) {
     await new Promise(resolve => setTimeout(resolve, 400))
@@ -423,11 +425,25 @@ export const getChannelVideos = async (
     throw new Error('YouTube API key is required. Please configure your API key in settings or enable mock data mode.')
   }
 
-  // Use activities endpoint for better quota efficiency
+  // If no uploadsPlaylistId provided, get it from channel details
+  let playlistId = uploadsPlaylistId
+  if (!playlistId) {
+    try {
+      const channelDetails = await getChannelDetails(channelId)
+      playlistId = channelDetails.uploadsPlaylistId
+      if (!playlistId) {
+        throw new Error('Channel does not have an uploads playlist')
+      }
+    } catch (error) {
+      console.error('Failed to get channel uploads playlist ID:', error)
+      throw new Error('Failed to get channel uploads playlist')
+    }
+  }
+
   const params: any = {
     part: 'snippet,contentDetails',
-    channelId,
-    maxResults: 25,
+    playlistId: playlistId,
+    maxResults: 50,
   }
 
   if (pageToken) {
@@ -440,25 +456,20 @@ export const getChannelVideos = async (
     
     try {
       const api = getApiInstance()
-      const response: AxiosResponse = await api.get('/activities', { params })
+      const response: AxiosResponse = await api.get('/playlistItems', { params })
       
-      // Filter only video uploads and convert to our format
-      const videoItems = response.data.items
-        .filter((item: any) => 
-          item.snippet.type === 'upload' && 
-          item.contentDetails?.upload?.videoId
-        )
-        .map((item: any) => ({
-          id: item.contentDetails.upload.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description || '',
-          thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
-          channelTitle: item.snippet.channelTitle,
-          channelId: item.snippet.channelId,
-          publishedAt: item.snippet.publishedAt,
-          duration: '', // Will be filled by getVideoDetails if needed
-          viewCount: '', // Will be filled by getVideoDetails if needed
-        }))
+      // Convert playlist items to our video format
+      const videoItems = response.data.items.map((item: any) => ({
+        id: item.contentDetails.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description || '',
+        thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+        channelTitle: item.snippet.channelTitle,
+        channelId: item.snippet.channelId,
+        publishedAt: item.snippet.publishedAt,
+        duration: '', // Will be filled by getVideoDetails if needed
+        viewCount: '', // Will be filled by getVideoDetails if needed
+      }))
 
       return {
         items: videoItems,
@@ -466,42 +477,9 @@ export const getChannelVideos = async (
         totalResults: response.data.pageInfo?.totalResults || videoItems.length,
       }
     } catch (error) {
-      // Fallback to search endpoint if activities fails
-      console.warn('Activities endpoint failed, falling back to search:', error)
-      
-      const searchParams: any = {
-        part: 'snippet',
-        channelId,
-        type: 'video',
-        maxResults: 25,
-        order: 'date',
-      }
-
-      if (pageToken) {
-        searchParams.pageToken = pageToken
-      }
-
-      // Apply rate limiting for fallback search
-      await youtubeRateLimiter.waitIfNeeded()
-      
-      const api = getApiInstance()
-      const response: AxiosResponse = await api.get('/search', { params: searchParams })
-      
-      return {
-        items: response.data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-          channelTitle: item.snippet.channelTitle,
-          channelId: item.snippet.channelId,
-          publishedAt: item.snippet.publishedAt,
-          duration: '', // Will be filled by getVideoDetails
-          viewCount: '', // Will be filled by getVideoDetails
-        })),
-        nextPageToken: response.data.nextPageToken,
-        totalResults: response.data.pageInfo.totalResults,
-      }
+      console.error('Failed to fetch channel videos from playlist:', error)
+      handleApiError(error)
+      throw error
     }
   })
 }

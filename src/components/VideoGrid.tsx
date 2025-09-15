@@ -19,6 +19,10 @@ const parseDurationToSeconds = (duration: string): number => {
 // Filter out YouTube Shorts (videos under 60 seconds)
 const filterOutShorts = (videos: Video[]): Video[] => {
   return videos.filter(video => {
+    // If duration is empty or not available, don't filter out the video
+    if (!video.duration || video.duration.trim() === '') {
+      return true
+    }
     const durationSeconds = parseDurationToSeconds(video.duration)
     return durationSeconds >= 60 // Videos must be at least 60 seconds to not be considered shorts
   })

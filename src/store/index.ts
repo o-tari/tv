@@ -4,7 +4,6 @@ import authSlice from './slices/authSlice'
 import uiSlice from './slices/uiSlice'
 import historySlice from './slices/historySlice'
 import videosSlice from './slices/videosSlice'
-import subscriptionsSlice from './slices/subscriptionsSlice'
 import continueWatchingSlice from './slices/continueWatchingSlice'
 import settingsSlice from './slices/settingsSlice'
 import animeSlice from './slices/animeSlice'
@@ -21,7 +20,6 @@ export const store = configureStore({
     ui: uiSlice,
     history: historySlice,
     videos: videosSlice,
-    subscriptions: subscriptionsSlice,
     continueWatching: continueWatchingSlice,
     settings: settingsSlice,
     anime: animeSlice,

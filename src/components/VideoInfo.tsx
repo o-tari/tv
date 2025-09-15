@@ -4,7 +4,7 @@ import { type Video } from '../types/youtube'
 import { formatViewCount } from '../utils/formatNumber'
 import { sanitizeHTML } from '../utils/sanitizeHTML'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectIsSubscribed, toggleSubscription } from '../store/slices/subscriptionsSlice'
+import { selectIsChannelSaved, toggleChannel } from '../store/slices/channelsSlice'
 
 interface VideoInfoProps {
   video: Video
@@ -13,7 +13,7 @@ interface VideoInfoProps {
 const VideoInfo = ({ video }: VideoInfoProps) => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const isSubscribed = useAppSelector(selectIsSubscribed(video.channelId))
+  const isSubscribed = useAppSelector(selectIsChannelSaved(video.channelId))
   
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -47,11 +47,11 @@ const VideoInfo = ({ video }: VideoInfoProps) => {
       videoCount: '0', // Not available in video data
       viewCount: '0', // Not available in video data
     }
-    dispatch(toggleSubscription(channel))
+    dispatch(toggleChannel(channel))
   }
 
   const handleChannelClick = () => {
-    navigate(`/subscriptions?channel=${video.channelId}`)
+    navigate(`/channel/${video.channelId}`)
   }
 
   return (

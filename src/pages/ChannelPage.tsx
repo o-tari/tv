@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
-import { selectIsSubscribed, toggleSubscription } from '../store/slices/subscriptionsSlice'
+import { selectIsChannelSaved, toggleChannel } from '../store/slices/channelsSlice'
 import { useChannel } from '../hooks/useChannel'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
+import { formatSubscriberCount } from '../utils/formatNumber'
 
 const ChannelPage = () => {
   const { channelId } = useParams<{ channelId: string }>()
@@ -20,12 +21,12 @@ const ChannelPage = () => {
     hasMoreVideos,
   } = useChannel(channelId || '')
 
-  const isSubscribed = useAppSelector(selectIsSubscribed(channelId || ''))
-  const [activeTab, setActiveTab] = useState<'videos' | 'playlists' | 'about'>('videos')
+  const isSubscribed = useAppSelector(selectIsChannelSaved(channelId || ''))
+  const [activeTab, setActiveTab] = useState<'videos' | 'about'>('videos')
 
   const handleSubscribe = () => {
     if (channel) {
-      dispatch(toggleSubscription(channel))
+      dispatch(toggleChannel(channel))
     }
   }
 
@@ -88,29 +89,21 @@ const ChannelPage = () => {
       <div className="max-w-6xl mx-auto">
         {/* Channel header */}
         <div className="mb-8">
-          <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 rounded-lg mb-6"></div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+          <div className="flex items-center space-x-4 mb-6">
             <img
               src={channel.thumbnail}
               alt={channel.title}
-              className="w-24 h-24 rounded-full object-cover -mt-12 border-4 border-white dark:border-gray-800"
+              className="w-20 h-20 rounded-full object-cover"
             />
             
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                 {channel.title}
               </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                <span>{channel.subscriberCount} subscribers</span>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <span>{formatSubscriberCount(channel.subscriberCount)} subscribers</span>
                 <span>•</span>
                 <span>{channel.videoCount} videos</span>
-                {channel.country && (
-                  <>
-                    <span>•</span>
-                    <span>{channel.country}</span>
-                  </>
-                )}
               </div>
             </div>
             
@@ -132,7 +125,6 @@ const ChannelPage = () => {
           <nav className="flex space-x-8">
             {[
               { id: 'videos', label: 'Videos' },
-              { id: 'playlists', label: 'Playlists' },
               { id: 'about', label: 'About' },
             ].map((tab) => (
               <button
@@ -172,22 +164,10 @@ const ChannelPage = () => {
                 <VideoGrid
                   videos={videos}
                   loading={videosLoading && videos.length === 0}
+                  excludeShorts={false}
                 />
               </InfiniteScroll>
             )}
-          </div>
-        )}
-
-        {activeTab === 'playlists' && (
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Playlists
-            </h2>
-            <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">
-                No playlists available
-              </p>
-            </div>
           </div>
         )}
 

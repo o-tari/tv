@@ -4,7 +4,6 @@ import { type Video } from '../../types/youtube'
 interface HistoryState {
   watchHistory: Video[]
   watchLater: Video[]
-  subscriptions: string[] // Channel IDs
 }
 
 const loadFromStorage = (key: string, defaultValue: any) => {
@@ -27,7 +26,6 @@ const saveToStorage = (key: string, value: any) => {
 const initialState: HistoryState = {
   watchHistory: loadFromStorage('watchHistory', []),
   watchLater: loadFromStorage('watchLater', []),
-  subscriptions: loadFromStorage('subscriptions', []),
 }
 
 const historySlice = createSlice({
@@ -69,17 +67,6 @@ const historySlice = createSlice({
       state.watchLater = []
       saveToStorage('watchLater', state.watchLater)
     },
-    subscribeToChannel: (state, action: PayloadAction<string>) => {
-      const channelId = action.payload
-      if (!state.subscriptions.includes(channelId)) {
-        state.subscriptions.push(channelId)
-        saveToStorage('subscriptions', state.subscriptions)
-      }
-    },
-    unsubscribeFromChannel: (state, action: PayloadAction<string>) => {
-      state.subscriptions = state.subscriptions.filter(id => id !== action.payload)
-      saveToStorage('subscriptions', state.subscriptions)
-    },
   },
 })
 
@@ -90,13 +77,10 @@ export const {
   addToWatchLater,
   removeFromWatchLater,
   clearWatchLater,
-  subscribeToChannel,
-  unsubscribeFromChannel,
 } = historySlice.actions
 
 // Selectors
 export const selectWatchHistory = (state: { history: HistoryState }) => state.history.watchHistory
 export const selectWatchLater = (state: { history: HistoryState }) => state.history.watchLater
-export const selectSubscriptions = (state: { history: HistoryState }) => state.history.subscriptions
 
 export default historySlice.reducer

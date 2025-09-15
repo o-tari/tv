@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { type Channel } from '../types/youtube'
 import { formatSubscriberCount } from '../utils/formatNumber'
 import { useAppSelector, useAppDispatch } from '../store'
-import { selectIsSubscribed, toggleSubscription } from '../store/slices/subscriptionsSlice'
+import { selectIsChannelSaved, toggleChannel } from '../store/slices/channelsSlice'
 
 interface ChannelCardProps {
   channel: Channel
@@ -21,12 +21,12 @@ const ChannelCard = ({
 }: ChannelCardProps) => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const isSubscribed = useAppSelector(selectIsSubscribed(channel.id))
+  const isSubscribed = useAppSelector(selectIsChannelSaved(channel.id))
 
   const handleSubscribe = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    dispatch(toggleSubscription(channel))
+    dispatch(toggleChannel(channel))
   }
 
   const handleCardClick = () => {

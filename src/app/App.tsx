@@ -14,7 +14,6 @@ const SearchPage = lazy(() => import('../pages/SearchPage'))
 const WatchPage = lazy(() => import('../pages/WatchPage'))
 const ChannelPage = lazy(() => import('../pages/ChannelPage'))
 const ExplorePage = lazy(() => import('../pages/ExplorePage'))
-const SubscriptionsPage = lazy(() => import('../pages/SubscriptionsPage'))
 const HistoryPage = lazy(() => import('../pages/HistoryPage'))
 const WatchLaterPage = lazy(() => import('../pages/WatchLaterPage'))
 const ContinueWatchingPage = lazy(() => import('../pages/ContinueWatchingPage'))
@@ -47,7 +46,6 @@ function AppRoutes() {
         <Route path="/movies-tv" element={<MoviesTVPage />} />
         <Route path="/tmdb-watch/:type/:id" element={<TMDBWatchPage />} />
         {isTorrentEndpointConfigured && <Route path="/torrents" element={<TorrentSearchPage />} />}
-        <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/watch-later" element={<WatchLaterPage />} />
         <Route path="/continue-watching" element={<ContinueWatchingPage />} />

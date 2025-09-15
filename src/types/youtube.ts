@@ -22,6 +22,7 @@ export interface Channel {
   viewCount: string
   customUrl?: string
   country?: string
+  uploadsPlaylistId?: string
 }
 
 

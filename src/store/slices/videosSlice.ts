@@ -171,8 +171,8 @@ export const fetchChannelDetails = createAsyncThunk(
 
 export const fetchChannelVideos = createAsyncThunk(
   'videos/fetchChannelVideos',
-  async ({ channelId, pageToken }: { channelId: string; pageToken?: string }) => {
-    const response = await youtubeService.getChannelVideos(channelId, pageToken)
+  async ({ channelId, pageToken, uploadsPlaylistId }: { channelId: string; pageToken?: string; uploadsPlaylistId?: string }) => {
+    const response = await youtubeService.getChannelVideos(channelId, pageToken, uploadsPlaylistId)
     return response
   }
 )

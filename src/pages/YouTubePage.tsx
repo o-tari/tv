@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { fetchTrendingVideos } from '../store/slices/videosSlice'
-import { selectWatchHistory, selectWatchLater, selectSubscriptions } from '../store/slices/historySlice'
+import { selectWatchHistory, selectWatchLater } from '../store/slices/historySlice'
 import { selectContinueWatching, selectVideoProgress, removeFromContinueWatching } from '../store/slices/continueWatchingSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
@@ -22,7 +22,6 @@ const YouTubePage = () => {
   
   const watchHistory = useAppSelector(selectWatchHistory)
   const watchLater = useAppSelector(selectWatchLater)
-  const subscriptions = useAppSelector(selectSubscriptions)
   const continueWatching = useAppSelector(selectContinueWatching)
   const videoProgress = useAppSelector(selectVideoProgress)
 
@@ -129,33 +128,6 @@ const YouTubePage = () => {
         {/* Channels Section */}
         <ChannelsSection />
 
-        {/* Subscriptions Section */}
-        {subscriptions.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                📺 Subscriptions
-              </h2>
-              <button
-                onClick={() => navigate('/subscriptions')}
-                className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
-              >
-                More →
-              </button>
-            </div>
-            <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">
-                {subscriptions.length} subscribed channel{subscriptions.length !== 1 ? 's' : ''}
-              </p>
-              <button
-                onClick={() => navigate('/subscriptions')}
-                className="mt-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
-              >
-                View Subscriptions →
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* History Section */}
         {watchHistory.length > 0 && (

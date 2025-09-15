@@ -23,7 +23,11 @@ export const useChannel = (channelId: string) => {
 
   const loadMoreVideos = () => {
     if (channelId && !channelVideosLoading && channelVideosNextPageToken) {
-      dispatch(fetchChannelVideos({ channelId, pageToken: channelVideosNextPageToken }))
+      dispatch(fetchChannelVideos({ 
+        channelId, 
+        pageToken: channelVideosNextPageToken,
+        uploadsPlaylistId: currentChannel?.uploadsPlaylistId
+      }))
     }
   }
 
