@@ -62,6 +62,17 @@ const TorrentPlayer = ({
         console.log('🚀 TorrentPlayer: Initializing WebTorrent client...')
         setTorrentError(null)
         
+        // Check for ASM.js errors in console
+        const originalError = console.error
+        let asmErrorDetected = false
+        
+        console.error = (...args) => {
+          if (args.some(arg => typeof arg === 'string' && arg.includes('Invalid asm.js'))) {
+            asmErrorDetected = true
+            console.log('⚠️ ASM.js error detected during WebTorrent initialization')
+          }
+          originalError.apply(console, args)
+        }
       
         // Use global WebTorrent from CDN
         if (typeof window !== 'undefined' && (window as unknown as { WebTorrent: WebTorrent.WebTorrentConstructor }).WebTorrent) {
@@ -69,6 +80,13 @@ const TorrentPlayer = ({
           const client = new WebTorrent()
           clientRef.current = client
           console.log('🔍 WebTorrent client:', client)
+          
+          // Restore original console.error
+          console.error = originalError
+          
+          if (asmErrorDetected) {
+            throw new Error('ASM.js compatibility issue detected')
+          }
         } else {
           throw new Error('WebTorrent not loaded from CDN')
         }
@@ -79,7 +97,13 @@ const TorrentPlayer = ({
         
       } catch (error) {
         console.error('❌ Failed to load WebTorrent:', error)
-        setTorrentError(`WebTorrent not available: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        
+        if (errorMessage.includes('ASM.js')) {
+          setTorrentError('WebTorrent not compatible with this browser - using YouTube instead')
+        } else {
+          setTorrentError(`WebTorrent not available: ${errorMessage}`)
+        }
         setUseTorrent(false)
       }
     }
@@ -211,28 +235,49 @@ const TorrentPlayer = ({
             // Clear the video element first
             video.innerHTML = ''
             
-            // Use the simple appendTo method from the example
-            file.appendTo(video)
-            
-            video.addEventListener('loadeddata', () => {
-              console.log('✅ Video loaded successfully')
-              updateState({
-                isLoading: false,
-                status: 'playing',
-                message: 'Playing torrent...',
-                progress: 100
-              })
-              resolve()
-            })
+            try {
+              // Use the simple appendTo method from the example
+              file.appendTo(video)
+              
+              // Add event listeners
+              const handleLoadedData = () => {
+                console.log('✅ Video loaded successfully')
+                updateState({
+                  isLoading: false,
+                  status: 'playing',
+                  message: 'Playing torrent...',
+                  progress: 100
+                })
+                resolve()
+              }
 
-            video.addEventListener('error', (e) => {
-              console.error('❌ Video load error:', e)
-              reject(new Error('Failed to load video from torrent'))
-            })
+              const handleError = (e: Event) => {
+                console.error('❌ Video load error:', e)
+                reject(new Error('Failed to load video from torrent'))
+              }
 
-            video.addEventListener('canplay', () => {
-              console.log('📥 Video can start playing')
-            })
+              const handleCanPlay = () => {
+                console.log('📥 Video can start playing')
+              }
+              
+              video.addEventListener('loadeddata', handleLoadedData, { once: true })
+              video.addEventListener('error', handleError, { once: true })
+              video.addEventListener('canplay', handleCanPlay)
+              
+              // Set a timeout for video loading
+              const videoTimeout = setTimeout(() => {
+                console.error('❌ Video loading timeout')
+                reject(new Error('Video loading timeout'))
+              }, 30000)
+              
+              // Clear timeout when video loads
+              video.addEventListener('loadeddata', () => clearTimeout(videoTimeout), { once: true })
+              video.addEventListener('error', () => clearTimeout(videoTimeout), { once: true })
+              
+            } catch (error) {
+              console.error('❌ Error appending video file:', error)
+              reject(new Error('Failed to append video file'))
+            }
           } else {
             console.error('❌ Video element not available')
             reject(new Error('Video element not available'))
@@ -242,11 +287,21 @@ const TorrentPlayer = ({
 
       torrent.on('error', (error: Error) => {
         console.error('❌ Torrent error:', error)
+        clearTimeout(timeoutId)
+        
         // Don't reject if it's a duplicate torrent error - just log and continue
         if (error.message.includes('duplicate torrent')) {
           console.log('⚠️ Duplicate torrent detected, continuing...')
           return
         }
+        
+        // Handle specific WebTorrent errors
+        if (error.message.includes('Invalid asm.js')) {
+          console.error('❌ ASM.js error detected, falling back to YouTube')
+          reject(new Error('WebTorrent ASM.js error - falling back to YouTube'))
+          return
+        }
+        
         reject(error)
       })
 
@@ -258,16 +313,18 @@ const TorrentPlayer = ({
         console.log('📤 Uploaded bytes:', bytes)
       })
 
-      // Timeout after 30 seconds
+      // Timeout after 60 seconds (increased from 30)
       const timeoutId = setTimeout(() => {
-        if (torrentRef.current !== torrent) {
-          console.error('❌ Torrent loading timeout')
-          reject(new Error('Torrent loading timeout'))
-        }
-      }, 30000)
+        console.error('❌ Torrent loading timeout')
+        reject(new Error('Torrent loading timeout'))
+      }, 60000)
 
-      // Clear timeout when torrent is ready
+      // Clear timeout when torrent is ready or has an error
       torrent.on('ready', () => {
+        clearTimeout(timeoutId)
+      })
+      
+      torrent.on('error', () => {
         clearTimeout(timeoutId)
       })
     })
@@ -379,14 +436,26 @@ const TorrentPlayer = ({
         searchParams: { movieTitle, showTitle, season, episode }
       })
       
-      setTorrentError(error instanceof Error ? error.message : 'Failed to search for torrent')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to search for torrent'
+      setTorrentError(errorMessage)
       setUseTorrent(false)
-      updateState({
-        isLoading: false,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Failed to search for torrent',
-        message: 'Falling back to YouTube...'
-      })
+      
+      // If it's an ASM.js error, provide a more helpful message
+      if (errorMessage.includes('ASM.js')) {
+        updateState({
+          isLoading: false,
+          status: 'failed',
+          error: 'WebTorrent compatibility issue - using YouTube instead',
+          message: 'WebTorrent not compatible with this browser - playing YouTube trailer'
+        })
+      } else {
+        updateState({
+          isLoading: false,
+          status: 'failed',
+          error: errorMessage,
+          message: 'Falling back to YouTube...'
+        })
+      }
     }
   }, [movieTitle, showTitle, season, episode, useTorrent, updateState, torrentApiUrl, useMockData, isTorrentEndpointConfigured, loadTorrent])
 
@@ -409,7 +478,12 @@ const TorrentPlayer = ({
       setTorrentError(null)
       currentMagnetRef.current = null
       
-      searchForTorrent()
+      // Add a small delay to prevent rapid re-renders
+      const timeoutId = setTimeout(() => {
+        searchForTorrent()
+      }, 100)
+      
+      return () => clearTimeout(timeoutId)
     }
   }, [movieTitle, showTitle, season, episode, useTorrent, searchForTorrent])
 
