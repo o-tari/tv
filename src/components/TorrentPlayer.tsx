@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAppSelector } from '../store'
 import { selectTorrentApiUrl, selectUseMockData, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { torrentSearchService as torrentService } from '../services/torrentSearch'
 import type { TorrentPlayerState, ApiTorrentSearchResponse } from '../types/torrent'
-import type { WebTorrent } from '../types/webtorrent'
+// import type { WebTorrent } from '../types/webtorrent' // COMMENTED OUT - not used when torrent playback is disabled
 import YouTubePlayer from './YouTubePlayer'
 import LoadingSpinner from './LoadingSpinner'
 
@@ -16,9 +16,9 @@ interface TorrentPlayerProps {
   episode?: number
   // Fallback YouTube video
   youtubeVideoId?: string
-  // Callbacks
-  onVideoEnd?: () => void
-  onError?: (error: string) => void
+  // Callbacks - COMMENTED OUT - not used when torrent playback is disabled
+  // onVideoEnd?: () => void
+  // onError?: (error: string) => void
   className?: string
 }
 
@@ -28,8 +28,8 @@ const TorrentPlayer = ({
   season,
   episode,
   youtubeVideoId,
-  onVideoEnd,
-  onError,
+  // onVideoEnd, // COMMENTED OUT - not used when torrent playback is disabled
+  // onError, // COMMENTED OUT - not used when torrent playback is disabled
   className = ''
 }: TorrentPlayerProps) => {
   const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
@@ -43,101 +43,108 @@ const TorrentPlayer = ({
     message: ''
   })
   const [useTorrent, setUseTorrent] = useState(true)
-  const [magnetUrl, setMagnetUrl] = useState<string | null>(null)
+  // const [magnetUrl, setMagnetUrl] = useState<string | null>(null) // COMMENTED OUT - not used when torrent playback is disabled
   const [torrentError, setTorrentError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<ApiTorrentSearchResponse | null>(null)
   const [selectedTorrent, setSelectedTorrent] = useState<{ name: string; size: string; seeders: string; leechers: string; category: string; uploader: string; date: string; magnet: string } | null>(null)
   const [displayedTorrents, setDisplayedTorrents] = useState(10) // Number of torrents to display
-  const [loadedTorrents, setLoadedTorrents] = useState<Set<string>>(new Set()) // Track loaded torrents
+  // const [loadedTorrents, setLoadedTorrents] = useState<Set<string>>(new Set()) // COMMENTED OUT - not used when torrent playback is disabled
   
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const torrentRef = useRef<WebTorrent.Torrent | null>(null)
-  const clientRef = useRef<WebTorrent.Instance | null>(null)
-  const currentMagnetRef = useRef<string | null>(null)
+  // const videoRef = useRef<HTMLVideoElement>(null) // COMMENTED OUT - not used when torrent playback is disabled
+  // const torrentRef = useRef<WebTorrent.Torrent | null>(null) // COMMENTED OUT - not used when torrent playback is disabled
+  // const clientRef = useRef<WebTorrent.Instance | null>(null) // COMMENTED OUT - not used when torrent playback is disabled
+  // const currentMagnetRef = useRef<string | null>(null) // COMMENTED OUT - not used when torrent playback is disabled
 
-  // Initialize WebTorrent client
-  useEffect(() => {
-    const initWebTorrent = async () => {
-      try {
-        console.log('🚀 TorrentPlayer: Initializing WebTorrent client...')
-        setTorrentError(null)
+  // Initialize WebTorrent client - COMMENTED OUT
+  // useEffect(() => {
+  //   const initWebTorrent = async () => {
+  //     try {
+  //       console.log('🚀 TorrentPlayer: Initializing WebTorrent client...')
+  //       setTorrentError(null)
         
-        // Check for ASM.js errors in console
-        const originalError = console.error
-        let asmErrorDetected = false
+  //       // Check for ASM.js errors in console
+  //       const originalError = console.error
+  //       let asmErrorDetected = false
         
-        console.error = (...args) => {
-          if (args.some(arg => typeof arg === 'string' && arg.includes('Invalid asm.js'))) {
-            asmErrorDetected = true
-            console.log('⚠️ ASM.js error detected during WebTorrent initialization')
-          }
-          originalError.apply(console, args)
-        }
+  //       console.error = (...args) => {
+  //         if (args.some(arg => typeof arg === 'string' && arg.includes('Invalid asm.js'))) {
+  //           asmErrorDetected = true
+  //           console.log('⚠️ ASM.js error detected during WebTorrent initialization')
+  //         }
+  //         originalError.apply(console, args)
+  //       }
       
-        // Use global WebTorrent from CDN
-        if (typeof window !== 'undefined' && (window as unknown as { WebTorrent: WebTorrent.WebTorrentConstructor }).WebTorrent) {
-          const WebTorrent = (window as unknown as { WebTorrent: WebTorrent.WebTorrentConstructor }).WebTorrent
-          const client = new WebTorrent()
-          clientRef.current = client
-          console.log('🔍 WebTorrent client:', client)
+  //       // Use global WebTorrent from CDN
+  //       if (typeof window !== 'undefined' && (window as unknown as { WebTorrent: WebTorrent.WebTorrentConstructor }).WebTorrent) {
+  //         const WebTorrent = (window as unknown as { WebTorrent: WebTorrent.WebTorrentConstructor }).WebTorrent
+  //         const client = new WebTorrent()
+  //         clientRef.current = client
+  //         console.log('🔍 WebTorrent client:', client)
           
-          // Restore original console.error
-          console.error = originalError
+  //         // Restore original console.error
+  //         console.error = originalError
           
-          if (asmErrorDetected) {
-            throw new Error('ASM.js compatibility issue detected')
-          }
-        } else {
-          throw new Error('WebTorrent not loaded from CDN')
-        }
+  //         if (asmErrorDetected) {
+  //           throw new Error('ASM.js compatibility issue detected')
+  //         }
+  //       } else {
+  //         throw new Error('WebTorrent not loaded from CDN')
+  //       }
         
-        console.log('✅ WebTorrent client initialized successfully')
-        setUseTorrent(true)
-        setTorrentError(null)
+  //       console.log('✅ WebTorrent client initialized successfully')
+  //       setUseTorrent(true)
+  //       setTorrentError(null)
         
-      } catch (error) {
-        console.error('❌ Failed to load WebTorrent:', error)
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+  //     } catch (error) {
+  //       console.error('❌ Failed to load WebTorrent:', error)
+  //       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         
-        if (errorMessage.includes('ASM.js')) {
-          setTorrentError('WebTorrent not compatible with this browser - using YouTube instead')
-        } else {
-          setTorrentError(`WebTorrent not available: ${errorMessage}`)
-        }
-        setUseTorrent(false)
-      }
-    }
+  //       if (errorMessage.includes('ASM.js')) {
+  //         setTorrentError('WebTorrent not compatible with this browser - using YouTube instead')
+  //       } else {
+  //         setTorrentError(`WebTorrent not available: ${errorMessage}`)
+  //       }
+  //       setUseTorrent(false)
+  //     }
+  //   }
 
-    initWebTorrent()
+  //   initWebTorrent()
     
-    return () => {
-      console.log('🧹 TorrentPlayer: Cleaning up WebTorrent client...')
+  //   return () => {
+  //     console.log('🧹 TorrentPlayer: Cleaning up WebTorrent client...')
       
-      // Clean up current torrent
-      if (torrentRef.current) {
-        try {
-          torrentRef.current.destroy()
-          console.log('✅ Current torrent destroyed')
-        } catch (error) {
-          console.warn('⚠️ Error destroying current torrent:', error)
-        }
-        torrentRef.current = null
-      }
+  //     // Clean up current torrent
+  //     if (torrentRef.current) {
+  //       try {
+  //         torrentRef.current.destroy()
+  //         console.log('✅ Current torrent destroyed')
+  //       } catch (error) {
+  //         console.warn('⚠️ Error destroying current torrent:', error)
+  //       }
+  //       torrentRef.current = null
+  //     }
       
-      // Clean up WebTorrent client
-      if (clientRef.current) {
-        try {
-          clientRef.current.destroy()
-          console.log('✅ WebTorrent client destroyed')
-        } catch (error) {
-          console.warn('⚠️ Error destroying WebTorrent client:', error)
-        }
-        clientRef.current = null
-      }
+  //     // Clean up WebTorrent client
+  //     if (clientRef.current) {
+  //       try {
+  //         clientRef.current.destroy()
+  //         console.log('✅ WebTorrent client destroyed')
+  //       } catch (error) {
+  //         console.warn('⚠️ Error destroying WebTorrent client:', error)
+  //       }
+  //       clientRef.current = null
+  //     }
       
-      // Reset refs
-      currentMagnetRef.current = null
-    }
+  //     // Reset refs
+  //     currentMagnetRef.current = null
+  //   }
+  // }, [])
+
+  // Disable torrent functionality for now - use YouTube trailers instead
+  useEffect(() => {
+    console.log('🎬 TorrentPlayer: Using YouTube trailers instead of torrents')
+    setUseTorrent(false)
+    setTorrentError('Torrent playback disabled - using YouTube trailers')
   }, [])
 
   // Update torrent service URL when settings change
@@ -149,186 +156,193 @@ const TorrentPlayer = ({
     setPlayerState(prev => ({ ...prev, ...updates }))
   }, [])
 
-  const loadTorrent = useCallback(async (magnet: string) => {
-    console.log('📥 TorrentPlayer: Starting torrent load...')
-    console.log('📥 Magnet URL:', magnet)
+  // Torrent loading functionality - COMMENTED OUT
+  // const loadTorrent = useCallback(async (magnet: string) => {
+  //   console.log('📥 TorrentPlayer: Starting torrent load...')
+  //   console.log('📥 Magnet URL:', magnet)
 
-    if (!clientRef.current) {
-      console.error('❌ WebTorrent client not available')
-      throw new Error('WebTorrent client not available')
-    }
+  //   if (!clientRef.current) {
+  //     console.error('❌ WebTorrent client not available')
+  //     throw new Error('WebTorrent client not available')
+  //   }
 
-    // Check if this torrent is already loaded
-    if (loadedTorrents.has(magnet)) {
-      console.log('⚠️ Torrent already loaded, skipping...')
-      return
-    }
+  //   // Check if this torrent is already loaded
+  //   if (loadedTorrents.has(magnet)) {
+  //     console.log('⚠️ Torrent already loaded, skipping...')
+  //     return
+  //   }
 
-    // Check if we're already loading this torrent
-    if (currentMagnetRef.current === magnet) {
-      console.log('⚠️ Torrent already being loaded, skipping...')
-      return
-    }
+  //   // Check if we're already loading this torrent
+  //   if (currentMagnetRef.current === magnet) {
+  //     console.log('⚠️ Torrent already being loaded, skipping...')
+  //     return
+  //   }
 
-    currentMagnetRef.current = magnet
+  //   currentMagnetRef.current = magnet
 
-    return new Promise<void>((resolve, reject) => {
-      console.log('📥 Adding torrent to WebTorrent client...')
-      const torrent = clientRef.current!.add(magnet, (torrent: WebTorrent.Torrent) => {
-        console.log('📥 Torrent added successfully:', {
-          name: torrent.name,
-          files: torrent.files.length,
-          size: torrent.length,
-          infoHash: torrent.infoHash
-        })
+  //   return new Promise<void>((resolve, reject) => {
+  //     console.log('📥 Adding torrent to WebTorrent client...')
+  //     const torrent = clientRef.current!.add(magnet, (torrent: WebTorrent.Torrent) => {
+  //       console.log('📥 Torrent added successfully:', {
+  //         name: torrent.name,
+  //         files: torrent.files.length,
+  //         size: torrent.length,
+  //         infoHash: torrent.infoHash
+  //       })
         
-        torrentRef.current = torrent
+  //       torrentRef.current = torrent
         
-        // Add to loaded torrents set
-        setLoadedTorrents(prev => new Set([...prev, magnet]))
+  //       // Add to loaded torrents set
+  //       setLoadedTorrents(prev => new Set([...prev, magnet]))
         
-        updateState({
-          message: 'Torrent loaded, finding video file...',
-          progress: 70
-        })
+  //       updateState({
+  //         message: 'Torrent loaded, finding video file...',
+  //         progress: 70
+  //       })
 
-        // Wait for torrent to be ready before accessing files
-        torrent.on('ready', () => {
-          console.log('📥 Torrent ready, files available:', torrent.files.length)
+  //       // Wait for torrent to be ready before accessing files
+  //       torrent.on('ready', () => {
+  //         console.log('📥 Torrent ready, files available:', torrent.files.length)
           
-          // Log all files in the torrent
-          console.log('📥 Torrent files:', torrent.files.map((file: WebTorrent.TorrentFile) => ({
-            name: file.name,
-            length: file.length,
-            type: file.name.split('.').pop()
-          })))
+  //         // Log all files in the torrent
+  //         console.log('📥 Torrent files:', torrent.files.map((file: WebTorrent.TorrentFile) => ({
+  //           name: file.name,
+  //           length: file.length,
+  //           type: file.name.split('.').pop()
+  //         })))
 
-          // Find video file - try multiple extensions
-          const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.m4v']
-          const file = torrent.files.find((file: WebTorrent.TorrentFile) => 
-            videoExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
-          )
+  //         // Find video file - try multiple extensions
+  //         const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.m4v']
+  //         const file = torrent.files.find((file: WebTorrent.TorrentFile) => 
+  //           videoExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+  //         )
           
-          if (!file) {
-            console.error('❌ No video file found in torrent')
-            console.log('📥 Available files:', torrent.files.map((f: WebTorrent.TorrentFile) => f.name))
-            reject(new Error('No video file found in torrent'))
-            return
-          }
+  //         if (!file) {
+  //           console.error('❌ No video file found in torrent')
+  //           console.log('📥 Available files:', torrent.files.map((f: WebTorrent.TorrentFile) => f.name))
+  //           reject(new Error('No video file found in torrent'))
+  //           return
+  //         }
 
-          console.log('📥 Selected video file:', {
-            name: file.name,
-            length: file.length,
-            size: (file.length / (1024 * 1024)).toFixed(2) + ' MB'
-          })
+  //         console.log('📥 Selected video file:', {
+  //           name: file.name,
+  //           length: file.length,
+  //           size: (file.length / (1024 * 1024)).toFixed(2) + ' MB'
+  //         })
 
-          updateState({
-            message: 'Creating video stream...',
-            progress: 90
-          })
+  //         updateState({
+  //           message: 'Creating video stream...',
+  //           progress: 90
+  //         })
 
-          // Use the simple appendTo approach from the example
-          const video = videoRef.current
-          if (video) {
-            console.log('📥 Appending video file to video element...')
+  //         // Use the simple appendTo approach from the example
+  //         const video = videoRef.current
+  //         if (video) {
+  //           console.log('📥 Appending video file to video element...')
             
-            // Clear the video element first
-            video.innerHTML = ''
+  //           // Clear the video element first
+  //           video.innerHTML = ''
             
-            try {
-              // Use the simple appendTo method from the example
-              file.appendTo(video)
+  //           try {
+  //             // Use the simple appendTo method from the example
+  //             file.appendTo(video)
               
-              // Add event listeners
-              const handleLoadedData = () => {
-                console.log('✅ Video loaded successfully')
-                updateState({
-                  isLoading: false,
-                  status: 'playing',
-                  message: 'Playing torrent...',
-                  progress: 100
-                })
-                resolve()
-              }
+  //             // Add event listeners
+  //             const handleLoadedData = () => {
+  //               console.log('✅ Video loaded successfully')
+  //               updateState({
+  //                 isLoading: false,
+  //                 status: 'playing',
+  //                 message: 'Playing torrent...',
+  //                 progress: 100
+  //               })
+  //               resolve()
+  //             }
 
-              const handleError = (e: Event) => {
-                console.error('❌ Video load error:', e)
-                reject(new Error('Failed to load video from torrent'))
-              }
+  //             const handleError = (e: Event) => {
+  //               console.error('❌ Video load error:', e)
+  //               reject(new Error('Failed to load video from torrent'))
+  //             }
 
-              const handleCanPlay = () => {
-                console.log('📥 Video can start playing')
-              }
+  //             const handleCanPlay = () => {
+  //               console.log('📥 Video can start playing')
+  //             }
               
-              video.addEventListener('loadeddata', handleLoadedData, { once: true })
-              video.addEventListener('error', handleError, { once: true })
-              video.addEventListener('canplay', handleCanPlay)
+  //             video.addEventListener('loadeddata', handleLoadedData, { once: true })
+  //             video.addEventListener('error', handleError, { once: true })
+  //             video.addEventListener('canplay', handleCanPlay)
               
-              // Set a timeout for video loading
-              const videoTimeout = setTimeout(() => {
-                console.error('❌ Video loading timeout')
-                reject(new Error('Video loading timeout'))
-              }, 30000)
+  //             // Set a timeout for video loading
+  //             const videoTimeout = setTimeout(() => {
+  //               console.error('❌ Video loading timeout')
+  //               reject(new Error('Video loading timeout'))
+  //             }, 30000)
               
-              // Clear timeout when video loads
-              video.addEventListener('loadeddata', () => clearTimeout(videoTimeout), { once: true })
-              video.addEventListener('error', () => clearTimeout(videoTimeout), { once: true })
+  //             // Clear timeout when video loads
+  //             video.addEventListener('loadeddata', () => clearTimeout(videoTimeout), { once: true })
+  //             video.addEventListener('error', () => clearTimeout(videoTimeout), { once: true })
               
-            } catch (error) {
-              console.error('❌ Error appending video file:', error)
-              reject(new Error('Failed to append video file'))
-            }
-          } else {
-            console.error('❌ Video element not available')
-            reject(new Error('Video element not available'))
-          }
-        })
-      })
+  //           } catch (error) {
+  //             console.error('❌ Error appending video file:', error)
+  //             reject(new Error('Failed to append video file'))
+  //           }
+  //         } else {
+  //           console.error('❌ Video element not available')
+  //           reject(new Error('Video element not available'))
+  //         }
+  //       })
+  //     })
 
-      torrent.on('error', (error: Error) => {
-        console.error('❌ Torrent error:', error)
-        clearTimeout(timeoutId)
+  //     torrent.on('error', (error: Error) => {
+  //       console.error('❌ Torrent error:', error)
+  //       clearTimeout(timeoutId)
         
-        // Don't reject if it's a duplicate torrent error - just log and continue
-        if (error.message.includes('duplicate torrent')) {
-          console.log('⚠️ Duplicate torrent detected, continuing...')
-          return
-        }
+  //       // Don't reject if it's a duplicate torrent error - just log and continue
+  //       if (error.message.includes('duplicate torrent')) {
+  //         console.log('⚠️ Duplicate torrent detected, continuing...')
+  //         return
+  //       }
         
-        // Handle specific WebTorrent errors
-        if (error.message.includes('Invalid asm.js')) {
-          console.error('❌ ASM.js error detected, falling back to YouTube')
-          reject(new Error('WebTorrent ASM.js error - falling back to YouTube'))
-          return
-        }
+  //       // Handle specific WebTorrent errors
+  //       if (error.message.includes('Invalid asm.js')) {
+  //         console.error('❌ ASM.js error detected, falling back to YouTube')
+  //         reject(new Error('WebTorrent ASM.js error - falling back to YouTube'))
+  //         return
+  //       }
         
-        reject(error)
-      })
+  //       reject(error)
+  //     })
 
-      torrent.on('download', (bytes: number) => {
-        console.log('📥 Downloaded bytes:', bytes)
-      })
+  //     torrent.on('download', (bytes: number) => {
+  //       console.log('📥 Downloaded bytes:', bytes)
+  //     })
 
-      torrent.on('upload', (bytes: number) => {
-        console.log('📤 Uploaded bytes:', bytes)
-      })
+  //     torrent.on('upload', (bytes: number) => {
+  //       console.log('📤 Uploaded bytes:', bytes)
+  //     })
 
-      // Timeout after 5 minutes (increased from 60 seconds)
-      const timeoutId = setTimeout(() => {
-        console.error('❌ Torrent loading timeout')
-        reject(new Error('Torrent loading timeout'))
-      }, 300000)
+  //     // Timeout after 5 minutes (increased from 60 seconds)
+  //     const timeoutId = setTimeout(() => {
+  //       console.error('❌ Torrent loading timeout')
+  //       reject(new Error('Torrent loading timeout'))
+  //     }, 300000)
 
-      // Clear timeout when torrent is ready or has an error
-      torrent.on('ready', () => {
-        clearTimeout(timeoutId)
-      })
+  //     // Clear timeout when torrent is ready or has an error
+  //     torrent.on('ready', () => {
+  //       clearTimeout(timeoutId)
+  //     })
       
-      torrent.on('error', () => {
-        clearTimeout(timeoutId)
-      })
-    })
-  }, [updateState, loadedTorrents])
+  //     torrent.on('error', () => {
+  //       clearTimeout(timeoutId)
+  //     })
+  //   })
+  // }, [updateState, loadedTorrents])
+
+  // Mock loadTorrent function that always fails to force YouTube fallback - COMMENTED OUT
+  // const loadTorrent = useCallback(async (_magnet: string) => {
+  //   console.log('📥 TorrentPlayer: Torrent loading disabled - using YouTube trailers')
+  //   throw new Error('Torrent playback disabled - using YouTube trailers')
+  // }, [])
 
   const searchForTorrent = useCallback(async () => {
     console.log('🔍 TorrentPlayer: Starting torrent search...')
@@ -417,16 +431,16 @@ const TorrentPlayer = ({
         })
       }
 
-      setMagnetUrl(bestMagnet)
+      // setMagnetUrl(bestMagnet) // COMMENTED OUT - not used when torrent playback is disabled
       
       updateState({
-        status: 'loading',
-        message: 'Loading torrent...',
-        progress: 50
+        status: 'completed',
+        message: 'Torrent search completed - showing results',
+        progress: 100
       })
 
-      console.log('🔍 Attempting to load torrent with magnet:', bestMagnet)
-      await loadTorrent(bestMagnet)
+      console.log('🔍 Torrent search completed, showing results instead of loading torrent')
+      // await loadTorrent(bestMagnet) // COMMENTED OUT - torrent loading disabled
       
     } catch (error) {
       console.error('❌ Torrent search failed:', error)
@@ -457,26 +471,15 @@ const TorrentPlayer = ({
         })
       }
     }
-  }, [movieTitle, showTitle, season, episode, useTorrent, updateState, torrentApiUrl, useMockData, isTorrentEndpointConfigured, loadTorrent])
+  }, [movieTitle, showTitle, season, episode, useTorrent, updateState, torrentApiUrl, useMockData, isTorrentEndpointConfigured])
 
   // Start torrent search when component mounts or parameters change
   useEffect(() => {
     if (useTorrent && (movieTitle || (showTitle && season && episode))) {
-      // Clean up previous torrent before starting new search
-      if (torrentRef.current) {
-        console.log('🧹 Cleaning up previous torrent...')
-        try {
-          torrentRef.current.destroy()
-        } catch (error) {
-          console.warn('⚠️ Error destroying previous torrent:', error)
-        }
-        torrentRef.current = null
-      }
-      
       // Reset state
-      setMagnetUrl(null)
+      // setMagnetUrl(null) // COMMENTED OUT - not used when torrent playback is disabled
       setTorrentError(null)
-      currentMagnetRef.current = null
+      // currentMagnetRef.current = null // COMMENTED OUT - not used when torrent playback is disabled
       
       // Add a small delay to prevent rapid re-renders
       const timeoutId = setTimeout(() => {
@@ -487,15 +490,15 @@ const TorrentPlayer = ({
     }
   }, [movieTitle, showTitle, season, episode, useTorrent, searchForTorrent])
 
-  // Handle video end
-  const handleVideoEnd = useCallback(() => {
-    onVideoEnd?.()
-  }, [onVideoEnd])
+  // Handle video end - COMMENTED OUT - not used when torrent playback is disabled
+  // const handleVideoEnd = useCallback(() => {
+  //   onVideoEnd?.()
+  // }, [onVideoEnd])
 
-  // Handle errors
-  const handleError = useCallback((error: string) => {
-    onError?.(error)
-  }, [onError])
+  // Handle errors - COMMENTED OUT - not used when torrent playback is disabled
+  // const handleError = useCallback((error: string) => {
+  //   onError?.(error)
+  // }, [onError])
 
   // Handle loading more torrents
   const handleLoadMore = useCallback(() => {
@@ -510,7 +513,7 @@ const TorrentPlayer = ({
   }, [searchResults?.data])
 
   // If torrent failed or we're not using torrent, show YouTube fallback with torrent info
-  if (!useTorrent || torrentError || playerState.status === 'failed') {
+  if (!useTorrent || torrentError || playerState.status === 'failed' || playerState.status === 'completed') {
     if (youtubeVideoId) {
       return (
         <div className={className}>
@@ -677,7 +680,7 @@ const TorrentPlayer = ({
   }
 
   // If WebTorrent is not available, show a message and fallback to YouTube
-  if (!clientRef.current && useTorrent) {
+  if (useTorrent) {
     if (youtubeVideoId) {
       return (
         <div className={className}>
@@ -864,36 +867,36 @@ const TorrentPlayer = ({
     )
   }
 
-  // Show torrent video player
-  if (playerState.status === 'playing' && magnetUrl) {
-    return (
-      <div className={className}>
-        <video
-          ref={videoRef}
-          controls
-          className="w-full h-full rounded-lg"
-          onEnded={handleVideoEnd}
-          onError={() => handleError('Video playback error')}
-        />
-        <div className="mt-2 space-y-2">
-          <div className="p-2 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm rounded">
-            ✅ Playing from torrent: {movieTitle || `${showTitle} S${season}E${episode}`}
-          </div>
-          {selectedTorrent && (
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs rounded">
-              <div className="font-semibold">Selected Torrent:</div>
-              <div className="truncate" title={selectedTorrent.name}>{selectedTorrent.name}</div>
-              <div className="flex justify-between mt-1">
-                <span>Size: {selectedTorrent.size}</span>
-                <span>Seeders: {selectedTorrent.seeders}</span>
-                <span>Leechers: {selectedTorrent.leechers}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
+  // Show torrent video player - COMMENTED OUT
+  // if (playerState.status === 'playing' && magnetUrl) {
+  //   return (
+  //     <div className={className}>
+  //       <video
+  //         ref={videoRef}
+  //         controls
+  //         className="w-full h-full rounded-lg"
+  //         onEnded={handleVideoEnd}
+  //         onError={() => handleError('Video playback error')}
+  //       />
+  //       <div className="mt-2 space-y-2">
+  //         <div className="p-2 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm rounded">
+  //           ✅ Playing from torrent: {movieTitle || `${showTitle} S${season}E${episode}`}
+  //         </div>
+  //         {selectedTorrent && (
+  //           <div className="p-2 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs rounded">
+  //             <div className="font-semibold">Selected Torrent:</div>
+  //             <div className="truncate" title={selectedTorrent.name}>{selectedTorrent.name}</div>
+  //             <div className="flex justify-between mt-1">
+  //               <span>Size: {selectedTorrent.size}</span>
+  //               <span>Seeders: {selectedTorrent.seeders}</span>
+  //               <span>Leechers: {selectedTorrent.leechers}</span>
+  //             </div>
+  //           </div>
+  //         )}
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   // Default fallback
   return (

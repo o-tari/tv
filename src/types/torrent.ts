@@ -118,7 +118,7 @@ export interface ApiTorrentSearchParams {
 export interface TorrentPlayerState {
   isLoading: boolean
   error: string | null
-  status: 'idle' | 'searching' | 'fetching' | 'loading' | 'playing' | 'failed'
+  status: 'idle' | 'searching' | 'fetching' | 'loading' | 'playing' | 'failed' | 'completed'
   progress: number
   message: string
 }
