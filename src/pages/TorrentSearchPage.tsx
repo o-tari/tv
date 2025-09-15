@@ -3,7 +3,6 @@ import {
   searchTorrents, 
   getActiveProviders, 
   getMagnetUrl, 
-  getPopularCategories,
   torrentSearchService
 } from '../services/torrentSearch'
 import { type Torrent, type TorrentSearchParams, type ApiTorrentSearchResponse } from '../types/torrent'

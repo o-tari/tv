@@ -172,20 +172,118 @@ const YouTubePage = () => {
         </div>
 
         {/* Category Sections */}
-        <CategorySection categoryId="23" categoryName="Comedy" emoji="😂" />
-        <CategorySection categoryId="24" categoryName="Entertainment" emoji="🎭" />
-        <CategorySection categoryId="28" categoryName="Science & Technology" emoji="🔬" />
-        <CategorySection categoryId="1" categoryName="Film & Animation" emoji="🎬" />
-        <CategorySection categoryId="20" categoryName="Gaming" emoji="🎮" />
-        <CategorySection categoryId="10" categoryName="Music" emoji="🎵" />
-        <CategorySection categoryId="15" categoryName="Pets & Animals" emoji="🐾" />
-        <CategorySection categoryId="22" categoryName="People & Blogs" emoji="👥" />
-        <CategorySection categoryId="25" categoryName="News & Politics" emoji="📰" />
-        <CategorySection categoryId="26" categoryName="Howto & Style" emoji="💄" />
-        <CategorySection categoryId="1" categoryName="Movies" emoji="🎞️" />
-        <CategorySection categoryId="24" categoryName="Shows" emoji="📺" />
-        <CategorySection categoryId="1" categoryName="Trailers" emoji="🎬" />
-        <CategorySection categoryId="2" categoryName="Autos & Vehicles" emoji="🚗" />
+        <CategorySection 
+          title="Comedy" 
+          description="Funny videos and comedy content" 
+          identifier="23" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=23')} 
+        />
+        <CategorySection 
+          title="Entertainment" 
+          description="Movies, shows, and celebrity content" 
+          identifier="24" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=24')} 
+        />
+        <CategorySection 
+          title="Science & Technology" 
+          description="Discover the latest in tech and science" 
+          identifier="28" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=28')} 
+        />
+        <CategorySection 
+          title="Film & Animation" 
+          description="Movies, animations, and film content" 
+          identifier="1" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=1')} 
+        />
+        <CategorySection 
+          title="Gaming" 
+          description="Gaming content and live streams" 
+          identifier="20" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=20')} 
+        />
+        <CategorySection 
+          title="Music" 
+          description="Latest music videos and songs" 
+          identifier="10" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=10')} 
+        />
+        <CategorySection 
+          title="Pets & Animals" 
+          description="Cute animals and pet content" 
+          identifier="15" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=15')} 
+        />
+        <CategorySection 
+          title="People & Blogs" 
+          description="Personal vlogs and lifestyle content" 
+          identifier="22" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=22')} 
+        />
+        <CategorySection 
+          title="News & Politics" 
+          description="Latest news and current events" 
+          identifier="25" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=25')} 
+        />
+        <CategorySection 
+          title="Howto & Style" 
+          description="Tutorials and style guides" 
+          identifier="26" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=26')} 
+        />
+        <CategorySection 
+          title="Movies" 
+          description="Full movies and film content" 
+          identifier="1" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=1')} 
+        />
+        <CategorySection 
+          title="Shows" 
+          description="TV shows and series" 
+          identifier="24" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=24')} 
+        />
+        <CategorySection 
+          title="Trailers" 
+          description="Movie and show trailers" 
+          identifier="1" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=1')} 
+        />
+        <CategorySection 
+          title="Autos & Vehicles" 
+          description="Car reviews and automotive content" 
+          identifier="2" 
+          limit={8} 
+          showMoreButton={true} 
+          onMoreClick={() => navigate('/search?category=2')} 
+        />
 
         {/* History Section */}
         {watchHistory.length > 0 && (

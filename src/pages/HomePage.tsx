@@ -83,7 +83,6 @@ const HomePage = () => {
       <CategorySection
         title="Music"
         description="Latest music videos and songs"
-        type="category"
         identifier="10"
         limit={8}
         showMoreButton={true}
@@ -94,7 +93,6 @@ const HomePage = () => {
       <CategorySection
         title="Gaming"
         description="Gaming content and live streams"
-        type="category"
         identifier="20"
         limit={8}
         showMoreButton={true}
@@ -105,7 +103,6 @@ const HomePage = () => {
       <CategorySection
         title="News"
         description="Latest news and current events"
-        type="category"
         identifier="25"
         limit={8}
         showMoreButton={true}
@@ -116,7 +113,6 @@ const HomePage = () => {
       <CategorySection
         title="Education"
         description="Learn something new today"
-        type="category"
         identifier="26"
         limit={8}
         showMoreButton={true}
@@ -127,7 +123,6 @@ const HomePage = () => {
       <CategorySection
         title="Science & Technology"
         description="Discover the latest in tech and science"
-        type="category"
         identifier="27"
         limit={8}
         showMoreButton={true}
@@ -138,7 +133,6 @@ const HomePage = () => {
       <CategorySection
         title="Comedy"
         description="Laugh out loud with the best comedy"
-        type="category"
         identifier="30"
         limit={8}
         showMoreButton={true}
@@ -149,7 +143,6 @@ const HomePage = () => {
       <CategorySection
         title="Entertainment"
         description="Movies, shows, and celebrity content"
-        type="category"
         identifier="31"
         limit={8}
         showMoreButton={true}
@@ -160,7 +153,6 @@ const HomePage = () => {
       <CategorySection
         title="Lifestyle"
         description="Fashion, beauty, health, and fitness"
-        type="category"
         identifier="32"
         limit={8}
         showMoreButton={true}
@@ -171,7 +163,6 @@ const HomePage = () => {
       <CategorySection
         title="Travel"
         description="Explore the world through travel content"
-        type="category"
         identifier="29"
         limit={8}
         showMoreButton={true}

@@ -99,7 +99,7 @@ export const setCachedData = <T>(key: string, data: T, ttl?: number): void => {
 }
 
 export const isCached = (key: string, maxAge?: number): boolean => {
-  const item = cache.get(key)
+  const item = cache['cache'].get(key) as CacheItem<any> | undefined
   if (!item) return false
   
   if (maxAge) {
