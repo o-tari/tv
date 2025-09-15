@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/tv/',
+  // base: '/tv/', // Commented out for local development
   plugins: [react()],
   build: {
     rollupOptions: {
