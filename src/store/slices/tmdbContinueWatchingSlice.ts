@@ -12,6 +12,13 @@ interface TMDBContinueWatchingItem {
   rating: number
   publishedAt: string
   lastWatchedTime: number
+  lastWatchedEpisode?: {
+    seasonNumber: number
+    episodeNumber: number
+    airDate: string
+  }
+  hasNewEpisodes?: boolean
+  newEpisodesCount?: number
 }
 
 interface TMDBContinueWatchingState {
@@ -127,6 +134,30 @@ const tmdbContinueWatchingSlice = createSlice({
         saveToStorage(state)
       }
     },
+
+    updateLastWatchedEpisode: (state, action: PayloadAction<{
+      itemId: string
+      seasonNumber: number
+      episodeNumber: number
+      airDate: string
+    }>) => {
+      const { itemId, seasonNumber, episodeNumber, airDate } = action.payload
+      const item = state.items.find(item => item.id === itemId)
+      if (item && item.type === 'tv') {
+        item.lastWatchedEpisode = {
+          seasonNumber,
+          episodeNumber,
+          airDate
+        }
+        item.lastWatchedTime = Date.now()
+        saveToStorage(state)
+      }
+    },
+
+    updateProcessedItems: (state, action: PayloadAction<TMDBContinueWatchingItem[]>) => {
+      state.items = action.payload
+      saveToStorage(state)
+    },
   },
 })
 
@@ -136,6 +167,8 @@ export const {
   removeFromTMDBContinueWatching,
   clearTMDBContinueWatching,
   updateTMDBLastWatchedTime,
+  updateLastWatchedEpisode,
+  updateProcessedItems,
 } = tmdbContinueWatchingSlice.actions
 
 export const selectTMDBContinueWatching = (state: { tmdbContinueWatching: TMDBContinueWatchingState }) => 

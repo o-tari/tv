@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectTmdbApiKey, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
-import { addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
+import { addTVToContinueWatching, updateLastWatchedEpisode } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
 import { torrentSearchService } from '../services/torrentSearch'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
@@ -182,6 +182,17 @@ const TMDBWatchPage = () => {
         type: 'tv'
       }))
       console.log('📺 Added to continue watching')
+    }
+
+    // Update last watched episode for new episode detection
+    if (id && type === 'tv' && episode.air_date) {
+      dispatch(updateLastWatchedEpisode({
+        itemId: `tv-${id}`,
+        seasonNumber: episode.season_number,
+        episodeNumber: episode.episode_number,
+        airDate: episode.air_date
+      }))
+      console.log('📺 Updated last watched episode for new episode detection')
     }
 
     // Search for torrents for this episode
