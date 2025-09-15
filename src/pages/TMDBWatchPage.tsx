@@ -57,6 +57,18 @@ const TMDBWatchPage = () => {
     }
   }, [id, type, tmdbApiKey, content])
 
+  // Trigger torrent search when selectedEpisode is restored from localStorage
+  useEffect(() => {
+    if (selectedEpisode && content && type === 'tv' && isTorrentEndpointConfigured) {
+      console.log('🔍 Auto-triggering torrent search for restored episode:', {
+        show: (content as TMDBTVDetails).name,
+        season: selectedEpisode.season_number,
+        episode: selectedEpisode.episode_number
+      })
+      searchForEpisodeTorrents(content as TMDBTVDetails, selectedEpisode)
+    }
+  }, [selectedEpisode, content, type, isTorrentEndpointConfigured])
+
   const loadContent = async () => {
     if (!id || !type || !tmdbApiKey) return
 
