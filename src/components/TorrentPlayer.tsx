@@ -313,11 +313,11 @@ const TorrentPlayer = ({
         console.log('📤 Uploaded bytes:', bytes)
       })
 
-      // Timeout after 60 seconds (increased from 30)
+      // Timeout after 5 minutes (increased from 60 seconds)
       const timeoutId = setTimeout(() => {
         console.error('❌ Torrent loading timeout')
         reject(new Error('Torrent loading timeout'))
-      }, 60000)
+      }, 300000)
 
       // Clear timeout when torrent is ready or has an error
       torrent.on('ready', () => {
