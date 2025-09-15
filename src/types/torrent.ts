@@ -115,10 +115,3 @@ export interface ApiTorrentSearchParams {
   query: string
 }
 
-export interface TorrentPlayerState {
-  isLoading: boolean
-  error: string | null
-  status: 'idle' | 'searching' | 'fetching' | 'loading' | 'playing' | 'failed' | 'completed'
-  progress: number
-  message: string
-}

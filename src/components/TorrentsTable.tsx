@@ -4,8 +4,8 @@ import TorrentQueryInput from './TorrentQueryInput'
 
 interface TorrentsTableProps {
   searchResults: ApiTorrentSearchResponse | null
-  selectedTorrent?: any
-  onTorrentSelect?: (torrent: any) => void
+  selectedTorrent?: { name: string; size: string; seeders: string; leechers: string; category: string; uploader: string; date: string; magnet: string } | null
+  onTorrentSelect?: (torrent: { name: string; size: string; seeders: string; leechers: string; category: string; uploader: string; date: string; magnet: string }) => void
   onQueryChange?: (query: string) => void
   currentQuery?: string
   className?: string
@@ -141,7 +141,7 @@ const TorrentsTable = ({
                     </button>
                     <button
                       onClick={() => {
-                        console.log('Opening WebTorrent app with magnet:', torrent.name)
+                        console.log('Opening torrent with magnet:', torrent.name)
                         console.log('Magnet URL:', torrent.magnet)
                         
                         // Create a temporary link element to trigger the magnet protocol
@@ -152,17 +152,12 @@ const TorrentsTable = ({
                         link.click()
                         document.body.removeChild(link)
                         
-                        // Also try to open with webtorrent:// protocol
-                        try {
-                          window.open(`webtorrent://${torrent.magnet}`, '_blank')
-                        } catch {
-                          console.log('⚠️ Could not open webtorrent:// protocol, using magnet://')
-                          window.open(torrent.magnet, '_blank')
-                        }
+                        // Open magnet link directly
+                        window.open(torrent.magnet, '_blank')
                       }}
                       className="px-3 py-1 rounded text-xs font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
                     >
-                      ▶️ Play
+                      Play
                     </button>
                   </div>
                 </td>

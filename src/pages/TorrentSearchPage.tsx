@@ -29,7 +29,7 @@ const TORRENT_SITES = [
   { id: 'torrentfunk', name: 'TorrentFunk', url: 'https://www.torrentfunk.com', status: ' ' },
   { id: 'glodls', name: 'Glodls', url: 'https://glodls.to', status: ' ' },
   { id: 'torrentproject', name: 'TorrentProject', url: 'https://torrentproject2.com', status: ' ' },
-  { id: 'ybt', name: 'YourBittorrent', url: 'https://yourbittorrent.com', status: ' ' }
+  { id: 'ybt', name: 'YourBitTorrent', url: 'https://yourbittorrent.com', status: ' ' }
 ]
 
 const TorrentSearchPage = () => {

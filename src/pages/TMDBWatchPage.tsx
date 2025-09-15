@@ -7,7 +7,7 @@ import { getTMDBService } from '../services/tmdb'
 import { torrentSearchService } from '../services/torrentSearch'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
 import type { ApiTorrentSearchResponse } from '../types/torrent'
-import TorrentPlayer from '../components/TorrentPlayer'
+import YouTubePlayer from '../components/YouTubePlayer'
 import TorrentsTable from '../components/TorrentsTable'
 import LoadingSpinner from '../components/LoadingSpinner'
 import SeasonSearchModal from '../components/SeasonSearchModal'
@@ -472,30 +472,48 @@ const TMDBWatchPage = () => {
             <div className="mb-6">
               {(() => {
                 if (isTV && selectedEpisode) {
-                  console.log(' TMDBWatchPage: Rendering TorrentPlayer for TV show', {
+                  console.log(' TMDBWatchPage: Rendering YouTubePlayer for TV show', {
                     showTitle: (content as TMDBTVDetails).name,
                     season: selectedEpisode.season_number,
                     episode: selectedEpisode.episode_number,
                     youtubeVideoId: trailer?.key
                   })
-                  return (
-                    <TorrentPlayer
-                      showTitle={(content as TMDBTVDetails).name}
-                      season={selectedEpisode.season_number}
-                      episode={selectedEpisode.episode_number}
-                      youtubeVideoId={trailer?.key}
-                    />
+                  return trailer?.key ? (
+                    <YouTubePlayer videoId={trailer.key} />
+                  ) : (
+                    <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+                          No trailer available for this episode
+                        </p>
+                        <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   )
                 } else if (!isTV) {
-                  console.log(' TMDBWatchPage: Rendering TorrentPlayer for movie', {
+                  console.log(' TMDBWatchPage: Rendering YouTubePlayer for movie', {
                     movieTitle: (content as TMDBMovieDetails).title,
                     youtubeVideoId: trailer?.key
                   })
-                  return (
-                    <TorrentPlayer
-                      movieTitle={(content as TMDBMovieDetails).title}
-                      youtubeVideoId={trailer?.key}
-                    />
+                  return trailer?.key ? (
+                    <YouTubePlayer videoId={trailer.key} />
+                  ) : (
+                    <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+                          No trailer available for this movie
+                        </p>
+                        <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   )
                 } else {
                   return (

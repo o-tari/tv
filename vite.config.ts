@@ -6,13 +6,6 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      external: [
-        'bittorrent-dht',
-        'torrent-discovery',
-        'parse-torrent',
-        'create-torrent',
-        'bittorrent-protocol'
-      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
@@ -30,16 +23,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@reduxjs/toolkit', 'react-redux'],
-    exclude: ['bittorrent-dht', 'torrent-discovery', 'parse-torrent', 'create-torrent', 'bittorrent-protocol']
   },
   define: {
     global: 'globalThis',
-    'process.env': {},
-  },
-  resolve: {
-    alias: {
-      buffer: 'buffer',
-      process: 'process/browser',
-    },
   },
 })
