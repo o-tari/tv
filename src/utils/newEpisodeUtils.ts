@@ -68,6 +68,42 @@ export function checkForNewEpisodes(
 }
 
 /**
+ * Checks if an episode air date is in the future
+ * @param airDate - The air date string (can be empty or null)
+ * @returns true if the episode air date is in the future, false otherwise
+ */
+export function isEpisodeInFuture(airDate: string | null | undefined): boolean {
+  if (!airDate) return false
+  
+  const currentDate = new Date()
+  const episodeAirDate = new Date(airDate)
+  
+  return episodeAirDate > currentDate
+}
+
+/**
+ * Formats a date string to display with month name
+ * @param dateString - The date string (YYYY-MM-DD format)
+ * @returns formatted date string with month name (e.g., "Jan 15, 2024")
+ */
+export function formatDateWithMonthName(dateString: string | null | undefined): string {
+  if (!dateString) return ''
+  
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return dateString
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  } catch (error) {
+    return dateString
+  }
+}
+
+/**
  * Gets all episodes for a TV show by fetching all seasons
  * This would typically be called when checking for new episodes
  */

@@ -5,6 +5,7 @@ import { selectTmdbApiKey, selectIsTorrentEndpointConfigured } from '../store/sl
 import { addTVToContinueWatching, updateLastWatchedEpisode } from '../store/slices/tmdbContinueWatchingSlice'
 import { getTMDBService } from '../services/tmdb'
 import { torrentSearchService } from '../services/torrentSearch'
+import { isEpisodeInFuture, formatDateWithMonthName } from '../utils/newEpisodeUtils'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
 import type { ApiTorrentSearchResponse } from '../types/torrent'
 import YouTubePlayerModal from '../components/YouTubePlayerModal'
@@ -759,19 +760,26 @@ const TMDBWatchPage = () => {
                             {episodes
                               .slice()
                               .reverse()
-                              .map((episode) => (
-                                <button
-                                  key={episode.id}
-                                  onClick={() => handleEpisodeSelect(episode)}
-                                  className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all ${
-                                    selectedEpisode?.id === episode.id
-                                      ? 'bg-red-600 text-white border-red-600'
-                                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                  }`}
-                                >
-                                  {episode.episode_number}
-                                </button>
-                              ))}
+                              .map((episode) => {
+                                const isFuture = isEpisodeInFuture(episode.air_date)
+                                return (
+                                  <button
+                                    key={episode.id}
+                                    onClick={() => !isFuture && handleEpisodeSelect(episode)}
+                                    disabled={isFuture}
+                                    className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all ${
+                                      isFuture
+                                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                                        : selectedEpisode?.id === episode.id
+                                        ? 'bg-red-600 text-white border-red-600'
+                                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                                    title={`Episode ${episode.episode_number}${episode.air_date ? ` - ${isFuture ? 'Airs' : 'Aired'} ${formatDateWithMonthName(episode.air_date)}` : ''}`}
+                                  >
+                                    {episode.episode_number}
+                                  </button>
+                                )
+                              })}
                           </div>
                         </div>
                       ) : (

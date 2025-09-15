@@ -4,6 +4,7 @@ import { addToAnimeContinueWatching, saveAnimeEpisodeProgress } from '../store/s
 import { selectAnimeContinueWatching, selectAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
 import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 import { torrentSearchService } from '../services/torrentSearch'
+import { isEpisodeInFuture, formatDateWithMonthName } from '../utils/newEpisodeUtils'
 import { type AnimeEpisode, type AnimeMedia } from '../types/anime'
 import type { ApiTorrentSearchResponse } from '../types/torrent'
 import LoadingSpinner from './LoadingSpinner'
@@ -394,32 +395,38 @@ const AnimeEpisodeBatches = ({
             // Find the actual episode data if available
             const episode = episodes.find(ep => ep.episodeNumber === episodeNumber)
             const isSelected = selectedEpisode?.episodeNumber === episodeNumber
+            const isFuture = episode ? isEpisodeInFuture(episode.aired) : false
             
             return (
               <button
                 key={episodeNumber}
                 onClick={() => {
-                  if (episode) {
-                    handleEpisodeSelect(episode)
-                  } else {
-                    // Create a mock episode for episodes not yet loaded
-                    const mockEpisode: AnimeEpisode = {
-                      id: `${animeId}-episode-${episodeNumber}`,
-                      episodeId: `${animeId}-episode-${episodeNumber}`,
-                      episodeNumber,
-                      title: `Episode ${episodeNumber}`,
-                      image: animeImage,
-                      url: `/anime/${animeId}/episode/${episodeNumber}`
+                  if (!isFuture) {
+                    if (episode) {
+                      handleEpisodeSelect(episode)
+                    } else {
+                      // Create a mock episode for episodes not yet loaded
+                      const mockEpisode: AnimeEpisode = {
+                        id: `${animeId}-episode-${episodeNumber}`,
+                        episodeId: `${animeId}-episode-${episodeNumber}`,
+                        episodeNumber,
+                        title: `Episode ${episodeNumber}`,
+                        image: animeImage,
+                        url: `/anime/${animeId}/episode/${episodeNumber}`
+                      }
+                      handleEpisodeSelect(mockEpisode)
                     }
-                    handleEpisodeSelect(mockEpisode)
                   }
                 }}
+                disabled={isFuture}
                 className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all ${
-                  isSelected
+                  isFuture
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                    : isSelected
                     ? 'bg-red-600 text-white border-red-600'
                     : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                 }`}
-                title={episode?.title || `Episode ${episodeNumber}`}
+                title={`${episode?.title || `Episode ${episodeNumber}`}${episode?.aired ? ` - ${isFuture ? 'Airs' : 'Aired'} ${formatDateWithMonthName(episode.aired)}` : ''}`}
               >
                 {episodeNumber}
               </button>
