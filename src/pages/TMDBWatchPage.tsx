@@ -552,7 +552,7 @@ const TMDBWatchPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-2">
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        {selectedEpisode.name}
+                        Episode {selectedEpisode.episode_number}
                       </h3>
                       <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-sm font-medium">
                         S{selectedEpisode.season_number}E{selectedEpisode.episode_number}
@@ -563,20 +563,7 @@ const TMDBWatchPage = () => {
                       {selectedEpisode.air_date && (
                         <span>{formatDate(selectedEpisode.air_date)}</span>
                       )}
-                      {selectedEpisode.vote_average > 0 && (
-                        <div className="flex items-center">
-                          <span className="text-yellow-500 mr-1">★</span>
-                          <span>{selectedEpisode.vote_average.toFixed(1)}</span>
-                          <span className="ml-1">({selectedEpisode.vote_count} votes)</span>
-                        </div>
-                      )}
                     </div>
-                    
-                    {selectedEpisode.overview && (
-                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        {selectedEpisode.overview}
-                      </p>
-                    )}
                   </div>
                 </div>
 
