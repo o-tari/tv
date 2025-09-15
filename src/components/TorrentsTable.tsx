@@ -35,18 +35,39 @@ const TorrentsTable = ({
 
   if (!searchResults || !searchResults.data || searchResults.data.length === 0) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg p-6 text-center ${className}`}>
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+      <div className={`bg-white dark:bg-gray-800 rounded-lg p-6 ${className}`}>
+        {/* Show search input even when there are no results */}
+        {onQueryChange && (
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                No torrents found
+              </h3>
+              <div className="w-80">
+                <TorrentQueryInput
+                  initialQuery={currentQuery}
+                  onQueryChange={onQueryChange}
+                  placeholder="Modify search query..."
+                  debounceMs={500}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No torrents found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            No torrents were found for this search. Try adjusting your search terms or check back later.
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          No torrents found
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          No torrents were found for this search. Try adjusting your search terms or check back later.
-        </p>
       </div>
     )
   }
