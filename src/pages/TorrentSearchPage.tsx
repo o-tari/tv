@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   searchTorrents, 
   getActiveProviders, 
@@ -9,6 +9,7 @@ import {
 import { type Torrent, type TorrentSearchParams, type ApiTorrentSearchResponse } from '../types/torrent'
 import LoadingSpinner from '../components/LoadingSpinner'
 import TorrentProviderManager from '../components/TorrentProviderManager'
+import TorrentQueryInput from '../components/TorrentQueryInput'
 import { useAppSelector } from '../store'
 import { selectUseMockData, selectTorrentApiUrl, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
 
@@ -58,8 +59,9 @@ const TorrentSearchPage = () => {
     setProviders(activeProviders.map(p => p.name))
   }
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return
+  const handleSearch = useCallback(async (query?: string) => {
+    const searchTerm = query || searchQuery.trim()
+    if (!searchTerm) return
 
     setLoading(true)
     setError(null)
@@ -68,7 +70,7 @@ const TorrentSearchPage = () => {
       if (useMockData) {
         // Use the old mock data approach
         const params: TorrentSearchParams = {
-          query: searchQuery.trim(),
+          query: searchTerm,
           category: selectedCategory === 'All' ? undefined : selectedCategory,
           limit: 50,
           providers: selectedProvider ? [selectedProvider] : undefined
@@ -81,7 +83,7 @@ const TorrentSearchPage = () => {
         torrentSearchService.setBaseUrl(torrentApiUrl)
         const response: ApiTorrentSearchResponse = await torrentSearchService.searchTorrents({
           site: selectedSite,
-          query: searchQuery.trim()
+          query: searchTerm
         })
 
         // Convert API response to Torrent format
@@ -109,13 +111,32 @@ const TorrentSearchPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchQuery, selectedCategory, selectedProvider, selectedSite, useMockData, torrentApiUrl])
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch()
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout
+      return (query: string) => {
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => {
+          handleSearch(query)
+        }, 500) // 500ms debounce
+      }
+    })(),
+    [handleSearch]
+  )
+
+  // Handle query changes with debouncing
+  const handleQueryChange = useCallback((query: string) => {
+    setSearchQuery(query)
+    if (query.trim()) {
+      debouncedSearch(query)
+    } else {
+      setTorrents([])
     }
-  }
+  }, [debouncedSearch])
+
 
   const handleMagnetClick = async (torrent: Torrent) => {
     try {
@@ -233,13 +254,11 @@ const TorrentSearchPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Search Query
               </label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
+              <TorrentQueryInput
+                initialQuery={searchQuery}
+                onQueryChange={handleQueryChange}
                 placeholder="Enter search terms..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                debounceMs={500}
               />
             </div>
 
@@ -306,7 +325,7 @@ const TorrentSearchPage = () => {
           {/* Search Button */}
           <div className="mt-4">
             <button
-              onClick={handleSearch}
+              onClick={() => handleSearch()}
               disabled={loading || !searchQuery.trim()}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-md transition-colors"
             >
