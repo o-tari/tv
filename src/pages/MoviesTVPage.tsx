@@ -18,8 +18,6 @@ const MoviesTVPage = () => {
   const tmdbApiKey = useAppSelector(selectTmdbApiKey)
   const showUpcomingReleases = useAppSelector(selectShowUpcomingReleases)
   
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<TMDBContent[]>([])
   const [trendingMovies, setTrendingMovies] = useState<TMDBMovie[]>([])
   const [trendingTV, setTrendingTV] = useState<TMDBTVShow[]>([])
   const [tvRecommendations, setTvRecommendations] = useState<TMDBTVShow[]>([])
@@ -29,8 +27,6 @@ const MoviesTVPage = () => {
   const [popularMovies, setPopularMovies] = useState<TMDBMovie[]>([])
   const [topRatedMovies, setTopRatedMovies] = useState<TMDBMovie[]>([])
   const [loading, setLoading] = useState(false)
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'trending' | 'search'>('trending')
   
   // Section states for limiting items and load more functionality
   const [sectionStates, setSectionStates] = useState<Record<string, SectionState>>({
@@ -126,44 +122,6 @@ const MoviesTVPage = () => {
     }
   }
 
-  const handleSearch = async (query: string) => {
-    if (!tmdbApiKey || !query.trim()) {
-      setSearchResults([])
-      setActiveTab('trending')
-      return
-    }
-
-    setSearchLoading(true)
-    setActiveTab('search')
-    
-    try {
-      const tmdbService = getTMDBService(tmdbApiKey)
-      
-      const [moviesResponse, tvResponse] = await Promise.all([
-        tmdbService.searchMovies(query),
-        tmdbService.searchTV(query)
-      ])
-
-      const filteredMovies = tmdbService.filterByReleaseDate(moviesResponse.results, showUpcomingReleases)
-      const filteredTV = tmdbService.filterByReleaseDate(tvResponse.results, showUpcomingReleases)
-
-      setSearchResults([...filteredMovies, ...filteredTV])
-    } catch (error) {
-      console.error('Error searching:', error)
-    } finally {
-      setSearchLoading(false)
-    }
-  }
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query)
-    if (query.trim()) {
-      handleSearch(query)
-    } else {
-      setSearchResults([])
-      setActiveTab('trending')
-    }
-  }
 
   const handleLoadMore = (sectionKey: string) => {
     setSectionStates(prev => ({
@@ -263,96 +221,6 @@ const MoviesTVPage = () => {
     )
   }
 
-  const renderContent = () => {
-    if (activeTab === 'search') {
-      if (searchLoading) {
-        return (
-          <div className="flex justify-center items-center py-12">
-            <LoadingSpinner />
-          </div>
-        )
-      }
-
-      if (searchResults.length === 0 && searchQuery) {
-        return (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-lg">
-              No results found for "{searchQuery}"
-            </p>
-          </div>
-        )
-      }
-
-      return (
-        <div className="space-y-8">
-          {/* Continue Watching Section */}
-          <TMDBContinueWatching limit={10} />
-          
-          {/* Watch Later Section */}
-          <TMDBWatchLater limit={10} />
-          
-          {/* Search Results */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Search Results for "{searchQuery}"
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {searchResults.map((item) => (
-                <TMDBMediaCard
-                  key={`${item.id}-${'title' in item ? 'movie' : 'tv'}`}
-                  id={item.id}
-                  title={'title' in item ? item.title : item.name}
-                  thumbnail={item.poster_path}
-                  duration={null}
-                  viewCount={item.vote_count}
-                  publishedAt={'release_date' in item ? item.release_date : item.first_air_date}
-                  channelTitle={null}
-                  type={'title' in item ? 'movie' : 'tv'}
-                  rating={item.vote_average}
-                  overview={item.overview}
-                  content={item}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="space-y-12">
-        {/* Continue Watching Section */}
-        <TMDBContinueWatching limit={10} />
-        
-        {/* Watch Later Section */}
-        <TMDBWatchLater limit={10} />
-        
-        {/* TV Recommendations - First section after search */}
-        {renderSection('Recommended TV Shows', 'tvRecommendations', 'tv')}
-
-        {/* Trending Movies */}
-        {renderSection('Trending Movies', 'trendingMovies', 'movie')}
-
-        {/* Trending TV Shows */}
-        {renderSection('Trending TV Shows', 'trendingTV', 'tv')}
-
-        {/* Discover Movies */}
-        {renderSection('Discover Movies', 'discoverMovies', 'movie')}
-
-        {/* Discover TV Shows */}
-        {renderSection('Discover TV Shows', 'discoverTV', 'tv')}
-
-        {/* Now Playing Movies */}
-        {renderSection('Now Playing Movies', 'nowPlayingMovies', 'movie')}
-
-        {/* Popular Movies */}
-        {renderSection('Popular Movies', 'popularMovies', 'movie')}
-
-        {/* Top Rated Movies */}
-        {renderSection('Top Rated Movies', 'topRatedMovies', 'movie')}
-      </div>
-    )
-  }
 
   if (!tmdbApiKey) {
     return (
@@ -388,14 +256,42 @@ const MoviesTVPage = () => {
           
           {/* Search Bar */}
           <div className="max-w-2xl">
-            <SearchBar
-              onSearch={handleSearchChange}
-            />
+            <SearchBar searchPath="/movies-tv/search" />
           </div>
         </div>
 
         {/* Content */}
-        {renderContent()}
+        <div className="space-y-12">
+          {/* Continue Watching Section */}
+          <TMDBContinueWatching limit={10} />
+          
+          {/* Watch Later Section */}
+          <TMDBWatchLater limit={10} />
+          
+          {/* TV Recommendations - First section after search */}
+          {renderSection('Recommended TV Shows', 'tvRecommendations', 'tv')}
+
+          {/* Trending Movies */}
+          {renderSection('Trending Movies', 'trendingMovies', 'movie')}
+
+          {/* Trending TV Shows */}
+          {renderSection('Trending TV Shows', 'trendingTV', 'tv')}
+
+          {/* Discover Movies */}
+          {renderSection('Discover Movies', 'discoverMovies', 'movie')}
+
+          {/* Discover TV Shows */}
+          {renderSection('Discover TV Shows', 'discoverTV', 'tv')}
+
+          {/* Now Playing Movies */}
+          {renderSection('Now Playing Movies', 'nowPlayingMovies', 'movie')}
+
+          {/* Popular Movies */}
+          {renderSection('Popular Movies', 'popularMovies', 'movie')}
+
+          {/* Top Rated Movies */}
+          {renderSection('Top Rated Movies', 'topRatedMovies', 'movie')}
+        </div>
       </div>
     </div>
   )

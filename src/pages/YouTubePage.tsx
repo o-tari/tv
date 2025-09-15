@@ -48,9 +48,6 @@ const YouTubePage = () => {
     }
   }
 
-  const handleSearch = (query: string) => {
-    navigate(`/search?q=${encodeURIComponent(query)}`)
-  }
 
   const handleRemoveFromContinueWatching = (videoId: string, event: React.MouseEvent) => {
     event.preventDefault()
@@ -96,7 +93,7 @@ const YouTubePage = () => {
             Search
           </h2>
           <div className="max-w-2xl">
-            <SearchBar onSearch={handleSearch} />
+            <SearchBar searchPath="/youtube/search" />
           </div>
         </div>
 

@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery } from '../store/slices/uiSlice'
 
 interface SearchBarProps {
-  onSearch: (query: string) => void
+  onSearch?: (query: string) => void
+  searchPath?: string
 }
 
-const SearchBar = ({ onSearch }: SearchBarProps) => {
+const SearchBar = ({ onSearch, searchPath }: SearchBarProps) => {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { searchQuery } = useAppSelector((state) => state.ui)
   const [localQuery, setLocalQuery] = useState(searchQuery)
@@ -67,7 +70,11 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (localQuery.trim()) {
-      onSearch(localQuery.trim())
+      if (onSearch) {
+        onSearch(localQuery.trim())
+      } else if (searchPath) {
+        navigate(`${searchPath}?search=${encodeURIComponent(localQuery.trim())}`)
+      }
       setShowSuggestions(false)
     }
   }
@@ -75,7 +82,11 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   const handleSuggestionClick = (suggestion: string) => {
     setLocalQuery(suggestion)
     dispatch(setSearchQuery(suggestion))
-    onSearch(suggestion)
+    if (onSearch) {
+      onSearch(suggestion)
+    } else if (searchPath) {
+      navigate(`${searchPath}?search=${encodeURIComponent(suggestion)}`)
+    }
     setShowSuggestions(false)
   }
 
