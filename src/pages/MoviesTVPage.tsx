@@ -204,6 +204,7 @@ const MoviesTVPage = () => {
               rating={item.vote_average}
               overview={item.overview}
               content={item}
+              trailerVideoId={null} // Trailers not available in basic data
             />
           ))}
         </div>

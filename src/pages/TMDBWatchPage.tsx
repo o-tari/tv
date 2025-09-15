@@ -7,7 +7,7 @@ import { getTMDBService } from '../services/tmdb'
 import { torrentSearchService } from '../services/torrentSearch'
 import type { TMDBMovieDetails, TMDBTVDetails, TMDBVideo, TMDBEpisode } from '../types/tmdb'
 import type { ApiTorrentSearchResponse } from '../types/torrent'
-import YouTubePlayer from '../components/YouTubePlayer'
+import YouTubePlayerModal from '../components/YouTubePlayerModal'
 import TorrentsTable from '../components/TorrentsTable'
 import LoadingSpinner from '../components/LoadingSpinner'
 import SeasonSearchModal from '../components/SeasonSearchModal'
@@ -31,6 +31,7 @@ const TMDBWatchPage = () => {
   const [seasonSearchModalOpen, setSeasonSearchModalOpen] = useState(false)
   const [customQuery, setCustomQuery] = useState<string>('')
   const [isCustomSearch, setIsCustomSearch] = useState(false)
+  const [trailerModalOpen, setTrailerModalOpen] = useState(false)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
@@ -81,6 +82,11 @@ const TMDBWatchPage = () => {
         const movieDetails = await tmdbService.getMovieDetails(parseInt(id))
         console.log(' Movie loaded:', { title: movieDetails.title, year: movieDetails.release_date })
         setContent(movieDetails)
+        
+        // Search for movie torrents
+        if (isTorrentEndpointConfigured) {
+          searchForMovieTorrents(movieDetails)
+        }
       } else {
         console.log(' Loading TV details for ID:', id)
         const tvDetails = await tmdbService.getTVDetails(parseInt(id))
@@ -271,6 +277,42 @@ const TMDBWatchPage = () => {
     }
   }
 
+  const searchForMovieTorrents = async (movie: TMDBMovieDetails) => {
+    if (!isTorrentEndpointConfigured) {
+      console.log(' Torrent endpoint not configured, skipping torrent search')
+      setTorrentResults(null)
+      return
+    }
+
+    try {
+      setTorrentLoading(true)
+      console.log(' Searching for movie torrents:', {
+        movie: movie.title,
+        year: movie.release_date ? new Date(movie.release_date).getFullYear() : 'Unknown',
+        genres: movie.genres.map(g => g.name)
+      })
+
+      // Create search query with movie title and year
+      const year = movie.release_date ? new Date(movie.release_date).getFullYear() : ''
+      const searchQuery = year ? `${movie.title} ${year}` : movie.title
+      
+      console.log(' Movie search query:', searchQuery)
+      
+      const results = await torrentSearchService.searchTorrents({
+        site: 'piratebay',
+        query: searchQuery
+      })
+      
+      console.log(' Movie torrent search results:', results)
+      setTorrentResults(results)
+    } catch (error) {
+      console.error('❌ Error searching for movie torrents:', error)
+      setTorrentResults(null)
+    } finally {
+      setTorrentLoading(false)
+    }
+  }
+
   const getTrailerVideo = (): TMDBVideo | null => {
     if (!content?.videos?.results) return null
     
@@ -286,7 +328,7 @@ const TMDBWatchPage = () => {
     setCustomQuery(query)
     setIsCustomSearch(true)
     
-    if (!query.trim() || !selectedEpisode || !content) return
+    if (!query.trim() || !content) return
 
     setTorrentLoading(true)
     
@@ -304,7 +346,7 @@ const TMDBWatchPage = () => {
     } finally {
       setTorrentLoading(false)
     }
-  }, [selectedEpisode, content])
+  }, [content])
 
   // Get the current search query for display
   const getCurrentQuery = useCallback(() => {
@@ -323,6 +365,11 @@ const TMDBWatchPage = () => {
         const episodeStr = selectedEpisode.episode_number.toString().padStart(2, '0')
         return `${show.name} s${seasonStr}e${episodeStr}`
       }
+    }
+    if (content && 'title' in content) {
+      const movie = content as TMDBMovieDetails
+      const year = movie.release_date ? new Date(movie.release_date).getFullYear() : ''
+      return year ? `${movie.title} ${year}` : movie.title
     }
     return ''
   }, [isCustomSearch, customQuery, selectedEpisode, content])
@@ -468,125 +515,9 @@ const TMDBWatchPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Video Player */}
-            <div className="mb-6">
-              {(() => {
-                if (isTV && selectedEpisode) {
-                  console.log(' TMDBWatchPage: Rendering YouTubePlayer for TV show', {
-                    showTitle: (content as TMDBTVDetails).name,
-                    season: selectedEpisode.season_number,
-                    episode: selectedEpisode.episode_number,
-                    youtubeVideoId: trailer?.key
-                  })
-                  return trailer?.key ? (
-                    <YouTubePlayer videoId={trailer.key} />
-                  ) : (
-                    <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
-                          No trailer available for this episode
-                        </p>
-                        <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                } else if (!isTV) {
-                  console.log(' TMDBWatchPage: Rendering YouTubePlayer for movie', {
-                    movieTitle: (content as TMDBMovieDetails).title,
-                    youtubeVideoId: trailer?.key
-                  })
-                  return trailer?.key ? (
-                    <YouTubePlayer videoId={trailer.key} />
-                  ) : (
-                    <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
-                          No trailer available for this movie
-                        </p>
-                        <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                } else {
-                  return (
-                    <div className="bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
-                          Select an episode to watch
-                        </p>
-                        <div className="w-16 h-16 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-              })()}
-            </div>
-
-            {/* Content Details */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                {isTV ? (content as TMDBTVDetails).name : (content as TMDBMovieDetails).title}
-              </h1>
-              
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <div className="flex items-center">
-                  <span className="text-yellow-500 mr-1">★</span>
-                  <span className="text-gray-900 dark:text-white font-semibold">
-                    {content.vote_average.toFixed(1)}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400 ml-1">
-                    ({content.vote_count} votes)
-                  </span>
-                </div>
-                
-                {isTV && 'number_of_seasons' in content && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    {content.number_of_seasons} season{content.number_of_seasons !== 1 ? 's' : ''}
-                  </span>
-                )}
-                
-                {!isTV && 'runtime' in content && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    {formatRuntime(content.runtime)}
-                  </span>
-                )}
-                
-                <span className="text-gray-500 dark:text-gray-400">
-                  {formatDate(isTV ? (content as TMDBTVDetails).first_air_date : (content as TMDBMovieDetails).release_date)}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {content.genres.map((genre) => (
-                  <span
-                    key={genre.id}
-                    className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
-                  >
-                    {genre.name}
-                  </span>
-                ))}
-              </div>
-
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {content.overview}
-              </p>
-            </div>
-
-            {/* Selected Episode Details */}
+            {/* Selected Episode Details - Moved to top */}
             {isTV && selectedEpisode && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mt-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Selected Episode
@@ -671,6 +602,86 @@ const TMDBWatchPage = () => {
                 )}
               </div>
             )}
+
+
+            {/* Content Details */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                {isTV ? (content as TMDBTVDetails).name : (content as TMDBMovieDetails).title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <div className="flex items-center">
+                  <span className="text-yellow-500 mr-1">★</span>
+                  <span className="text-gray-900 dark:text-white font-semibold">
+                    {content.vote_average.toFixed(1)}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-1">
+                    ({content.vote_count} votes)
+                  </span>
+                </div>
+                
+                {isTV && 'number_of_seasons' in content && (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {content.number_of_seasons} season{content.number_of_seasons !== 1 ? 's' : ''}
+                  </span>
+                )}
+                
+                {!isTV && 'runtime' in content && (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {formatRuntime(content.runtime)}
+                  </span>
+                )}
+                
+                <span className="text-gray-500 dark:text-gray-400">
+                  {formatDate(isTV ? (content as TMDBTVDetails).first_air_date : (content as TMDBMovieDetails).release_date)}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                {content.genres.map((genre) => (
+                  <span
+                    key={genre.id}
+                    className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
+                  >
+                    {genre.name}
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {content.overview}
+              </p>
+            </div>
+
+            {/* Movie Torrents Section */}
+            {!isTV && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mt-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Torrents
+                </h2>
+                
+                {torrentLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <LoadingSpinner />
+                    <span className="ml-3 text-gray-600 dark:text-gray-400">
+                      Searching for torrents...
+                    </span>
+                  </div>
+                ) : (
+                  <TorrentsTable 
+                    searchResults={torrentResults}
+                    selectedTorrent={null}
+                    onTorrentSelect={(torrent) => {
+                      console.log(' Torrent selected:', torrent.name)
+                    }}
+                    onQueryChange={handleCustomQueryChange}
+                    currentQuery={getCurrentQuery()}
+                  />
+                )}
+              </div>
+            )}
+
           </div>
 
           {/* Sidebar */}
@@ -784,6 +795,21 @@ const TMDBWatchPage = () => {
                 />
               </div>
               
+              {/* Trailer Button */}
+              {trailer && (
+                <div className="flex justify-center mb-4">
+                  <button
+                    onClick={() => setTrailerModalOpen(true)}
+                    className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Watch Trailer
+                  </button>
+                </div>
+              )}
+              
               {/* External Link for Content */}
               <div className="flex justify-end">
                 <a
@@ -844,6 +870,14 @@ const TMDBWatchPage = () => {
           seasonNumber={selectedSeason}
         />
       )}
+      
+      {/* Trailer Modal */}
+      <YouTubePlayerModal
+        isOpen={trailerModalOpen}
+        onClose={() => setTrailerModalOpen(false)}
+        videoId={trailer?.key || null}
+        title={trailer ? `Trailer - ${isTV ? (content as TMDBTVDetails).name : (content as TMDBMovieDetails).title}` : undefined}
+      />
     </div>
   )
 }

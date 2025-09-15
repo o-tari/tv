@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addMovieToContinueWatching, addTVToContinueWatching } from '../store/slices/tmdbContinueWatchingSlice'
 import { addToWatchLater, removeFromWatchLater, selectIsInWatchLater } from '../store/slices/tmdbWatchLaterSlice'
 import { formatViewCount } from '../utils/formatNumber'
 import { FilmIcon, TvIcon } from '@heroicons/react/24/outline'
 import LazyImage from './LazyImage'
+import YouTubePlayerModal from './YouTubePlayerModal'
 import type { TMDBContent } from '../types/tmdb'
 
 interface TMDBMediaCardProps {
@@ -20,6 +22,7 @@ interface TMDBMediaCardProps {
   overview?: string
   variant?: 'default' | 'compact' | 'large'
   content?: TMDBContent // Full content object for continue watching
+  trailerVideoId?: string | null // YouTube video ID for trailer
 }
 
 const TMDBMediaCard = ({
@@ -33,10 +36,12 @@ const TMDBMediaCard = ({
   rating,
   overview,
   variant = 'default',
-  content
+  content,
+  trailerVideoId
 }: TMDBMediaCardProps) => {
   const dispatch = useAppDispatch()
   const isInWatchLater = useAppSelector(selectIsInWatchLater(id, type))
+  const [trailerModalOpen, setTrailerModalOpen] = useState(false)
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
@@ -123,6 +128,23 @@ const TMDBMediaCard = ({
               </svg>
             )}
           </button>
+          
+          {/* Trailer Button - appears on hover */}
+          {trailerVideoId && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setTrailerModalOpen(true)
+              }}
+              className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              title="Watch Trailer"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          )}
         </div>
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -188,6 +210,23 @@ const TMDBMediaCard = ({
               </svg>
             )}
           </button>
+          
+          {/* Trailer Button - appears on hover */}
+          {trailerVideoId && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setTrailerModalOpen(true)
+              }}
+              className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              title="Watch Trailer"
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          )}
         </div>
         <div className="flex-1 min-w-0 space-y-1">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -249,6 +288,23 @@ const TMDBMediaCard = ({
               </svg>
             )}
           </button>
+          
+          {/* Trailer Button - appears on hover */}
+          {trailerVideoId && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setTrailerModalOpen(true)
+              }}
+              className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              title="Watch Trailer"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          )}
         </div>
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 line-clamp-2">
@@ -287,15 +343,31 @@ const TMDBMediaCard = ({
     </Link>
   )
 
-  if (variant === 'compact') {
-    return renderCompactCard()
+  const renderCard = () => {
+    if (variant === 'compact') {
+      return renderCompactCard()
+    }
+
+    if (variant === 'large') {
+      return renderLargeCard()
+    }
+
+    return renderDefaultCard()
   }
 
-  if (variant === 'large') {
-    return renderLargeCard()
-  }
-
-  return renderDefaultCard()
+  return (
+    <>
+      {renderCard()}
+      
+      {/* Trailer Modal */}
+      <YouTubePlayerModal
+        isOpen={trailerModalOpen}
+        onClose={() => setTrailerModalOpen(false)}
+        videoId={trailerVideoId || null}
+        title={trailerVideoId ? `Trailer - ${title}` : undefined}
+      />
+    </>
+  )
 }
 
 export default TMDBMediaCard
