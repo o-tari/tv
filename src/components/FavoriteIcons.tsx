@@ -20,7 +20,7 @@ const FavoriteIcons = () => {
   }
 
   return (
-    <div className="fixed bottom-6 left-20 flex items-center space-x-2 z-40">
+    <div className="fixed bottom-6 left-28 flex items-center space-x-2 z-40">
       {favoriteSidebarItems.map((item) => (
         <button
           key={item.id}
