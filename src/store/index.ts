@@ -13,6 +13,7 @@ import tmdbContinueWatchingSlice from './slices/tmdbContinueWatchingSlice'
 import tmdbWatchLaterSlice from './slices/tmdbWatchLaterSlice'
 import streamingLinksSlice from './slices/streamingLinksSlice'
 import channelsSlice from './slices/channelsSlice'
+import favoritesSlice from './slices/favoritesSlice'
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +30,7 @@ export const store = configureStore({
     tmdbWatchLater: tmdbWatchLaterSlice,
     streamingLinks: streamingLinksSlice,
     channels: channelsSlice,
+    favorites: favoritesSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

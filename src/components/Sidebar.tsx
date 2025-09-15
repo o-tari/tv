@@ -4,6 +4,7 @@ import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
 import { logout } from '../store/slices/authSlice'
 import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
+import { toggleFavorite, selectFavoriteItems, selectSidebarItems } from '../store/slices/favoritesSlice'
 import SearchBar from './SearchBar'
 
 const Sidebar = () => {
@@ -13,16 +14,18 @@ const Sidebar = () => {
   const { sidebarOpen } = useAppSelector((state) => state.ui)
   const { isAuthenticated } = useAppSelector((state) => state.auth)
   const isTorrentEndpointConfigured = useAppSelector(selectIsTorrentEndpointConfigured)
+  const favoriteItems = useAppSelector(selectFavoriteItems)
+  const sidebarItems = useAppSelector(selectSidebarItems)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
-  const navigationItems = [
-    { label: 'YouTube', href: '/youtube', icon: '📺' },
-    { label: 'Movies & TV', href: '/movies-tv', icon: '🎬' },
-    { label: 'Anime', href: '/anime', icon: '🎌' },
-    { label: 'HiAnime', href: '/hianime', icon: '🌸' },
-    ...(isTorrentEndpointConfigured ? [{ label: 'Torrent Search', href: '/torrents', icon: '🔍' }] : []),
-  ]
+  // Get navigation items from Redux state, filtering out torrents if not configured
+  const navigationItems = sidebarItems.filter(item => 
+    item.id !== 'torrents' || isTorrentEndpointConfigured
+  ).filter(item => 
+    // Only show main navigation items (not library or account items)
+    ['youtube', 'movies-tv', 'anime', 'hianime', 'torrents'].includes(item.id)
+  )
 
   const isActive = (href: string) => {
     if (href === '/youtube') {
@@ -116,23 +119,42 @@ const Sidebar = () => {
           </div>
 
           <div className="py-4">
-            {navigationItems.map((item, index) => (
-              <Link
-                key={index}
-                to={item.href}
-                onClick={() => dispatch(toggleSidebar())}
-                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <span className="mr-4 text-lg">
-                  {item.icon}
-                </span>
-                <span className="truncate">{item.label}</span>
-              </Link>
-            ))}
+            {navigationItems.map((item, index) => {
+              const isItemFavorite = favoriteItems.includes(item.id)
+              return (
+                <div key={index} className="flex items-center group">
+                  <Link
+                    to={item.href}
+                    onClick={() => dispatch(toggleSidebar())}
+                    className={`flex items-center flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      isActive(item.href)
+                        ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <span className="mr-4 text-lg">
+                      {item.icon}
+                    </span>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      dispatch(toggleFavorite(item.id))
+                    }}
+                    className={`px-3 py-3 text-sm transition-colors opacity-0 group-hover:opacity-100 ${
+                      isItemFavorite 
+                        ? 'opacity-100 text-yellow-500 hover:text-yellow-600' 
+                        : 'text-gray-400 hover:text-yellow-500'
+                    }`}
+                    aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
+                  >
+                    {isItemFavorite ? '⭐' : '☆'}
+                  </button>
+                </div>
+              )
+            })}
           </div>
 
           <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
@@ -140,22 +162,36 @@ const Sidebar = () => {
               Library
             </h3>
             <div className="space-y-1">
-              <Link
-                to="/library/liked"
-                onClick={() => dispatch(toggleSidebar())}
-                className="flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              >
-                <span className="mr-3">👍</span>
-                Liked videos
-              </Link>
-              <Link
-                to="/library/playlists"
-                onClick={() => dispatch(toggleSidebar())}
-                className="flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              >
-                <span className="mr-3">📋</span>
-                Playlists
-              </Link>
+              {sidebarItems.filter(item => ['liked', 'playlists'].includes(item.id)).map((item) => {
+                const isItemFavorite = favoriteItems.includes(item.id)
+                return (
+                  <div key={item.id} className="flex items-center group">
+                    <Link
+                      to={item.href}
+                      onClick={() => dispatch(toggleSidebar())}
+                      className="flex items-center flex-1 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                    >
+                      <span className="mr-3">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        dispatch(toggleFavorite(item.id))
+                      }}
+                      className={`px-2 py-2 text-sm transition-colors opacity-0 group-hover:opacity-100 ${
+                        isItemFavorite 
+                          ? 'opacity-100 text-yellow-500 hover:text-yellow-600' 
+                          : 'text-gray-400 hover:text-yellow-500'
+                      }`}
+                      aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
+                    >
+                      {isItemFavorite ? '⭐' : '☆'}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -184,39 +220,39 @@ const Sidebar = () => {
                   <div className="py-2">
                     {isAuthenticated ? (
                       <>
-                        <Link
-                          to="/channel/me"
-                          onClick={() => {
-                            setShowUserMenu(false)
-                            dispatch(toggleSidebar())
-                          }}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          <span className="mr-3">👤</span>
-                          Your channel
-                        </Link>
-                        <Link
-                          to="/history"
-                          onClick={() => {
-                            setShowUserMenu(false)
-                            dispatch(toggleSidebar())
-                          }}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          <span className="mr-3">🕒</span>
-                          History
-                        </Link>
-                        <Link
-                          to="/watch-later"
-                          onClick={() => {
-                            setShowUserMenu(false)
-                            dispatch(toggleSidebar())
-                          }}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          <span className="mr-3">⏰</span>
-                          Watch later
-                        </Link>
+                        {sidebarItems.filter(item => ['channel', 'history', 'watch-later'].includes(item.id)).map((item) => {
+                          const isItemFavorite = favoriteItems.includes(item.id)
+                          return (
+                            <div key={item.id} className="flex items-center group">
+                              <Link
+                                to={item.href}
+                                onClick={() => {
+                                  setShowUserMenu(false)
+                                  dispatch(toggleSidebar())
+                                }}
+                                className="flex items-center flex-1 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              >
+                                <span className="mr-3">{item.icon}</span>
+                                {item.label}
+                              </Link>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  dispatch(toggleFavorite(item.id))
+                                }}
+                                className={`px-3 py-2 text-sm transition-colors opacity-0 group-hover:opacity-100 ${
+                                  isItemFavorite 
+                                    ? 'opacity-100 text-yellow-500 hover:text-yellow-600' 
+                                    : 'text-gray-400 hover:text-yellow-500'
+                                }`}
+                                aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
+                              >
+                                {isItemFavorite ? '⭐' : '☆'}
+                              </button>
+                            </div>
+                          )
+                        })}
                         <hr className="my-2 border-gray-200 dark:border-gray-700" />
                         <button
                           onClick={handleLogout}
@@ -244,18 +280,35 @@ const Sidebar = () => {
 
           {/* Settings Button */}
           <div className="p-4">
-            <Link
-              to="/settings"
-              onClick={() => dispatch(toggleSidebar())}
-              className={`flex items-center w-full px-2 py-2 text-sm font-medium transition-colors rounded ${
-                isSettingsActive()
-                  ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              <span className="mr-3 text-lg">⚙️</span>
-              <span>Settings</span>
-            </Link>
+            <div className="flex items-center group">
+              <Link
+                to="/settings"
+                onClick={() => dispatch(toggleSidebar())}
+                className={`flex items-center flex-1 px-2 py-2 text-sm font-medium transition-colors rounded ${
+                  isSettingsActive()
+                    ? 'bg-gray-100 dark:bg-gray-800 text-red-600 dark:text-red-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <span className="mr-3 text-lg">⚙️</span>
+                <span>Settings</span>
+              </Link>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  dispatch(toggleFavorite('settings'))
+                }}
+                className={`px-3 py-2 text-sm transition-colors opacity-0 group-hover:opacity-100 ${
+                  favoriteItems.includes('settings')
+                    ? 'opacity-100 text-yellow-500 hover:text-yellow-600' 
+                    : 'text-gray-400 hover:text-yellow-500'
+                }`}
+                aria-label={`${favoriteItems.includes('settings') ? 'Remove from' : 'Add to'} favorites`}
+              >
+                {favoriteItems.includes('settings') ? '⭐' : '☆'}
+              </button>
+            </div>
           </div>
         </div>
 

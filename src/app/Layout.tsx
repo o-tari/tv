@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import FloatingSidebarButton from '../components/FloatingSidebarButton'
+import FavoriteIcons from '../components/FavoriteIcons'
 import MockDataNotification from '../components/MockDataNotification'
 import Settings from '../components/Settings'
 
@@ -24,6 +25,9 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Floating Sidebar Button */}
       <FloatingSidebarButton />
+
+      {/* Favorite Icons */}
+      <FavoriteIcons />
 
       {/* Settings Modal */}
       <Settings 
