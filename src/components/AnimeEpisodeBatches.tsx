@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../store'
 import { addToAnimeContinueWatching, saveAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
 import { selectAnimeContinueWatching, selectAnimeEpisodeProgress } from '../store/slices/animeContinueWatchingSlice'
@@ -45,6 +45,8 @@ const AnimeEpisodeBatches = ({
   const [isInitialized, setIsInitialized] = useState(false)
   const [torrentResults, setTorrentResults] = useState<ApiTorrentSearchResponse | null>(null)
   const [torrentLoading, setTorrentLoading] = useState(false)
+  const [customQuery, setCustomQuery] = useState<string>('')
+  const [isCustomSearch, setIsCustomSearch] = useState(false)
   
 
   // Create episode ranges based on total episode count
@@ -193,6 +195,43 @@ const AnimeEpisodeBatches = ({
     }
   }
 
+  // Handle custom query changes
+  const handleCustomQueryChange = useCallback(async (query: string) => {
+    setCustomQuery(query)
+    setIsCustomSearch(true)
+    
+    if (!query.trim() || !selectedEpisode) return
+
+    setTorrentLoading(true)
+    
+    try {
+      const results = await torrentSearchService.searchTorrents({
+        site: 'piratebay',
+        query: query.trim()
+      })
+      
+      console.log('🔍 Custom anime torrent search results:', results)
+      setTorrentResults(results)
+    } catch (error) {
+      console.error('❌ Error searching with custom query:', error)
+      setTorrentResults(null)
+    } finally {
+      setTorrentLoading(false)
+    }
+  }, [selectedEpisode])
+
+  // Get the current search query for display
+  const getCurrentQuery = useCallback(() => {
+    if (isCustomSearch && customQuery) {
+      return customQuery
+    }
+    if (selectedEpisode) {
+      const seasonStr = '01' // Most anime are single season, use 01 as default
+      const episodeStr = selectedEpisode.episodeNumber.toString().padStart(2, '0')
+      return `${animeTitle} s${seasonStr}e${episodeStr}`
+    }
+    return ''
+  }, [isCustomSearch, customQuery, selectedEpisode, animeTitle])
 
   // Memoize episode numbers for the current range
   const episodeNumbers = useMemo(() => {
@@ -307,6 +346,8 @@ const AnimeEpisodeBatches = ({
                 onTorrentSelect={(torrent) => {
                   console.log('🎬 Anime torrent selected:', torrent.name)
                 }}
+                onQueryChange={handleCustomQueryChange}
+                currentQuery={getCurrentQuery()}
               />
             </div>
           )}

@@ -6,6 +6,7 @@ import type { TorrentPlayerState, ApiTorrentSearchResponse } from '../types/torr
 // import type { WebTorrent } from '../types/webtorrent' // COMMENTED OUT - not used when torrent playback is disabled
 import YouTubePlayer from './YouTubePlayer'
 import LoadingSpinner from './LoadingSpinner'
+import TorrentQueryInput from './TorrentQueryInput'
 
 interface TorrentPlayerProps {
   // For movies
@@ -48,6 +49,8 @@ const TorrentPlayer = ({
   const [searchResults, setSearchResults] = useState<ApiTorrentSearchResponse | null>(null)
   const [selectedTorrent, setSelectedTorrent] = useState<{ name: string; size: string; seeders: string; leechers: string; category: string; uploader: string; date: string; magnet: string } | null>(null)
   const [displayedTorrents, setDisplayedTorrents] = useState(10) // Number of torrents to display
+  const [customQuery, setCustomQuery] = useState<string>('')
+  const [isCustomSearch, setIsCustomSearch] = useState(false)
   // const [loadedTorrents, setLoadedTorrents] = useState<Set<string>>(new Set()) // COMMENTED OUT - not used when torrent playback is disabled
   
   // const videoRef = useRef<HTMLVideoElement>(null) // COMMENTED OUT - not used when torrent playback is disabled
@@ -140,12 +143,18 @@ const TorrentPlayer = ({
   //   }
   // }, [])
 
-  // Disable torrent functionality for now - use YouTube trailers instead
+  // Initialize torrent functionality based on configuration
   useEffect(() => {
-    console.log('🎬 TorrentPlayer: Using YouTube trailers instead of torrents')
-    setUseTorrent(false)
-    setTorrentError('Torrent playback disabled - using YouTube trailers')
-  }, [])
+    if (isTorrentEndpointConfigured) {
+      console.log('🎬 TorrentPlayer: Torrent endpoint configured, enabling torrent search')
+      setUseTorrent(true)
+      setTorrentError(null)
+    } else {
+      console.log('🎬 TorrentPlayer: Torrent endpoint not configured, using YouTube trailers')
+      setUseTorrent(false)
+      setTorrentError('Torrent search endpoint not configured. Please configure it in settings.')
+    }
+  }, [isTorrentEndpointConfigured])
 
   // Update torrent service URL when settings change
   useEffect(() => {
@@ -344,9 +353,9 @@ const TorrentPlayer = ({
   //   throw new Error('Torrent playback disabled - using YouTube trailers')
   // }, [])
 
-  const searchForTorrent = useCallback(async () => {
+  const searchForTorrent = useCallback(async (customSearchQuery?: string) => {
     console.log('🔍 TorrentPlayer: Starting torrent search...')
-    console.log('🔍 Search parameters:', { movieTitle, showTitle, season, episode, useTorrent })
+    console.log('🔍 Search parameters:', { movieTitle, showTitle, season, episode, useTorrent, customSearchQuery })
     console.log('🔍 API URL:', torrentApiUrl)
     console.log('🔍 Mock data mode:', useMockData)
 
@@ -383,7 +392,15 @@ const TorrentPlayer = ({
       let searchResult: ApiTorrentSearchResponse
       let searchQuery: string
       
-      if (movieTitle) {
+      // Use custom query if provided, otherwise use default logic
+      if (customSearchQuery) {
+        console.log('🔍 Using custom search query:', customSearchQuery)
+        searchQuery = customSearchQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
+        searchResult = await torrentService.searchTorrents({
+          site: 'piratebay',
+          query: customSearchQuery
+        })
+      } else if (movieTitle) {
         console.log('🎬 Searching for movie torrent:', movieTitle)
         searchQuery = movieTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
         searchResult = await torrentService.searchMovieTorrents(movieTitle, 'piratebay')
@@ -473,9 +490,44 @@ const TorrentPlayer = ({
     }
   }, [movieTitle, showTitle, season, episode, useTorrent, updateState, torrentApiUrl, useMockData, isTorrentEndpointConfigured])
 
+  // Handle custom query changes
+  const handleCustomQueryChange = useCallback((query: string) => {
+    setCustomQuery(query)
+    setIsCustomSearch(true)
+    if (query.trim()) {
+      searchForTorrent(query.trim())
+    }
+  }, [searchForTorrent])
+
+  // Get the current search query for display
+  const getCurrentQuery = useCallback(() => {
+    if (isCustomSearch && customQuery) {
+      return customQuery
+    }
+    if (movieTitle) {
+      return movieTitle
+    }
+    if (showTitle && season && episode) {
+      const seasonStr = season.toString().padStart(2, '0')
+      const episodeStr = episode.toString().padStart(2, '0')
+      return `${showTitle} s${seasonStr}e${episodeStr}`
+    }
+    return ''
+  }, [isCustomSearch, customQuery, movieTitle, showTitle, season, episode])
+
   // Start torrent search when component mounts or parameters change
   useEffect(() => {
+    console.log('🔍 TorrentPlayer useEffect triggered:', {
+      useTorrent,
+      movieTitle,
+      showTitle,
+      season,
+      episode,
+      isTorrentEndpointConfigured
+    })
+    
     if (useTorrent && (movieTitle || (showTitle && season && episode))) {
+      console.log('🔍 TorrentPlayer: Starting torrent search for:', movieTitle || `${showTitle} s${season}e${episode}`)
       // Reset state
       // setMagnetUrl(null) // COMMENTED OUT - not used when torrent playback is disabled
       setTorrentError(null)
@@ -487,8 +539,10 @@ const TorrentPlayer = ({
       }, 100)
       
       return () => clearTimeout(timeoutId)
+    } else {
+      console.log('🔍 TorrentPlayer: Skipping torrent search - conditions not met')
     }
-  }, [movieTitle, showTitle, season, episode, useTorrent, searchForTorrent])
+  }, [movieTitle, showTitle, season, episode, useTorrent, searchForTorrent, isTorrentEndpointConfigured])
 
   // Handle video end - COMMENTED OUT - not used when torrent playback is disabled
   // const handleVideoEnd = useCallback(() => {
@@ -531,9 +585,19 @@ const TorrentPlayer = ({
               <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg p-4">
                 {searchResults.data && searchResults.data.length > 0 ? (
                   <>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                      Found {searchResults.data.length} torrents
-                    </h3>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Found {searchResults.data.length} torrents
+                      </h3>
+                      <div className="w-80">
+                        <TorrentQueryInput
+                          initialQuery={getCurrentQuery()}
+                          onQueryChange={handleCustomQueryChange}
+                          placeholder="Modify search query..."
+                          debounceMs={500}
+                        />
+                      </div>
+                    </div>
                     <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -752,9 +816,19 @@ const TorrentPlayer = ({
         {/* Show search results if available - only for movies */}
         {searchResults && searchResults.data && searchResults.data.length > 0 && movieTitle && (
           <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Found {searchResults.data.length} torrents
-            </h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Found {searchResults.data.length} torrents
+              </h3>
+              <div className="w-80">
+                <TorrentQueryInput
+                  initialQuery={getCurrentQuery()}
+                  onQueryChange={handleCustomQueryChange}
+                  placeholder="Modify search query..."
+                  debounceMs={500}
+                />
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

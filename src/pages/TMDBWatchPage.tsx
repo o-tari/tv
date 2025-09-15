@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { selectTmdbApiKey, selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
@@ -29,6 +29,8 @@ const TMDBWatchPage = () => {
   const [torrentResults, setTorrentResults] = useState<ApiTorrentSearchResponse | null>(null)
   const [torrentLoading, setTorrentLoading] = useState(false)
   const [seasonSearchModalOpen, setSeasonSearchModalOpen] = useState(false)
+  const [customQuery, setCustomQuery] = useState<string>('')
+  const [isCustomSearch, setIsCustomSearch] = useState(false)
 
   useEffect(() => {
     if (id && type && tmdbApiKey) {
@@ -245,6 +247,52 @@ const TMDBWatchPage = () => {
     
     return trailers.length > 0 ? trailers[0] : null
   }
+
+  // Handle custom query changes
+  const handleCustomQueryChange = useCallback(async (query: string) => {
+    setCustomQuery(query)
+    setIsCustomSearch(true)
+    
+    if (!query.trim() || !selectedEpisode || !content) return
+
+    setTorrentLoading(true)
+    
+    try {
+      const results = await torrentSearchService.searchTorrents({
+        site: 'piratebay',
+        query: query.trim()
+      })
+      
+      console.log('🔍 Custom torrent search results:', results)
+      setTorrentResults(results)
+    } catch (error) {
+      console.error('❌ Error searching with custom query:', error)
+      setTorrentResults(null)
+    } finally {
+      setTorrentLoading(false)
+    }
+  }, [selectedEpisode, content])
+
+  // Get the current search query for display
+  const getCurrentQuery = useCallback(() => {
+    if (isCustomSearch && customQuery) {
+      return customQuery
+    }
+    if (selectedEpisode && content && 'name' in content) {
+      const show = content as TMDBTVDetails
+      const isAnimation = show.genres?.some(g => g.name === 'Animation')
+      const isLongRunning = show.number_of_seasons > 3
+      
+      if (isAnimation && isLongRunning) {
+        return `${show.name} ${selectedEpisode.episode_number}`
+      } else {
+        const seasonStr = selectedEpisode.season_number.toString().padStart(2, '0')
+        const episodeStr = selectedEpisode.episode_number.toString().padStart(2, '0')
+        return `${show.name} s${seasonStr}e${episodeStr}`
+      }
+    }
+    return ''
+  }, [isCustomSearch, customQuery, selectedEpisode, content])
 
 
   const formatRuntime = (minutes: number): string => {
@@ -565,6 +613,8 @@ const TMDBWatchPage = () => {
                       onTorrentSelect={(torrent) => {
                         console.log('🎬 Torrent selected:', torrent.name)
                       }}
+                      onQueryChange={handleCustomQueryChange}
+                      currentQuery={getCurrentQuery()}
                     />
                   </div>
                 )}

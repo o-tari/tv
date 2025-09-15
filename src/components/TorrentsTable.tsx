@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react'
 import type { ApiTorrentSearchResponse } from '../types/torrent'
+import TorrentQueryInput from './TorrentQueryInput'
 
 interface TorrentsTableProps {
   searchResults: ApiTorrentSearchResponse | null
   selectedTorrent?: any
   onTorrentSelect?: (torrent: any) => void
+  onQueryChange?: (query: string) => void
+  currentQuery?: string
   className?: string
 }
 
@@ -12,6 +15,8 @@ const TorrentsTable = ({
   searchResults,
   selectedTorrent,
   onTorrentSelect,
+  onQueryChange,
+  currentQuery = '',
   className = ''
 }: TorrentsTableProps) => {
   const [displayedTorrents, setDisplayedTorrents] = useState(10)
@@ -48,9 +53,21 @@ const TorrentsTable = ({
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-        Found {searchResults.data.length} torrents
-      </h3>
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Found {searchResults.data.length} torrents
+        </h3>
+        {onQueryChange && (
+          <div className="w-80">
+            <TorrentQueryInput
+              initialQuery={currentQuery}
+              onQueryChange={onQueryChange}
+              placeholder="Modify search query..."
+              debounceMs={500}
+            />
+          </div>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
