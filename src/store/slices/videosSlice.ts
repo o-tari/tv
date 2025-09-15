@@ -246,8 +246,8 @@ export const fetchVideosByCategory = createAsyncThunk<SearchResponse, { category
   async ({ categoryId, pageToken }) => {
     const cacheKey = pageToken ? `${YOUTUBE_CACHE_KEYS.CATEGORY}:${categoryId}:${pageToken}` : `${YOUTUBE_CACHE_KEYS.CATEGORY}:${categoryId}`
     
-    // Check cache first
-    if (!pageToken && isCached(cacheKey)) {
+    // Check cache first (with 1-hour duration for categories)
+    if (!pageToken && isCached(cacheKey, 60 * 60 * 1000)) { // 1 hour cache
       const cachedData = getCachedData(cacheKey) as SearchResponse
       if (cachedData) {
         console.log(`📦 Using cached videos for category ${categoryId}`)
@@ -260,7 +260,7 @@ export const fetchVideosByCategory = createAsyncThunk<SearchResponse, { category
     
     // Cache the response (only cache initial load, not pagination)
     if (!pageToken) {
-      setCachedData(cacheKey, response)
+      setCachedData(cacheKey, response, 60 * 60 * 1000) // 1 hour cache
     }
     
     return response
@@ -317,6 +317,10 @@ const videosSlice = createSlice({
     clearChannelRandomVideos: (state, action: PayloadAction<string>) => {
       const channelId = action.payload
       delete state.channelRandomVideos[channelId]
+    },
+    clearCategoryCache: (state) => {
+      // Clear all category videos from Redux state
+      state.categoryVideos = {}
     },
     clearAllData: (state) => {
       // Clear all video data when settings change
@@ -663,5 +667,5 @@ export const selectChannelRandomVideos = (channelId: string) => (state: { videos
   }
 }
 
-export const { clearSearchResults, clearCurrentVideo, clearChannel, clearChannelRandomVideos, clearAllData } = videosSlice.actions
+export const { clearSearchResults, clearCurrentVideo, clearChannel, clearChannelRandomVideos, clearCategoryCache, clearAllData } = videosSlice.actions
 export default videosSlice.reducer

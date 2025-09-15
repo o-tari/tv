@@ -899,6 +899,43 @@ export const getVideoCategories = async () => {
   }
 }
 
+// YouTube category mapping
+export const YOUTUBE_CATEGORIES = {
+  '23': 'Comedy',
+  '24': 'Entertainment', 
+  '28': 'Science & Technology',
+  '1': 'Film & Animation',
+  '20': 'Gaming',
+  '10': 'Music',
+  '15': 'Pets & Animals',
+  '19': 'Travel & Events',
+  '22': 'People & Blogs',
+  '25': 'News & Politics',
+  '26': 'Howto & Style',
+  '27': 'Education',
+  '2': 'Autos & Vehicles'
+} as const
+
+// Category display names for the UI (some categories share the same YouTube category ID)
+export const CATEGORY_DISPLAY_NAMES = {
+  '23': 'Comedy',
+  '24': 'Entertainment', 
+  '28': 'Science & Technology',
+  '1': 'Film & Animation',
+  '20': 'Gaming',
+  '10': 'Music',
+  '15': 'Pets & Animals',
+  '19': 'Travel & Events',
+  '22': 'People & Blogs',
+  '25': 'News & Politics',
+  '26': 'Howto & Style',
+  '27': 'Education',
+  'movies': 'Movies', // Uses Film & Animation category
+  'shows': 'Shows', // Uses Entertainment category  
+  'trailers': 'Trailers', // Uses Film & Animation category
+  '2': 'Autos & Vehicles'
+} as const
+
 // Get videos by category
 export const getVideosByCategory = async (
   categoryId: string,
@@ -910,16 +947,19 @@ export const getVideosByCategory = async (
     
     // Filter mock videos by category (simulate different categories)
     const categoryKeywords: Record<string, string[]> = {
-      '10': ['music', 'song', 'album', 'artist', 'concert'],
-      '20': ['gaming', 'game', 'play', 'stream', 'twitch'],
-      '25': ['news', 'news', 'breaking', 'update', 'report'],
-      '26': ['education', 'tutorial', 'learn', 'course', 'lesson'],
-      '27': ['science', 'tech', 'technology', 'innovation', 'research'],
-      '28': ['auto', 'vehicle', 'car', 'motorcycle', 'racing'],
-      '29': ['travel', 'trip', 'vacation', 'destination', 'adventure'],
-      '30': ['comedy', 'funny', 'joke', 'humor', 'laugh'],
-      '31': ['entertainment', 'show', 'movie', 'celebrity', 'hollywood'],
-      '32': ['lifestyle', 'fashion', 'beauty', 'health', 'fitness'],
+      '23': ['comedy', 'funny', 'joke', 'humor', 'laugh', 'standup', 'comedy'],
+      '24': ['entertainment', 'show', 'movie', 'celebrity', 'hollywood', 'entertainment'],
+      '28': ['science', 'tech', 'technology', 'innovation', 'research', 'science'],
+      '1': ['film', 'animation', 'movie', 'cinema', 'trailer', 'movies', 'shows', 'trailers'],
+      '20': ['gaming', 'game', 'play', 'stream', 'twitch', 'gaming'],
+      '10': ['music', 'song', 'album', 'artist', 'concert', 'music'],
+      '15': ['pets', 'animals', 'dog', 'cat', 'pet', 'animal'],
+      '19': ['travel', 'trip', 'vacation', 'destination', 'adventure', 'travel'],
+      '22': ['people', 'blogs', 'vlog', 'personal', 'lifestyle', 'people'],
+      '25': ['news', 'politics', 'breaking', 'update', 'report', 'news'],
+      '26': ['howto', 'style', 'tutorial', 'fashion', 'beauty', 'howto'],
+      '27': ['education', 'tutorial', 'learn', 'course', 'lesson', 'education'],
+      '2': ['auto', 'vehicle', 'car', 'motorcycle', 'racing', 'autos']
     }
     
     const keywords = categoryKeywords[categoryId] || ['video', 'content']

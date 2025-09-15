@@ -35,14 +35,12 @@ const TORRENT_SITES = [
 
 const TorrentSearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedProvider, setSelectedProvider] = useState('')
   const [selectedSite, setSelectedSite] = useState('piratebay')
   const [torrents, setTorrents] = useState<Torrent[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [providers, setProviders] = useState<string[]>([])
-  const [categories] = useState(getPopularCategories())
   const [showProviderManager, setShowProviderManager] = useState(false)
   const useMockData = useAppSelector(selectUseMockData)
   const torrentApiUrl = useAppSelector(selectTorrentApiUrl)
@@ -71,7 +69,6 @@ const TorrentSearchPage = () => {
         // Use the old mock data approach
         const params: TorrentSearchParams = {
           query: searchTerm,
-          category: selectedCategory === 'All' ? undefined : selectedCategory,
           limit: 50,
           providers: selectedProvider ? [selectedProvider] : undefined
         }
@@ -111,7 +108,7 @@ const TorrentSearchPage = () => {
     } finally {
       setLoading(false)
     }
-  }, [searchQuery, selectedCategory, selectedProvider, selectedSite, useMockData, torrentApiUrl])
+  }, [searchQuery, selectedProvider, selectedSite, useMockData, torrentApiUrl])
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -280,25 +277,6 @@ const TorrentSearchPage = () => {
               </select>
             </div>
 
-            {/* Category Select - Only show in mock data mode */}
-            {useMockData && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Category
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             {/* Provider Select - Only show in mock data mode */}
             {useMockData && (
@@ -406,11 +384,6 @@ const TorrentSearchPage = () => {
                         </span>
                       </div>
 
-                      {torrent.category && (
-                        <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full">
-                          {torrent.category}
-                        </span>
-                      )}
                     </div>
 
                     <div className="ml-4 flex flex-col gap-2">

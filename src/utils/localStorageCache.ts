@@ -16,6 +16,7 @@ interface CacheStats {
 class LocalStorageCache {
   private readonly CACHE_PREFIX = 'youtube_cache_'
   private readonly CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
+  private readonly CATEGORY_CACHE_DURATION = 60 * 60 * 1000 // 1 hour for categories
   private readonly MAX_CACHE_SIZE = 50 * 1024 * 1024 // 50MB max cache size
 
   private getCacheKey(type: string, videoId?: string, additionalParams?: any): string {
@@ -47,7 +48,9 @@ class LocalStorageCache {
   }
 
   private isExpired(entry: LocalStorageCacheEntry): boolean {
-    return Date.now() - entry.timestamp > this.CACHE_DURATION
+    // Use shorter cache duration for categories
+    const cacheDuration = entry.type === 'category' ? this.CATEGORY_CACHE_DURATION : this.CACHE_DURATION
+    return Date.now() - entry.timestamp > cacheDuration
   }
 
   private getCacheSize(): number {

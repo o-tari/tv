@@ -98,7 +98,16 @@ export const setCachedData = <T>(key: string, data: T, ttl?: number): void => {
   cache.set(key, data, { ttl })
 }
 
-export const isCached = (key: string): boolean => {
+export const isCached = (key: string, maxAge?: number): boolean => {
+  const item = cache.get(key)
+  if (!item) return false
+  
+  if (maxAge) {
+    const now = Date.now()
+    const age = now - item.timestamp
+    return age <= maxAge
+  }
+  
   return cache.has(key)
 }
 

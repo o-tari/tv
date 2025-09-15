@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
-import { fetchTrendingVideos } from '../store/slices/videosSlice'
+import { fetchTrendingVideos, clearCategoryCache } from '../store/slices/videosSlice'
 import { selectWatchHistory, selectWatchLater } from '../store/slices/historySlice'
 import { selectContinueWatching, selectVideoProgress, removeFromContinueWatching } from '../store/slices/continueWatchingSlice'
 import VideoGrid from '../components/VideoGrid'
 import InfiniteScroll from '../components/InfiniteScroll'
 import SearchBar from '../components/SearchBar'
 import ChannelsSection from '../components/ChannelsSection'
+import CategorySection from '../components/CategorySection'
 
 const YouTubePage = () => {
   const navigate = useNavigate()
@@ -129,27 +130,6 @@ const YouTubePage = () => {
         <ChannelsSection />
 
 
-        {/* History Section */}
-        {watchHistory.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                🕒 History
-              </h2>
-              <button
-                onClick={() => navigate('/history')}
-                className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
-              >
-                More →
-              </button>
-            </div>
-            <VideoGrid
-              videos={watchHistory.slice(0, 8)}
-              loading={false}
-              excludeShorts={true}
-            />
-          </div>
-        )}
 
         {/* Watch Later Section */}
         {watchLater.length > 0 && (
@@ -174,7 +154,7 @@ const YouTubePage = () => {
         )}
 
         {/* Trending Section */}
-        <div>
+        <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             🔥 Trending Videos
           </h2>
@@ -189,6 +169,80 @@ const YouTubePage = () => {
               excludeShorts={true}
             />
           </InfiniteScroll>
+        </div>
+
+        {/* Category Sections */}
+        <CategorySection categoryId="23" categoryName="Comedy" emoji="😂" />
+        <CategorySection categoryId="24" categoryName="Entertainment" emoji="🎭" />
+        <CategorySection categoryId="28" categoryName="Science & Technology" emoji="🔬" />
+        <CategorySection categoryId="1" categoryName="Film & Animation" emoji="🎬" />
+        <CategorySection categoryId="20" categoryName="Gaming" emoji="🎮" />
+        <CategorySection categoryId="10" categoryName="Music" emoji="🎵" />
+        <CategorySection categoryId="15" categoryName="Pets & Animals" emoji="🐾" />
+        <CategorySection categoryId="22" categoryName="People & Blogs" emoji="👥" />
+        <CategorySection categoryId="25" categoryName="News & Politics" emoji="📰" />
+        <CategorySection categoryId="26" categoryName="Howto & Style" emoji="💄" />
+        <CategorySection categoryId="1" categoryName="Movies" emoji="🎞️" />
+        <CategorySection categoryId="24" categoryName="Shows" emoji="📺" />
+        <CategorySection categoryId="1" categoryName="Trailers" emoji="🎬" />
+        <CategorySection categoryId="2" categoryName="Autos & Vehicles" emoji="🚗" />
+
+        {/* History Section */}
+        {watchHistory.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                🕒 History
+              </h2>
+              <button
+                onClick={() => navigate('/history')}
+                className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
+              >
+                More →
+              </button>
+            </div>
+            <VideoGrid
+              videos={watchHistory.slice(0, 8)}
+              loading={false}
+              excludeShorts={true}
+            />
+          </div>
+        )}
+
+        {/* Cache Management Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              🗂️ Cache Management
+            </h2>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              Clear YouTube category cache to refresh all category sections with fresh data.
+            </p>
+            <button
+              onClick={() => {
+                // Clear only YouTube category caches
+                const keysToRemove: string[] = []
+                for (let i = 0; i < localStorage.length; i++) {
+                  const key = localStorage.key(i)
+                  if (key && key.includes('youtube_cache_category')) {
+                    keysToRemove.push(key)
+                  }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key))
+                
+                // Clear Redux category state
+                dispatch(clearCategoryCache())
+                
+                // Reload the page to refresh all category sections
+                window.location.reload()
+              }}
+              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+            >
+              Clear Category Cache
+            </button>
+          </div>
         </div>
       </div>
     </div>

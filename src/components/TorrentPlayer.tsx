@@ -605,8 +605,6 @@ const TorrentPlayer = ({
                         <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Name</th>
                         <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Size</th>
                         <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Seeders</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Leechers</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Category</th>
                         <th className="text-center py-2 px-3 font-medium text-gray-900 dark:text-white">Action</th>
                       </tr>
                     </thead>
@@ -631,16 +629,6 @@ const TorrentPlayer = ({
                           <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
                             <span className="text-green-600 dark:text-green-400 font-medium">
                               {torrent.seeders}
-                            </span>
-                          </td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
-                            <span className="text-red-600 dark:text-red-400 font-medium">
-                              {torrent.leechers}
-                            </span>
-                          </td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
-                            <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                              {torrent.category}
                             </span>
                           </td>
                           <td className="py-2 px-3 text-center">
@@ -836,8 +824,6 @@ const TorrentPlayer = ({
                     <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Name</th>
                     <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Size</th>
                     <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Seeders</th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Leechers</th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">Category</th>
                     <th className="text-center py-2 px-3 font-medium text-gray-900 dark:text-white">Action</th>
                   </tr>
                 </thead>
@@ -862,16 +848,6 @@ const TorrentPlayer = ({
                       <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
                         <span className="text-green-600 dark:text-green-400 font-medium">
                           {torrent.seeders}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
-                        <span className="text-red-600 dark:text-red-400 font-medium">
-                          {torrent.leechers}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
-                        <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                          {torrent.category}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-center">

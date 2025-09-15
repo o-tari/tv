@@ -139,10 +139,9 @@ export const searchTorrents = async (params: TorrentSearchParams): Promise<Torre
       // Filter mock data based on search criteria
       let filteredTorrents = mockTorrents.filter(torrent => {
         const matchesQuery = torrent.title.toLowerCase().includes(query.toLowerCase())
-        const matchesCategory = category === 'All' || torrent.category === category
         const matchesProvider = !providers || providers.length === 0 || providers.includes(torrent.provider)
         
-        return matchesQuery && matchesCategory && matchesProvider
+        return matchesQuery && matchesProvider
       })
       
       // Limit results
@@ -162,10 +161,9 @@ export const searchTorrents = async (params: TorrentSearchParams): Promise<Torre
       // Fall back to mock data if API is not available
       let filteredTorrents = mockTorrents.filter(torrent => {
         const matchesQuery = torrent.title.toLowerCase().includes(query.toLowerCase())
-        const matchesCategory = category === 'All' || torrent.category === category
         const matchesProvider = !providers || providers.length === 0 || providers.includes(torrent.provider)
         
-        return matchesQuery && matchesCategory && matchesProvider
+        return matchesQuery && matchesProvider
       })
       
       filteredTorrents = filteredTorrents.slice(0, limit)
@@ -375,7 +373,6 @@ export const getTorrentDetails = async (torrent: Torrent): Promise<TorrentDetail
       peers: torrent.peers,
       magnet: torrent.magnet,
       desc: torrent.desc,
-      category: torrent.category,
       subcategory: torrent.subcategory,
       url: torrent.url,
       infoHash: torrent.infoHash,
@@ -427,7 +424,6 @@ export const getMagnetUrl = async (torrent: Torrent): Promise<string | null> => 
       peers: torrent.peers,
       magnet: torrent.magnet,
       desc: torrent.desc,
-      category: torrent.category,
       subcategory: torrent.subcategory,
       url: torrent.url,
       infoHash: torrent.infoHash,
@@ -471,7 +467,6 @@ export const downloadTorrent = async (torrent: Torrent, filename?: string): Prom
       peers: torrent.peers,
       magnet: torrent.magnet,
       desc: torrent.desc,
-      category: torrent.category,
       subcategory: torrent.subcategory,
       url: torrent.url,
       infoHash: torrent.infoHash,
