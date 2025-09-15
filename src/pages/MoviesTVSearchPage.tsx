@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../store'
 import { selectTmdbApiKey, selectShowUpcomingReleases } from '../store/slices/settingsSlice'
 import { getTMDBService } from '../services/tmdb'
-import type { TMDBMovie, TMDBTVShow, TMDBContent } from '../types/tmdb'
+import type { TMDBContent } from '../types/tmdb'
 import TMDBMediaCard from '../components/TMDBMediaCard'
 import LoadingSpinner from '../components/LoadingSpinner'
 import SearchBar from '../components/SearchBar'
@@ -100,7 +100,7 @@ const MoviesTVSearchPage = () => {
           {error}
         </p>
         <button
-          onClick={() => handleSearch(query)}
+          onClick={() => performSearch(query)}
           className="btn-primary"
         >
           Try again

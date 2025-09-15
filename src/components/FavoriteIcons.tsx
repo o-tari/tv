@@ -1,5 +1,6 @@
+import React from 'react'
 import { useAppSelector } from '../store'
-import { selectFavoriteItems, selectSidebarItems } from '../store/slices/favoritesSlice'
+import { selectFavoriteItems, selectSidebarItems, getIconComponent } from '../store/slices/favoritesSlice'
 import { useNavigate } from 'react-router-dom'
 
 const FavoriteIcons = () => {
@@ -10,7 +11,7 @@ const FavoriteIcons = () => {
   // Get only the favorite items that are currently favorited
   const favoriteSidebarItems = sidebarItems.filter(item => favoriteItems.includes(item.id))
 
-  const handleFavoriteClick = (item: { id: string; href: string; icon: React.ComponentType<{ className?: string }> }) => {
+  const handleFavoriteClick = (item: { id: string; href: string; iconName: string }) => {
     // Navigate to the item's page
     navigate(item.href)
   }
@@ -29,7 +30,7 @@ const FavoriteIcons = () => {
           aria-label={`Go to ${item.label}`}
           title={item.label}
         >
-          <item.icon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+          {React.createElement(getIconComponent(item.iconName), { className: "w-5 h-5 group-hover:scale-110 transition-transform duration-200" })}
         </button>
       ))}
     </div>

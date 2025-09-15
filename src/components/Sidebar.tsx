@@ -1,10 +1,11 @@
+import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
 import { useAppSelector, useAppDispatch } from '../store'
 import { setSearchQuery, toggleSidebar } from '../store/slices/uiSlice'
 import { logout } from '../store/slices/authSlice'
 import { selectIsTorrentEndpointConfigured } from '../store/slices/settingsSlice'
-import { toggleFavorite, selectFavoriteItems, selectSidebarItems } from '../store/slices/favoritesSlice'
+import { toggleFavorite, selectFavoriteItems, selectSidebarItems, getIconComponent } from '../store/slices/favoritesSlice'
 import { StarIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import SearchBar from './SearchBar'
@@ -134,7 +135,7 @@ const Sidebar = () => {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <item.icon className="mr-4 w-5 h-5" />
+                    {React.createElement(getIconComponent(item.iconName), { className: "mr-4 w-5 h-5" })}
                     <span className="truncate">{item.label}</span>
                   </Link>
                   <button
@@ -161,47 +162,6 @@ const Sidebar = () => {
             })}
           </div>
 
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Library
-            </h3>
-            <div className="space-y-1">
-              {sidebarItems.filter(item => ['liked', 'playlists'].includes(item.id)).map((item) => {
-                const isItemFavorite = favoriteItems.includes(item.id)
-                return (
-                  <div key={item.id} className="flex items-center group">
-                    <Link
-                      to={item.href}
-                      onClick={() => dispatch(toggleSidebar())}
-                      className="flex items-center flex-1 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                    >
-                      <item.icon className="mr-3 w-4 h-4" />
-                      {item.label}
-                    </Link>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        dispatch(toggleFavorite(item.id))
-                      }}
-                      className={`px-2 py-2 text-sm transition-colors opacity-0 group-hover:opacity-100 ${
-                        isItemFavorite 
-                          ? 'opacity-100 text-yellow-500 hover:text-yellow-600' 
-                          : 'text-gray-400 hover:text-yellow-500'
-                      }`}
-                      aria-label={`${isItemFavorite ? 'Remove from' : 'Add to'} favorites`}
-                    >
-                      {isItemFavorite ? (
-                        <StarSolidIcon className="w-4 h-4" />
-                      ) : (
-                        <StarIcon className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Account Section - Above Settings */}
@@ -240,7 +200,7 @@ const Sidebar = () => {
                                 }}
                                 className="flex items-center flex-1 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                               >
-                                <item.icon className="mr-3 w-4 h-4" />
+                                {React.createElement(getIconComponent(item.iconName), { className: "mr-3 w-4 h-4" })}
                                 {item.label}
                               </Link>
                               <button

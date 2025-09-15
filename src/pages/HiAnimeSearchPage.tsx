@@ -18,7 +18,7 @@ const HiAnimeSearchPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSearch = (newQuery: string) => {
+  const handleSearchNavigation = (newQuery: string) => {
     if (newQuery.trim()) {
       navigate(`/hianime/search?search=${encodeURIComponent(newQuery.trim())}`)
     }
@@ -130,7 +130,7 @@ const HiAnimeSearchPage = () => {
         
         {/* Search Input */}
         <div className="max-w-2xl mb-4">
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar onSearch={handleSearchNavigation} />
         </div>
         
         {query && (

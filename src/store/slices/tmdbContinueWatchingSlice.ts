@@ -1,28 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import type { TMDBContent } from '../../types/tmdb'
+import type { ProcessedContinueWatchingItem } from '../../services/newEpisodeService'
 
-interface TMDBContinueWatchingItem {
-  id: string // unique identifier combining type and id
-  type: 'movie' | 'tv'
-  tmdbId: number
-  title: string
-  thumbnail: string | null
-  overview: string
-  rating: number
-  publishedAt: string
-  lastWatchedTime: number
-  lastWatchedEpisode?: {
-    seasonNumber: number
-    episodeNumber: number
-    airDate: string
-  }
-  hasNewEpisodes?: boolean
-  newEpisodesCount?: number
-}
 
 interface TMDBContinueWatchingState {
-  items: TMDBContinueWatchingItem[]
+  items: ProcessedContinueWatchingItem[]
 }
 
 const initialState: TMDBContinueWatchingState = {
@@ -63,7 +46,7 @@ const tmdbContinueWatchingSlice = createSlice({
       type: 'movie'
     }>) => {
       const { content, type } = action.payload
-      const item: TMDBContinueWatchingItem = {
+      const item: ProcessedContinueWatchingItem = {
         id: `movie-${content.id}`,
         type,
         tmdbId: content.id,
@@ -73,6 +56,8 @@ const tmdbContinueWatchingSlice = createSlice({
         rating: content.vote_average,
         publishedAt: 'release_date' in content ? content.release_date : content.first_air_date,
         lastWatchedTime: Date.now(),
+        hasNewEpisodes: false,
+        newEpisodesCount: 0,
       }
       
       // Remove if already exists
@@ -91,7 +76,7 @@ const tmdbContinueWatchingSlice = createSlice({
       type: 'tv'
     }>) => {
       const { content, type } = action.payload
-      const item: TMDBContinueWatchingItem = {
+      const item: ProcessedContinueWatchingItem = {
         id: `tv-${content.id}`,
         type,
         tmdbId: content.id,
@@ -101,6 +86,8 @@ const tmdbContinueWatchingSlice = createSlice({
         rating: content.vote_average,
         publishedAt: 'first_air_date' in content ? content.first_air_date : content.release_date,
         lastWatchedTime: Date.now(),
+        hasNewEpisodes: false,
+        newEpisodesCount: 0,
       }
       
       // Remove if already exists
@@ -154,7 +141,7 @@ const tmdbContinueWatchingSlice = createSlice({
       }
     },
 
-    updateProcessedItems: (state, action: PayloadAction<TMDBContinueWatchingItem[]>) => {
+    updateProcessedItems: (state, action: PayloadAction<ProcessedContinueWatchingItem[]>) => {
       state.items = action.payload
       saveToStorage(state)
     },

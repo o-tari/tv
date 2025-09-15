@@ -30,7 +30,6 @@ export function checkForNewEpisodes(
   }
 
   const currentDate = new Date()
-  const lastWatchedDate = new Date(lastWatchedEpisode.airDate)
   
   // Filter episodes that:
   // 1. Have aired (air_date is not empty and is before/on current date)

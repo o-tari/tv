@@ -1,8 +1,21 @@
 import { getTMDBService } from './tmdb'
 import { checkForNewEpisodes, getAllEpisodesForTVShow } from '../utils/newEpisodeUtils'
-import type { TMDBContinueWatchingItem } from '../store/slices/tmdbContinueWatchingSlice'
 
-export interface ProcessedContinueWatchingItem extends TMDBContinueWatchingItem {
+export interface ProcessedContinueWatchingItem {
+  id: string
+  type: 'movie' | 'tv'
+  tmdbId: number
+  title: string
+  thumbnail: string | null
+  overview: string
+  rating: number
+  publishedAt: string
+  lastWatchedTime: number
+  lastWatchedEpisode?: {
+    seasonNumber: number
+    episodeNumber: number
+    airDate: string
+  }
   hasNewEpisodes: boolean
   newEpisodesCount: number
 }
@@ -17,7 +30,7 @@ export class NewEpisodeService {
   /**
    * Process all continue watching items to check for new episodes
    */
-  async processItemsForNewEpisodes(items: TMDBContinueWatchingItem[]): Promise<ProcessedContinueWatchingItem[]> {
+  async processItemsForNewEpisodes(items: ProcessedContinueWatchingItem[]): Promise<ProcessedContinueWatchingItem[]> {
     const processedItems: ProcessedContinueWatchingItem[] = []
 
     for (const item of items) {

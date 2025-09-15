@@ -16,7 +16,28 @@ interface SidebarItem {
   id: string
   label: string
   href: string
-  icon: React.ComponentType<{ className?: string }>
+  iconName: string
+}
+
+// Icon mapping for serializable storage
+export const iconMap = {
+  'TvIcon': TvIcon,
+  'FilmIcon': FilmIcon,
+  'SparklesIcon': SparklesIcon,
+  'MagnifyingGlassIcon': MagnifyingGlassIcon,
+  'HandThumbUpIcon': HandThumbUpIcon,
+  'ClipboardDocumentListIcon': ClipboardDocumentListIcon,
+  'UserIcon': UserIcon,
+  'ClockIcon': ClockIcon,
+  'WatchLaterIcon': WatchLaterIcon,
+  'Cog6ToothIcon': Cog6ToothIcon,
+} as const
+
+export type IconName = keyof typeof iconMap
+
+// Helper function to get icon component from name
+export const getIconComponent = (iconName: string): React.ComponentType<{ className?: string }> => {
+  return iconMap[iconName as IconName] || iconMap.TvIcon
 }
 
 interface FavoritesState {
@@ -25,17 +46,17 @@ interface FavoritesState {
 }
 
 const defaultSidebarItems: SidebarItem[] = [
-  { id: 'youtube', label: 'YouTube', href: '/youtube', icon: TvIcon },
-  { id: 'movies-tv', label: 'Movies & TV', href: '/movies-tv', icon: FilmIcon },
-  { id: 'anime', label: 'Anime', href: '/anime', icon: SparklesIcon },
-  { id: 'hianime', label: 'HiAnime', href: '/hianime', icon: SparklesIcon },
-  { id: 'torrents', label: 'Torrent Search', href: '/torrents', icon: MagnifyingGlassIcon },
-  { id: 'liked', label: 'Liked videos', href: '/library/liked', icon: HandThumbUpIcon },
-  { id: 'playlists', label: 'Playlists', href: '/library/playlists', icon: ClipboardDocumentListIcon },
-  { id: 'channel', label: 'Your channel', href: '/channel/me', icon: UserIcon },
-  { id: 'history', label: 'History', href: '/history', icon: ClockIcon },
-  { id: 'watch-later', label: 'Watch later', href: '/watch-later', icon: WatchLaterIcon },
-  { id: 'settings', label: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { id: 'youtube', label: 'YouTube', href: '/youtube', iconName: 'TvIcon' },
+  { id: 'movies-tv', label: 'Movies & TV', href: '/movies-tv', iconName: 'FilmIcon' },
+  { id: 'anime', label: 'Anime', href: '/anime', iconName: 'SparklesIcon' },
+  { id: 'hianime', label: 'HiAnime', href: '/hianime', iconName: 'SparklesIcon' },
+  { id: 'torrents', label: 'Torrent Search', href: '/torrents', iconName: 'MagnifyingGlassIcon' },
+  { id: 'liked', label: 'Liked videos', href: '/library/liked', iconName: 'HandThumbUpIcon' },
+  { id: 'playlists', label: 'Playlists', href: '/library/playlists', iconName: 'ClipboardDocumentListIcon' },
+  { id: 'channel', label: 'Your channel', href: '/channel/me', iconName: 'UserIcon' },
+  { id: 'history', label: 'History', href: '/history', iconName: 'ClockIcon' },
+  { id: 'watch-later', label: 'Watch later', href: '/watch-later', iconName: 'WatchLaterIcon' },
+  { id: 'settings', label: 'Settings', href: '/settings', iconName: 'Cog6ToothIcon' },
 ]
 
 const initialState: FavoritesState = {

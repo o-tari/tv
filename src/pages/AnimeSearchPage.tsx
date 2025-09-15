@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store'
 import { searchAnime, clearSearchResults } from '../store/slices/animeSlice'

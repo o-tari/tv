@@ -3,8 +3,6 @@ import { useAppSelector, useAppDispatch } from '../store'
 import { 
   fetchTopAiringAnime, 
   fetchRecentEpisodes, 
-  searchAnime, 
-  clearSearchResults,
   fetchTopAnime
 } from '../store/slices/animeSlice'
 import MediaGrid from '../components/MediaGrid'
@@ -26,11 +24,6 @@ const AnimePage = () => {
     recentEpisodesError,
     recentEpisodesNextPage,
     recentEpisodesHasNextPage,
-    searchResults,
-    searchLoading,
-    searchError,
-    searchNextPage,
-    searchHasNextPage,
     // Jikan API data
     topAnime,
     topAnimeLoading,
@@ -66,11 +59,6 @@ const AnimePage = () => {
     }
   }
 
-  const loadMoreSearch = () => {
-    if (searchNextPage && !searchLoading && searchQuery) {
-      dispatch(searchAnime({ query: searchQuery, page: searchNextPage }))
-    }
-  }
 
   const loadMoreTopAnime = () => {
     if (topAnimeNextPage && !topAnimeLoading) {
