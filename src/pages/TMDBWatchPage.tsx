@@ -38,7 +38,7 @@ const TMDBWatchPage = () => {
     }
   }, [id, type, tmdbApiKey])
 
-  // Load saved episode selection from localStorage
+  // Load saved episode selection from localStorage (only set selectedEpisode, season is handled in loadContent)
   useEffect(() => {
     if (id && type === 'tv' && tmdbApiKey && content) {
       const savedEpisode = localStorage.getItem(`tmdb-tv-${id}-selected-episode`)
@@ -46,12 +46,7 @@ const TMDBWatchPage = () => {
         try {
           const episodeData = JSON.parse(savedEpisode)
           setSelectedEpisode(episodeData)
-          // Also set the season if we have a saved episode
-          if (episodeData.season_number) {
-            setSelectedSeason(episodeData.season_number)
-            // Load episodes for the saved season
-            loadEpisodes(episodeData.season_number)
-          }
+          console.log('📺 Restored saved episode from localStorage:', episodeData.name)
         } catch (error) {
           console.error('Error parsing saved episode data:', error)
         }
@@ -91,11 +86,38 @@ const TMDBWatchPage = () => {
         const tvDetails = await tmdbService.getTVDetails(parseInt(id))
         console.log('📺 TV show loaded:', { name: tvDetails.name, seasons: tvDetails.seasons?.length })
         setContent(tvDetails)
-        // Set first season as default
-        if (tvDetails.seasons && tvDetails.seasons.length > 0) {
-          setSelectedSeason(tvDetails.seasons[0].season_number)
-          // Load episodes for the first season
-          loadEpisodes(tvDetails.seasons[0].season_number)
+        
+        // Check if there's a saved episode for this TV show
+        const savedEpisode = localStorage.getItem(`tmdb-tv-${id}-selected-episode`)
+        if (savedEpisode) {
+          try {
+            const episodeData = JSON.parse(savedEpisode)
+            if (episodeData.season_number) {
+              console.log('📺 Found saved episode, setting season to:', episodeData.season_number)
+              setSelectedSeason(episodeData.season_number)
+              // Load episodes for the saved season
+              loadEpisodes(episodeData.season_number)
+            } else {
+              // Fallback to first season if no season in saved episode
+              if (tvDetails.seasons && tvDetails.seasons.length > 0) {
+                setSelectedSeason(tvDetails.seasons[0].season_number)
+                loadEpisodes(tvDetails.seasons[0].season_number)
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing saved episode data in loadContent:', error)
+            // Fallback to first season if parsing fails
+            if (tvDetails.seasons && tvDetails.seasons.length > 0) {
+              setSelectedSeason(tvDetails.seasons[0].season_number)
+              loadEpisodes(tvDetails.seasons[0].season_number)
+            }
+          }
+        } else {
+          // No saved episode, set first season as default
+          if (tvDetails.seasons && tvDetails.seasons.length > 0) {
+            setSelectedSeason(tvDetails.seasons[0].season_number)
+            loadEpisodes(tvDetails.seasons[0].season_number)
+          }
         }
       }
     } catch (err) {
